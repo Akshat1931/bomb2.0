@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>KTaNE Solver Deck</title>
+  <!-- Vercel Web Analytics -->
+  <script defer src="/_vercel/insights/script.js"></script>
+  <!-- Premium Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07070f;
+      --bg-card: #0e0e1c;
+      --bg-input: #0a0a18;
+      --border: #1e1e32;
+      --border-hover: #35355c;
+      --accent: #ffd875;
+      --accent-dim: rgba(255, 216, 117, 0.12);
+      --green: #3ddc84;
+      --green-dim: rgba(61, 220, 132, 0.12);
+      --red: #ff5f57;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --radius: 10px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+    }
+
+    /* ── Site Header ─────────────────────────── */
+    .site-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .site-tagline {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    /* ── Nav ─────────────────────────────────── */
+    .topnav {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      background: var(--bg-card);
+      padding: 5px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      flex-wrap: wrap;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .nav-link {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 7px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .nav-link.active {
+      background: var(--accent);
+      color: #08080f;
+      font-weight: 700;
+    }
+
+    /* ── Page Sections ───────────────────────── */
+    .page-section {
+      display: none;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .page-section.active {
+      display: block;
+    }
+
+    /* ── Maze Solver Section ─────────────────── */
+    .solver-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .boxes {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .box {
+      width: 200px;
+      padding: 22px 16px;
+      border: 1.5px dashed var(--border-hover);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .box:hover {
+      border-color: var(--accent);
+      background: rgba(255, 216, 117, 0.04);
+    }
+
+    .box.done {
+      border-color: var(--green);
+      border-style: solid;
+      background: var(--green-dim);
+    }
+
+    .box input {
+      display: none;
+    }
+
+    .box .icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .box .name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .box .hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .box .paste-hint {
+      color: #3b3f5c;
+      font-style: italic;
+      margin-top: 3px;
+    }
+
+    .box .tick {
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 10px;
+      display: none;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .box.done .tick {
+      display: block;
+    }
+
+    .box.selected {
+      border-color: var(--green);
+      border-style: solid;
+    }
+
+    /* ── Upload Button ───────────────────────── */
+    .upload-btn {
+      margin-top: 12px;
+      padding: 7px 16px;
+      border: 1px solid var(--border-hover);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .upload-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── Status ──────────────────────────────── */
+    #status {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* ── Answer ──────────────────────────────── */
+    #ans {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--green);
+      font-family: 'Outfit', monospace;
+      letter-spacing: 5px;
+      word-break: break-all;
+      text-align: center;
+      background: var(--bg-card);
+      padding: 18px 28px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      max-width: 680px;
+      margin: 0 auto;
+      display: none;
+      line-height: 1.8;
+    }
+
+    /* ── Canvas ──────────────────────────────── */
+    .canvas-area {
+      position: relative;
+      display: none;
+      width: 620px;
+      height: 620px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1.5px solid var(--border);
+    }
+
+    canvas {
+      display: block;
+      width: 620px;
+      height: 620px;
+    }
+
+    #cOver, #cPath {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    /* ── Debug Controls ──────────────────────── */
+    .debug-controls {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: var(--bg-card);
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .debug-controls label {
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .debug-controls input[type="checkbox"] { cursor: pointer; }
+
+    .debug-controls input[type="range"] {
+      width: 80px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .debug-controls span {
+      font-size: 12px;
+      color: var(--text);
+      min-width: 28px;
+      font-family: monospace;
+    }
+
+    #calibInfo {
+      font-size: 11px;
+      color: #444466;
+      font-family: monospace;
+    }
+
+    /* ── Venn Shell ──────────────────────────── */
+    .venn-shell {
+      max-width: 860px;
+      margin: auto;
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+
+    .venn-tools {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .venn-note {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .venn-answer-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-top: 16px;
+      background: var(--bg-input);
+      padding: 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .venn-copy-btn {
+      padding: 9px 18px;
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--green);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+
+    .venn-copy-btn:hover {
+      background: var(--green-dim);
+    }
+
+    .venn-manual {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .venn-manual-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .venn-panel {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .venn-side label {
+      display: block;
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+    }
+
+    .venn-side input,
+    .venn-side select {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      border-radius: 8px;
+      margin-bottom: 14px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      transition: border-color 0.15s;
+    }
+
+    .venn-side input:focus,
+    .venn-side select:focus {
+      border-color: var(--accent);
+    }
+
+    .venn-legend {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .venn-chip {
+      display: inline-block;
+      min-width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 820px) {
+      .venn-manual-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="site-header">
+    <h1>KTaNE Solver Deck</h1>
+    <span class="site-tagline">Keep Talking and Nobody Explains — Module Helper</span>
+  </div>
+
+  <div class="topnav">
+    <button class="nav-link active" type="button" data-target="solverSection"
+      onclick="showSection('solverSection')">Maze Solver</button>
+    <button class="nav-link" type="button" data-target="vennSection" onclick="showSection('vennSection')">Venn
+      Diagram</button>
+    <button class="nav-link" type="button" data-target="logicSection" onclick="showSection('logicSection')">Logic Solver</button>
+    <button class="nav-link" type="button" data-target="morseSection" onclick="showSection('morseSection')">Morse Solver</button>
+    <button class="nav-link" type="button" data-target="switchesSection" onclick="showSection('switchesSection')">Switches Solver</button>
+    <button class="nav-link" type="button" data-target="searchSection" onclick="showSection('searchSection')">Search Solver</button>
+    <button class="nav-link" type="button" data-target="knobsSection" onclick="showSection('knobsSection')">Knobs Solver</button>
+    <button class="nav-link" type="button" data-target="memorySection" onclick="showSection('memorySection')">Memory Solver</button>
+    <button class="nav-link" type="button" data-target="passwordSection" onclick="showSection('passwordSection')">Password Solver</button>
+    <button class="nav-link" type="button" data-target="pianoSection" onclick="showSection('pianoSection')">Piano Solver</button>
+    <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
+    <button class="nav-link" type="button" data-target="aboutSection"
+      onclick="showSection('aboutSection')">About</button>
+  </div>
+
+  <section id="solverSection" class="page-section active">
+    <div class="solver-wrapper">
+      <div class="boxes">
+        <div class="box selected" id="b1" data-slot="1" onclick="selectSlot(1)">
+          <input id="file1" type="file" accept="image/*" onchange="load(1,this)">
+          <div class="icon">🔴🟡</div>
+          <div class="name">Dots Image</div>
+          <div class="hint">Red = start · Yellow = goal</div>
+          <div class="hint paste-hint">or Ctrl+V to paste</div>
+          <button type="button" class="upload-btn" onclick="openFileDialog(event,1)">Upload</button>
+          <div class="tick">✓ Loaded</div>
+        </div>
+        <div class="box" id="b2" data-slot="2" onclick="selectSlot(2)">
+          <input id="file2" type="file" accept="image/*" onchange="load(2,this)">
+          <div class="icon">🔲</div>
+          <div class="name">Maze Image</div>
+          <div class="hint">The one with walls</div>
+          <div class="hint paste-hint">or Ctrl+V to paste</div>
+          <button type="button" class="upload-btn" onclick="openFileDialog(event,2)">Upload</button>
+          <div class="tick">✓ Loaded</div>
+        </div>
+      </div>
+
+      <div id="status">Upload both images to get the answer.</div>
+
+      <details style="font-size:13px; color:#555; cursor:pointer; width: 100%; max-width: 620px;">
+        <summary style="color: var(--text-muted); font-size: 12px; letter-spacing: 0.3px;">⚙ Advanced Settings</summary>
+      <div class="debug-controls" style="margin-top:8px;">
+        <label><input type="checkbox" id="showDebug" onchange="if(lastSolveData) redraw()"> Show debug grid</label>
+        <label>DX: <input type="range" id="nudgeDX" min="-15" max="15" value="0"
+            onchange="document.getElementById('dxVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
+            id="dxVal">0</span></label>
+        <label>DY: <input type="range" id="nudgeDY" min="-15" max="15" value="0"
+            onchange="document.getElementById('dyVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
+            id="dyVal">0</span></label>
+        <label>Wall sensitivity: <input type="range" id="wallSens" min="20" max="80" value="47"
+            onchange="document.getElementById('wsVal').textContent=this.value+'%'; if(lastSolveData) resolveWithCurrentSettings()"><span
+            id="wsVal">47%</span></label>
+      </div>
+      <div id="calibInfo" style="margin-top:4px;"></div>
+      <div id="boxSizeInfo" style="margin-top:4px; color:#aaa; font-size:12px;"></div>
+    </details>
+      <div id="ans"></div>
+
+      <div class="canvas-area" id="canvasArea">
+        <canvas id="cBase"></canvas>
+        <canvas id="cOver"></canvas>
+        <canvas id="cPath"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section id="vennSection" class="page-section">
+    <div class="venn-shell">
+      <h2 style="color:#f5c542; text-align:center; margin-bottom:16px;">Venn Diagram</h2>
+
+      <div class="venn-tools">
+        <label style="color:#ddd; font-size:13px; gap:8px; display:inline-flex; align-items:center;">
+          <span>Answer needed:</span>
+          <select id="vennTargetMode"
+            style="padding:8px; background:#101025; border:1px solid #333; color:#eee; border-radius:8px;">
+            <option value="nonShaded" selected>Non-shaded region</option>
+            <option value="shaded">Shaded region</option>
+          </select>
+        </label>
+        <button type="button" class="upload-btn" onclick="openVennFileDialog()">Upload Image</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px;">
+        <div id="vennDropzone" class="morse-dropzone" style="width: 100%; max-width: 480px; padding: 20px; border: 2px dashed #444; border-radius: 10px; text-align: center; cursor: pointer; background: #0c0c1a;">
+          <span style="font-size:32px;">📁</span>
+          <p style="font-size:13px; color:#aaa; margin-top:8px; margin-bottom: 0;">Drag & Drop Venn Diagram here, click to Upload, or press Ctrl+V to paste</p>
+        </div>
+        <canvas id="vennCanvas" width="480" height="360" style="width:100%; max-width:480px; height:auto; border:1px solid #333; border-radius:10px; background:#181826;"></canvas>
+      </div>
+
+      <div style="text-align:center; color:#aaa; font-size:12px; margin:-4px 0 14px;">
+        Grey = shaded, Black = non-shaded
+      </div>
+
+      <div class="venn-manual">
+        <h3 style="color:#f5c542; text-align:center; margin-bottom:12px;">Build The Scenario</h3>
+        <div style="text-align:center; color:#aaa; font-size:12px; margin-bottom:14px;">
+          Click the actual region area below to toggle grey shaded or black non-shaded.
+        </div>
+        <div class="venn-manual-grid">
+          <div class="venn-panel">
+            <canvas id="vennManualCanvas"
+              style="width:100%; max-width:480px; height:auto; margin:0 auto; border:1px solid #333; border-radius:10px; background:#181826; cursor:pointer;"
+              width="480" height="360"></canvas>
+            <div class="venn-legend" style="margin-top:12px; text-align:center;">
+              <div><span class="venn-chip" style="background:#6f768a;"></span>Grey region = shaded</div>
+              <div><span class="venn-chip" style="background:#1f222b; border:1px solid #8a8ea3;"></span>Black region =
+                non-shaded</div>
+              <div style="margin-top:8px;">Outside area counts too. Click any region area to flip it.</div>
+            </div>
+          </div>
+          <div class="venn-panel venn-side">
+            <label for="vennCircleCount">Circle count</label>
+            <select id="vennCircleCount">
+              <option value="three" selected>3 circles</option>
+              <option value="two">2 circles</option>
+            </select>
+
+            <label for="vennLabelA">Top / Left label</label>
+            <input id="vennLabelA" type="text" maxlength="3" value="A" placeholder="A">
+
+            <label for="vennLabelB">Left / Right label</label>
+            <input id="vennLabelB" type="text" maxlength="3" value="B" placeholder="B">
+
+            <label for="vennLabelC">Right label</label>
+            <input id="vennLabelC" type="text" maxlength="3" value="C" placeholder="C">
+
+            <button id="vennResetManual" type="button" class="upload-btn" style="width:100%; margin-top:0;">Reset Manual
+              Diagram</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="venn-answer-row">
+        <div>
+          <label style="display:block; color:#aaa; font-size:12px; margin-bottom:4px;">Generated answer:</label>
+          <input id="vennAnswer" type="text" readonly placeholder="Paste image to get the set notation answer"
+            style="width:100%; padding:10px; background:#101025; border:1px solid #333; color:#eee; border-radius:6px; font-family:monospace; font-size:16px;">
+        </div>
+        <button id="vennCopyBtn" type="button" class="venn-copy-btn">Copy</button>
+      </div>
+
+      <div id="vennStatus" style="margin-top:12px; font-size:13px; color:#aaa; text-align:center;"></div>
+      <input id="vennFileInput" type="file" accept="image/*" hidden>
+    </div>
+  </section>
+
+  <section id="logicSection" class="page-section">
+    <div class="logic-shell">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
+        <h2 style="color:#f5c542; margin:0;">Logic Solver</h2>
+        <div style="display:flex; gap:10px;">
+          <button id="logicLoadDemoBtn" class="upload-btn" type="button" style="margin-top:0;" onclick="loadLogicDemoScenario()">Load Demo</button>
+          <button id="logicResetSolverBtn" class="upload-btn" type="button" style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetLogicSolver()">Reset</button>
+        </div>
+      </div>
+
+      <div class="logic-grid">
+        <!-- Sidebar -->
+        <div class="logic-sidebar">
+          <!-- Variable Assignments -->
+          <div class="logic-card">
+            <div class="logic-card-title">Variables assignments</div>
+            <textarea id="logicRawVarsInput" class="logic-var-textarea" placeholder="Paste variables here...&#10;e.g. P = T, Q = T, R = F" rows="3" oninput="handleLogicVarsTextAreaChange()"></textarea>
+            <div id="logicVariablesPillContainer" class="logic-var-pills">
+              <div class="empty-placeholder" style="font-size:12px; color:#666;">No variables parsed yet.</div>
+            </div>
+            
+            <form id="logicAddVarForm" style="display:flex; gap:6px; margin-top:12px; border-top:1px solid #25253f; padding-top:10px;" onsubmit="handleLogicCustomVarAdd(event)">
+              <input type="text" id="logicNewVarName" placeholder="Name" required style="padding:6px; background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; font-size:12px; flex:1;" maxlength="8">
+              <select id="logicNewVarVal" style="background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; padding:0 6px; font-size:12px;">
+                <option value="true">T</option>
+                <option value="false">F</option>
+              </select>
+              <button type="submit" class="upload-btn" style="margin-top:0; padding:4px 8px;">+</button>
+            </form>
+          </div>
+
+          <!-- Greek Letter Outputs -->
+          <div class="logic-card">
+            <div class="logic-card-title">Greek Outputs</div>
+            <div class="logic-greek-item" id="logicGreekItem-a">
+              <span>α (alpha) = Stage 1</span>
+              <span class="logic-greek-badge unset" id="logicGreekBadge-a">Unset</span>
+            </div>
+            <div class="logic-greek-item" id="logicGreekItem-b">
+              <span>β (beta) = Stage 2</span>
+              <span class="logic-greek-badge unset" id="logicGreekBadge-b">Unset</span>
+            </div>
+            <div class="logic-greek-item" id="logicGreekItem-g">
+              <span>γ (gamma) = Stage 3</span>
+              <span class="logic-greek-badge unset" id="logicGreekBadge-g">Unset</span>
+            </div>
+            <div class="logic-greek-item" id="logicGreekItem-d">
+              <span>δ (delta) = Stage 4</span>
+              <span class="logic-greek-badge unset" id="logicGreekBadge-d">Unset</span>
+            </div>
+          </div>
+
+          <!-- Notepad -->
+          <div class="logic-card">
+            <div class="logic-card-title">Scratchpad (Auto-save)</div>
+            <textarea id="logicNotepad" class="logic-notepad" placeholder="Write notes here..." oninput="saveLogicNotes()"></textarea>
+            <div>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('α')">α</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('β')">β</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('γ')">γ</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('δ')">δ</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('¬')">¬</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('∧')">∧</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('∨')">∨</button>
+              <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('⇒')">⇒</button>
+              <button type="button" class="logic-notepad-btn" onclick="clearLogicNotepad()" style="border-color:rgba(244,67,54,0.3); color:#f44336;">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Stages -->
+        <div class="logic-stages">
+          <!-- Stage 1 -->
+          <div class="logic-stage-card" id="logicStageCard-1">
+            <div>
+              <div class="logic-stage-header">
+                <div class="logic-stage-led"></div>
+                <div class="logic-stage-title">Stage 1</div>
+                <div class="logic-stage-vars-context" id="logicStageVars-1"></div>
+                <span id="logicOcrStatus-1" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+              </div>
+              <div class="logic-stage-input-row">
+                <input type="text" id="logicStageInput-1" class="logic-stage-input" data-stage="1" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 1)">
+              </div>
+              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-1"></div>
+              <div class="logic-live-preview" id="logicPreview-1">
+                <span class="logic-preview-label">Live Preview:</span>
+                <span id="logicPreviewContent-1" style="display:flex; flex-wrap:wrap; gap:4px;"></span>
+              </div>
+            </div>
+            <div class="logic-stage-result-box">
+              <div class="logic-stage-result-title">Result (α)</div>
+              <div class="logic-stage-result-val" id="logicResultVal-1">PENDING</div>
+            </div>
+          </div>
+
+          <!-- Stage 2 -->
+          <div class="logic-stage-card" id="logicStageCard-2">
+            <div>
+              <div class="logic-stage-header">
+                <div class="logic-stage-led"></div>
+                <div class="logic-stage-title">Stage 2</div>
+                <div class="logic-stage-vars-context" id="logicStageVars-2"></div>
+                <span id="logicOcrStatus-2" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+              </div>
+              <div class="logic-stage-input-row">
+                <input type="text" id="logicStageInput-2" class="logic-stage-input" data-stage="2" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 2)">
+              </div>
+              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-2"></div>
+              <div class="logic-live-preview" id="logicPreview-2">
+                <span class="logic-preview-label">Live Preview:</span>
+                <span id="logicPreviewContent-2" style="display:flex; flex-wrap:wrap; gap:4px;"></span>
+              </div>
+            </div>
+            <div class="logic-stage-result-box">
+              <div class="logic-stage-result-title">Result (β)</div>
+              <div class="logic-stage-result-val" id="logicResultVal-2">PENDING</div>
+            </div>
+          </div>
+
+          <!-- Stage 3 -->
+          <div class="logic-stage-card" id="logicStageCard-3">
+            <div>
+              <div class="logic-stage-header">
+                <div class="logic-stage-led"></div>
+                <div class="logic-stage-title">Stage 3</div>
+                <div class="logic-stage-vars-context" id="logicStageVars-3"></div>
+                <span id="logicOcrStatus-3" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+              </div>
+              <div class="logic-stage-input-row">
+                <input type="text" id="logicStageInput-3" class="logic-stage-input" data-stage="3" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 3)">
+              </div>
+              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-3"></div>
+              <div class="logic-live-preview" id="logicPreview-3">
+                <span class="logic-preview-label">Live Preview:</span>
+                <span id="logicPreviewContent-3" style="display:flex; flex-wrap:wrap; gap:4px;"></span>
+              </div>
+            </div>
+            <div class="logic-stage-result-box">
+              <div class="logic-stage-result-title">Result (γ)</div>
+              <div class="logic-stage-result-val" id="logicResultVal-3">PENDING</div>
+            </div>
+          </div>
+
+          <!-- Stage 4 -->
+          <div class="logic-stage-card" id="logicStageCard-4">
+            <div>
+              <div class="logic-stage-header">
+                <div class="logic-stage-led"></div>
+                <div class="logic-stage-title">Stage 4</div>
+                <div class="logic-stage-vars-context" id="logicStageVars-4"></div>
+                <span id="logicOcrStatus-4" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+              </div>
+              <div class="logic-stage-input-row">
+                <input type="text" id="logicStageInput-4" class="logic-stage-input" data-stage="4" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 4)">
+              </div>
+              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-4"></div>
+              <div class="logic-live-preview" id="logicPreview-4">
+                <span class="logic-preview-label">Live Preview:</span>
+                <span id="logicPreviewContent-4" style="display:flex; flex-wrap:wrap; gap:4px;"></span>
+              </div>
+            </div>
+            <div class="logic-stage-result-box">
+              <div class="logic-stage-result-title">Result (δ)</div>
+              <div class="logic-stage-result-val" id="logicResultVal-4">PENDING</div>
+            </div>
+          </div>
+
+          <!-- Stage 5 -->
+          <div class="logic-stage-card" id="logicStageCard-5">
+            <div>
+              <div class="logic-stage-header">
+                <div class="logic-stage-led"></div>
+                <div class="logic-stage-title">Stage 5</div>
+                <div class="logic-stage-vars-context" id="logicStageVars-5"></div>
+                <span id="logicOcrStatus-5" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+              </div>
+              <div class="logic-stage-input-row">
+                <input type="text" id="logicStageInput-5" class="logic-stage-input" data-stage="5" placeholder="Enter final expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 5)">
+              </div>
+              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-5"></div>
+              <div class="logic-live-preview" id="logicPreview-5">
+                <span class="logic-preview-label">Live Preview:</span>
+                <span id="logicPreviewContent-5" style="display:flex; flex-wrap:wrap; gap:4px;"></span>
+              </div>
+            </div>
+            <div class="logic-stage-result-box">
+              <div class="logic-stage-result-title">Final Answer</div>
+              <div class="logic-stage-result-val" id="logicResultVal-5">PENDING</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="morseSection" class="page-section">
+    <div class="morse-shell">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
+        <h2 style="color:#f5c542; margin:0;">Morse Code Solver</h2>
+      </div>
+
+      <div class="morse-grid">
+        <!-- Left Column: Video/GIF Preview and Controls -->
+        <div>
+          <div id="morseDropzone" class="morse-dropzone" onclick="openMorseFileDialog()">
+            <span style="font-size:32px;">📁</span>
+            <p style="font-size:13px; color:#aaa; margin-top:8px;">Drag & Drop Video / GIF here, or click to Upload</p>
+            <input id="morseFileInput" type="file" accept="image/gif,video/*" style="display:none;" onchange="handleMorseFileSelect(this)">
+          </div>
+
+          <div style="position:relative; text-align:center;">
+            <canvas id="morseCanvas" width="480" height="360" style="width:100%; max-width:480px; height:auto; border:1px solid #333; border-radius:10px; background:#181826; cursor:crosshair;"></canvas>
+          </div>
+
+          <div id="morseTrackStatus" style="font-size:12px; color:#aaa; margin-top:8px; text-align:center;">
+            No file loaded. Drag & drop a blinking GIF or Video.
+          </div>
+          
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="upload-btn" type="button" style="flex: 1; margin-top: 0; padding: 10px;" onclick="toggleMorseAutoTrack()">
+              🔍 Auto-Track
+            </button>
+            <button class="upload-btn" type="button" style="flex: 1; margin-top: 0; padding: 10px; border-color: #f44336; color: #f44336;" onclick="resetMorseSolver()">
+              🔄 Restart & Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Visual Signal & Decoded Matches -->
+        <div>
+          <!-- Live waveform canvas -->
+          <div class="logic-card" style="margin-bottom:12px;">
+            <div class="logic-card-title">Live Blinker Waveform</div>
+            <canvas id="morseGraphCanvas" width="440" height="120" style="width:100%; height:120px; border:1px solid #222; border-radius:6px; background:#070712; display:block;"></canvas>
+          </div>
+
+          <!-- Decoded Text Display -->
+          <div class="logic-card" style="margin-bottom:12px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div>
+              <div class="logic-card-title" style="margin-bottom:6px;">Decoded Symbols</div>
+              <div id="morseDecodedString" style="font-family:monospace; font-weight:bold; color:#f5c542; font-size:18px; min-height:27px; word-break:break-all;">---</div>
+            </div>
+            <div>
+              <div class="logic-card-title" style="margin-bottom:6px;">Reconstructed Loop</div>
+              <div id="morseReconstructedWord" style="font-family:monospace; font-weight:bold; color:#00d2ff; font-size:18px; min-height:27px; word-break:break-all;">---</div>
+            </div>
+          </div>
+
+          <!-- Matching Frequency Output -->
+          <div style="background:#0a0a1a; border:1px solid #222; border-radius:10px; padding:16px; text-align:center; margin-bottom:16px;">
+            <div style="font-size:11px; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:4px;">Defuser Frequency</div>
+            <div id="morseFrequencyOutput" style="font-size:36px; font-weight:bold; color:#444;">---</div>
+          </div>
+
+          <!-- Word List Matching State -->
+          <div class="logic-card">
+            <div class="logic-card-title" style="margin-bottom:6px;">Word List & Frequencies</div>
+            <div id="morseWordListContainer" class="morse-word-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="switchesSection" class="page-section">
+    <div class="switches-shell">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
+        <h2 style="color:#f5c542; margin:0;">Switches Solver</h2>
+        <button id="switchesResetBtn" class="upload-btn" type="button" style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetSwitchesSolver()">Reset Solver</button>
+      </div>
+
+      <!-- Instructions & Copy Paste area -->
+      <div class="logic-card" style="margin-bottom:20px;">
+        <div class="logic-card-title">1. Forbidden States Manager</div>
+        <form id="switchesAddForm" style="display:flex; gap:10px; margin-bottom:12px;" onsubmit="handleSwitchesAddState(event)">
+          <input type="text" id="switchesForbiddenInput" placeholder="Paste manual rules or type a state (e.g. UDDUD) here..." style="padding:10px; background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; font-size:14px; flex:1;">
+          <button type="submit" class="upload-btn" style="margin-top:0; padding:10px 18px;">Add State(s)</button>
+          <button type="button" class="upload-btn" style="margin-top:0; padding:10px 18px; border-color:#f44336; color:#f44336;" onclick="clearAllForbiddenStates()">Clear All</button>
+        </form>
+        <div style="font-size:12px; color:#aaa; margin-bottom:6px; font-weight:bold;">Active Forbidden States (click &times; to remove):</div>
+        <div id="switchesForbiddenChips" class="forbidden-chips-container"></div>
+      </div>
+
+      <div class="switches-grid">
+        <!-- Left Column: Switch Panel (Interactive) -->
+        <div class="switches-panel-card">
+          <div class="switches-panel-title">Switches Panel</div>
+          <div style="font-size:12px; color:#888; margin-bottom:12px;">
+            Click handle to toggle switch state (Current: <span id="switchesCurrentStateStr" style="font-family:monospace; color:#ffd875; font-weight:bold;"></span>)<br>
+            Click green light positions to set Target (Target: <span id="switchesTargetStateStr" style="font-family:monospace; color:#00ff66; font-weight:bold;"></span>)
+          </div>
+
+          <div class="switches-row">
+            <!-- Switch 1 -->
+            <div class="switches-col">
+              <div class="switches-light" id="targetLightTop-1" data-switch="1" data-pos="top"></div>
+              <div class="switches-slider-container" id="switchSlider-1" data-switch="1">
+                <div class="switches-track"></div>
+                <div class="switches-handle" id="switchHandle-1"></div>
+              </div>
+              <div class="switches-light" id="targetLightBottom-1" data-switch="1" data-pos="bottom"></div>
+              <div class="switches-num">1</div>
+            </div>
+
+            <!-- Switch 2 -->
+            <div class="switches-col">
+              <div class="switches-light" id="targetLightTop-2" data-switch="2" data-pos="top"></div>
+              <div class="switches-slider-container" id="switchSlider-2" data-switch="2">
+                <div class="switches-track"></div>
+                <div class="switches-handle" id="switchHandle-2"></div>
+              </div>
+              <div class="switches-light" id="targetLightBottom-2" data-switch="2" data-pos="bottom"></div>
+              <div class="switches-num">2</div>
+            </div>
+
+            <!-- Switch 3 -->
+            <div class="switches-col">
+              <div class="switches-light" id="targetLightTop-3" data-switch="3" data-pos="top"></div>
+              <div class="switches-slider-container" id="switchSlider-3" data-switch="3">
+                <div class="switches-track"></div>
+                <div class="switches-handle" id="switchHandle-3"></div>
+              </div>
+              <div class="switches-light" id="targetLightBottom-3" data-switch="3" data-pos="bottom"></div>
+              <div class="switches-num">3</div>
+            </div>
+
+            <!-- Switch 4 -->
+            <div class="switches-col">
+              <div class="switches-light" id="targetLightTop-4" data-switch="4" data-pos="top"></div>
+              <div class="switches-slider-container" id="switchSlider-4" data-switch="4">
+                <div class="switches-track"></div>
+                <div class="switches-handle" id="switchHandle-4"></div>
+              </div>
+              <div class="switches-light" id="targetLightBottom-4" data-switch="4" data-pos="bottom"></div>
+              <div class="switches-num">4</div>
+            </div>
+
+            <!-- Switch 5 -->
+            <div class="switches-col">
+              <div class="switches-light" id="targetLightTop-5" data-switch="5" data-pos="top"></div>
+              <div class="switches-slider-container" id="switchSlider-5" data-switch="5">
+                <div class="switches-track"></div>
+                <div class="switches-handle" id="switchHandle-5"></div>
+              </div>
+              <div class="switches-light" id="targetLightBottom-5" data-switch="5" data-pos="bottom"></div>
+              <div class="switches-num">5</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Pathfinding Solution -->
+        <div class="switches-instructions">
+          <div class="logic-card-title" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Safe Path Solution</span>
+            <div id="switchesPlayerControls" style="display:none; gap:6px; align-items:center;">
+              <button class="upload-btn" type="button" style="margin-top:0; padding:2px 8px; font-size:12px;" onclick="switchesPrevStep()">&#9664; Prev</button>
+              <span id="switchesStepStatusText" style="font-size:12px; color:#aaa; font-family:monospace; min-width:80px; text-align:center;">Step 1 of 5</span>
+              <button class="upload-btn" type="button" style="margin-top:0; padding:2px 8px; font-size:12px;" onclick="switchesNextStep()">Next &#9654;</button>
+            </div>
+          </div>
+          <div id="switchesSolutionContainer" style="overflow-y:auto; flex:1; max-height:300px; padding-right:4px;">
+            <!-- Generated steps -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="searchSection" class="page-section">
+    <!-- Rendered dynamically by search-module.js -->
+  </section>
+
+  <section id="knobsSection" class="page-section">
+    <!-- Rendered dynamically by knobs-module.js -->
+  </section>
+
+  <section id="memorySection" class="page-section">
+    <!-- Rendered dynamically by memory-module.js -->
+  </section>
+
+  <section id="passwordSection" class="page-section">
+    <!-- Rendered dynamically by password-module.js -->
+  </section>
+
+  <section id="pianoSection" class="page-section">
+    <!-- Rendered dynamically by piano-module.js -->
+  </section>
+
+  <section id="helpSection" class="page-section">
+    <div
+      style="max-width:700px; margin:auto; color:#ddd; line-height:1.7; font-size:14px; padding:12px; background:#101025; border:1px solid #222; border-radius:12px;">
+      <h2 style="color:#f5c542;">How to use</h2>
+      <ul style="padding-left:18px;">
+        <li>Click a slot to select where pasted image will go.</li>
+        <li>Use the Upload button to choose files normally.</li>
+        <li>Paste an image with Ctrl+V after selecting the slot.</li>
+        <li>The solver uses the fixed 43px grid size for the maze.</li>
+        <li>For Venn Diagram, open that tab, paste the diagram, and copy the generated notation.</li>
+      </ul>
+      <p>Want more modules? Add new sections and menu buttons, then show them with
+        <code>showSection('sectionId')</code>.</p>
+    </div>
+  </section>
+
+  <section id="aboutSection" class="page-section">
+    <div
+      style="max-width:700px; margin:auto; color:#ddd; line-height:1.7; font-size:14px; padding:12px; background:#101025; border:1px solid #222; border-radius:12px;">
+      <h2 style="color:#f5c542;">About</h2>
+      <p>This is a single-page maze solver. The UI is controlled entirely by JavaScript, so new menu modules can be
+        added without reloading the page.</p>
+      <p>Keep the main logic in functions and add more sections if you want settings, debug panels, or other tools.</p>
+    </div>
+  </section>
+
+  <script src="./venn-module.js"></script>
+  <script src="./logic-solver.js"></script>
+  <script src="./logic-module.js"></script>
+  <script src="./morse-module.js"></script>
+  <script src="./switches-module.js"></script>
+  <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+  <script src="./search-module.js"></script>
+  <script src="./knobs-module.js"></script>
+  <script src="./memory-module.js"></script>
+  <script src="./password-module.js"></script>
+  <script src="./piano-module.js"></script>
+  <script>
+    let img1 = null, img2 = null;
+    let lastSolveData = null;
+    let pasteTargetSlot = 1;
+    const FIXED_DISPLAY_SIZE = 620;
+    const HARD_CELL_SIZE = 43;
+
+    const cBase = document.getElementById('cBase');
+    const cOver = document.getElementById('cOver');
+    const cPath = document.getElementById('cPath');
+    const ctxB = cBase.getContext('2d');
+    const ctxO = cOver.getContext('2d');
+    const ctxP = cPath.getContext('2d');
+
+    // ── Paste support ─────────────────────────────────────────
+    document.addEventListener('paste', function (e) {
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active')) return;
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          const img = new Image();
+          img.onload = () => {
+            let slot = pasteTargetSlot;
+            if (slot !== 1 && slot !== 2) slot = 1;
+            if (slot === 1) img1 = img; else img2 = img;
+            document.getElementById('b1').classList.toggle('selected', slot === 1);
+            document.getElementById('b2').classList.toggle('selected', slot === 2);
+            document.getElementById('b' + slot).classList.add('done');
+            if (img1 && img2) solve();
+            else setStatus(slot === 1 ? 'Pasted! Now upload or paste the maze image.' : 'Pasted! Now upload or paste the dots image.');
+          };
+          img.src = URL.createObjectURL(blob);
+          return;
+        }
+      }
+    });
+
+    document.querySelectorAll('.box[data-slot]').forEach(label => {
+      label.addEventListener('click', () => {
+        pasteTargetSlot = Number(label.dataset.slot) || 1;
+        document.getElementById('b1').classList.toggle('selected', pasteTargetSlot === 1);
+        document.getElementById('b2').classList.toggle('selected', pasteTargetSlot === 2);
+        setStatus(`Paste target set to slot ${pasteTargetSlot}.`);
+      });
+    });
+
+    function load(n, input) {
+      const f = input.files[0]; if (!f) return;
+      const img = new Image();
+      img.onload = () => {
+        if (n === 1) img1 = img; else img2 = img;
+        document.getElementById('b' + n).classList.add('done');
+        if (n === 2) {
+          const detected = detectGridBoxSize(img);
+          if (detected) setBoxSizeInfo(`Detected box size: ${detected.toFixed(1).replace(/\.0$/, '')} px`);
+        }
+        if (img1 && img2) solve();
+        else setStatus(n === 1 ? 'Now upload the maze image.' : 'Now upload the dots image.');
+      };
+      img.src = URL.createObjectURL(f);
+    }
+
+    function selectSlot(slot) {
+      pasteTargetSlot = slot;
+      document.getElementById('b1').classList.toggle('selected', slot === 1);
+      document.getElementById('b2').classList.toggle('selected', slot === 2);
+      setStatus(slot === 1 ? 'Paste target: Dots slot.' : 'Paste target: Maze slot.');
+    }
+
+    function openFileDialog(event, slot) {
+      event.stopPropagation();
+      const input = document.getElementById('file' + slot);
+      if (input) input.click();
+    }
+
+    function setStatus(t) { document.getElementById('status').textContent = t; }
+    function setBoxSizeInfo(t) { document.getElementById('boxSizeInfo').textContent = t; }
+    function setSize(w, h) { [cBase, cOver, cPath].forEach(c => { c.width = w; c.height = h; }); }
+
+    function showSection(id) {
+      document.querySelectorAll('.page-section').forEach(section => section.classList.toggle('active', section.id === id));
+      document.querySelectorAll('.nav-link').forEach(button => button.classList.toggle('active', button.dataset.target === id));
+
+      if (id === 'vennSection' && !window.vennLoaded) {
+        if (typeof window.initVennModule === 'function') {
+          window.initVennModule();
+        }
+        window.vennLoaded = true;
+      }
+      if (id === 'logicSection' && !window.logicLoaded) {
+        if (typeof window.initLogicModule === 'function') {
+          window.initLogicModule();
+        }
+        window.logicLoaded = true;
+      }
+      if (id === 'morseSection' && !window.morseLoaded) {
+        if (typeof window.initMorseModule === 'function') {
+          window.initMorseModule();
+        }
+        window.morseLoaded = true;
+      }
+      if (id === 'switchesSection' && !window.switchesLoaded) {
+        if (typeof window.initSwitchesModule === 'function') {
+          window.initSwitchesModule();
+        }
+        window.switchesLoaded = true;
+      }
+      if (id === 'searchSection' && !window.searchLoaded) {
+        if (typeof window.initSearchModule === 'function') {
+          window.initSearchModule();
+        }
+        window.searchLoaded = true;
+      }
+      if (id === 'knobsSection' && !window.knobsLoaded) {
+        if (typeof window.initKnobsModule === 'function') {
+          window.initKnobsModule();
+        }
+        window.knobsLoaded = true;
+      }
+      if (id === 'memorySection' && !window.memoryLoaded) {
+        if (typeof window.initMemoryModule === 'function') {
+          window.initMemoryModule();
+        }
+        window.memoryLoaded = true;
+      }
+      if (id === 'passwordSection' && !window.passwordLoaded) {
+        if (typeof window.initPasswordModule === 'function') {
+          window.initPasswordModule();
+        }
+        window.passwordLoaded = true;
+      }
+      if (id === 'pianoSection' && !window.pianoLoaded) {
+        if (typeof window.initPianoModule === 'function') {
+          window.initPianoModule();
+        }
+        window.pianoLoaded = true;
+      }
+    }
+
+    function selectSlot(slot) {
+      pasteTargetSlot = slot;
+      document.getElementById('b1').classList.toggle('selected', slot === 1);
+      document.getElementById('b2').classList.toggle('selected', slot === 2);
+      setStatus(slot === 1 ? 'Paste target: Dots slot.' : 'Paste target: Maze slot.');
+    }
+
+    function openFileDialog(event, slot) {
+      event.stopPropagation();
+      const input = document.getElementById('file' + slot);
+      if (input) input.click();
+    }
+
+    function detectGridBoxSize(imgEl) {
+      const canvas = makeCanvas(imgEl);
+      const bounds = detectBounds(canvas);
+      if (!bounds) return null;
+      const structure = detectGridLines(canvas, bounds);
+      return structure ? structure.cs : null;
+    }
+
+    function makeCanvas(imgEl, width, height) {
+      const c = document.createElement('canvas');
+      c.width = width || imgEl.width;
+      c.height = height || imgEl.height;
+      const x = c.getContext('2d');
+      x.imageSmoothingEnabled = false;
+      x.drawImage(imgEl, 0, 0, c.width, c.height);
+      return c;
+    }
+
+    function scaleDots(dots, fromW, fromH, toW, toH) {
+      const scaleX = toW / fromW;
+      const scaleY = toH / fromH;
+      return {
+        red: { x: dots.red.x * scaleX, y: dots.red.y * scaleY },
+        yellow: { x: dots.yellow.x * scaleX, y: dots.yellow.y * scaleY }
+      };
+    }
+
+    function locateDotsImage(imgA, imgB) {
+      const dotsA = findDots(imgA);
+      if (dotsA.red && dotsA.yellow) return { dotImage: imgA, mazeImage: imgB, dots: dotsA };
+      const dotsB = findDots(imgB);
+      if (dotsB.red && dotsB.yellow) return { dotImage: imgB, mazeImage: imgA, dots: dotsB };
+      return null;
+    }
+
+    // ── Find dots ──────────────────────────────────────────────────
+    function findDots(imgEl) {
+      const c = document.createElement('canvas');
+      c.width = imgEl.width; c.height = imgEl.height;
+      const x = c.getContext('2d'); x.drawImage(imgEl, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      let rS = { x: 0, y: 0, n: 0 }, yS = { x: 0, y: 0, n: 0 };
+      for (let y = 0; y < c.height; y++) for (let px = 0; px < c.width; px++) {
+        const i = (y * c.width + px) * 4, r = d[i], g = d[i + 1], b = d[i + 2], a = d[i + 3];
+        if (a < 120) continue;
+        if (r > 150 && g < 100 && b < 100) { rS.x += px; rS.y += y; rS.n++; }
+        if (r > 150 && g > 120 && b < 90) { yS.x += px; yS.y += y; yS.n++; }
+      }
+      return {
+        red: rS.n > 0 ? { x: Math.round(rS.x / rS.n), y: Math.round(rS.y / rS.n) } : null,
+        yellow: yS.n > 0 ? { x: Math.round(yS.x / yS.n), y: Math.round(yS.y / yS.n) } : null
+      };
+    }
+
+    // ── Brightness helper ──────────────────────────────────────────
+    function getBrightness(r, g, b) { return (r + g + b) / 3; }
+
+    // ── Auto-detect maze bounds ────────────────────────────────────
+    function detectBounds(imgEl) {
+      const c = document.createElement('canvas');
+      c.width = imgEl.width; c.height = imgEl.height;
+      const x = c.getContext('2d'); x.drawImage(imgEl, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      const W = c.width, H = c.height;
+
+      const rowDark = new Float32Array(H), colDark = new Float32Array(W);
+      for (let y = 0; y < H; y++) {
+        let count = 0;
+        for (let px = 0; px < W; px++) {
+          const i = (y * W + px) * 4;
+          if (getBrightness(d[i], d[i + 1], d[i + 2]) < 140) count++;
+        }
+        rowDark[y] = count / W;
+      }
+      for (let x = 0; x < W; x++) {
+        let count = 0;
+        for (let y = 0; y < H; y++) {
+          const i = (y * W + x) * 4;
+          if (getBrightness(d[i], d[i + 1], d[i + 2]) < 140) count++;
+        }
+        colDark[x] = count / H;
+      }
+
+      const threshold = 0.08;
+      let top = 0, bottom = H - 1, left = 0, right = W - 1;
+      for (let y = 0; y < H; y++) if (rowDark[y] > threshold) { top = y; break; }
+      for (let y = H - 1; y >= 0; y--) if (rowDark[y] > threshold) { bottom = y; break; }
+      for (let x = 0; x < W; x++) if (colDark[x] > threshold) { left = x; break; }
+      for (let x = W - 1; x >= 0; x--) if (colDark[x] > threshold) { right = x; break; }
+
+      top = Math.max(0, top - 3);
+      bottom = Math.min(H - 1, bottom + 3);
+      left = Math.max(0, left - 3);
+      right = Math.min(W - 1, right + 3);
+      return { top, bottom, left, right };
+    }
+
+    // ── Grid-line detection helpers ────────────────────────────────
+    function smoothArray(arr, radius) {
+      const result = new Float32Array(arr.length);
+      const window = radius * 2 + 1;
+      let sum = 0;
+      for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+        if (i - window >= 0) sum -= arr[i - window];
+        if (i >= radius) result[i - radius] = sum / Math.min(window, i + 1);
+      }
+      for (let i = arr.length - radius; i < arr.length; i++) {
+        if (i >= 0) result[i] = result[i] || arr[i];
+      }
+      return result;
+    }
+
+    function findPeaks(arr, minDistance, threshold) {
+      const peaks = [];
+      for (let i = 1; i < arr.length - 1; i++) {
+        if (arr[i] > arr[i - 1] && arr[i] > arr[i + 1] && arr[i] >= threshold) {
+          if (peaks.length === 0 || i - peaks[peaks.length - 1] >= minDistance) {
+            peaks.push(i);
+          }
+        }
+      }
+      return peaks;
+    }
+
+    // ── Detect grid lines (returns BASE structure, no nudge) ──────
+    function detectGridLines(imgEl, bounds) {
+      const c = document.createElement('canvas');
+      c.width = imgEl.width; c.height = imgEl.height;
+      const x = c.getContext('2d'); x.drawImage(imgEl, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      const W = c.width;
+      const width = bounds.right - bounds.left + 1;
+      const height = bounds.bottom - bounds.top + 1;
+      const rowDark = new Float32Array(height);
+      const colDark = new Float32Array(width);
+      for (let y = 0; y < height; y++) {
+        let sum = 0;
+        for (let x0 = 0; x0 < width; x0++) {
+          const i = ((bounds.top + y) * W + (bounds.left + x0)) * 4;
+          sum += 255 - getBrightness(d[i], d[i + 1], d[i + 2]);
+        }
+        rowDark[y] = sum / width;
+      }
+      for (let x0 = 0; x0 < width; x0++) {
+        let sum = 0;
+        for (let y = 0; y < height; y++) {
+          const i = ((bounds.top + y) * W + (bounds.left + x0)) * 4;
+          sum += 255 - getBrightness(d[i], d[i + 1], d[i + 2]);
+        }
+        colDark[x0] = sum / height;
+      }
+      const smoothRows = smoothArray(rowDark, 2);
+      const smoothCols = smoothArray(colDark, 2);
+      const rowThreshold = Math.max(...smoothRows) * 0.5;
+      const colThreshold = Math.max(...smoothCols) * 0.5;
+      const minDistance = Math.max(4, Math.round(Math.min(width, height) / 20));
+      const rowLines = findPeaks(smoothRows, minDistance, rowThreshold);
+      const colLines = findPeaks(smoothCols, minDistance, colThreshold);
+      if (rowLines.length < 4 || colLines.length < 4) return null;
+
+      // Compute uniform cell spacing
+      const csRow = rowLines.length > 1 ? Math.floor((rowLines[rowLines.length - 1] - rowLines[0]) / (rowLines.length - 1)) : 0;
+      const csCol = colLines.length > 1 ? Math.floor((colLines[colLines.length - 1] - colLines[0]) / (colLines.length - 1)) : 0;
+      let cs = Math.max(1, Math.floor((csRow + csCol) / 2));
+
+      // Build uniform line arrays anchored at the first detected line
+      let uniformRowLines = [];
+      let uniformColLines = [];
+      const buildUniform = () => {
+        uniformRowLines = [];
+        uniformColLines = [];
+        for (let i = 0; i < rowLines.length; i++) uniformRowLines.push(Math.round(rowLines[0] + i * cs));
+        for (let i = 0; i < colLines.length; i++) uniformColLines.push(Math.round(colLines[0] + i * cs));
+      };
+      buildUniform();
+
+      // Shrink cs if uniform lines overshoot detected peaks
+      let iter = 0;
+      while (iter < 5 && ((uniformRowLines.length && uniformRowLines[uniformRowLines.length - 1] > rowLines[rowLines.length - 1]) || (uniformColLines.length && uniformColLines[uniformColLines.length - 1] > colLines[colLines.length - 1]))) {
+        cs = Math.max(1, cs - 1);
+        buildUniform();
+        iter++;
+      }
+
+      // Compute centers from uniform lines
+      const uniformRowCenters = [];
+      const uniformColCenters = [];
+      for (let i = 0; i < uniformRowLines.length - 1; i++) uniformRowCenters.push(Math.round((uniformRowLines[i] + uniformRowLines[i + 1]) / 2));
+      for (let i = 0; i < uniformColLines.length - 1; i++) uniformColCenters.push(Math.round((uniformColLines[i] + uniformColLines[i + 1]) / 2));
+
+      // Compute initial offset via median of differences
+      const detectedRowCenters = [];
+      const detectedColCenters = [];
+      for (let i = 0; i < rowLines.length - 1; i++) detectedRowCenters.push(bounds.top + Math.round((rowLines[i] + rowLines[i + 1]) / 2));
+      for (let i = 0; i < colLines.length - 1; i++) detectedColCenters.push(bounds.left + Math.round((colLines[i] + colLines[i + 1]) / 2));
+
+      const minCols = Math.min(detectedColCenters.length, uniformColCenters.length);
+      const minRows = Math.min(detectedRowCenters.length, uniformRowCenters.length);
+      const dxs = [];
+      const dys = [];
+      for (let i = 0; i < minCols; i++) dxs.push(detectedColCenters[i] - uniformColCenters[i]);
+      for (let i = 0; i < minRows; i++) dys.push(detectedRowCenters[i] - uniformRowCenters[i]);
+      const median = arr => {
+        if (!arr.length) return 0;
+        const s = arr.slice().sort((a, b) => a - b);
+        const m = Math.floor(s.length / 2);
+        return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+      };
+      let dx = median(dxs);
+      let dy = median(dys);
+
+      // Apply initial median offset (NO manual nudge — auto-calibration will handle the rest)
+      const shiftedColCenters = uniformColCenters.map(v => v + dx);
+      const shiftedRowCenters = uniformRowCenters.map(v => v + dy);
+      const shiftedColLines = uniformColLines.map(v => v + dx);
+      const shiftedRowLines = uniformRowLines.map(v => v + dy);
+
+      return {
+        rows: shiftedRowCenters.length,
+        cols: shiftedColCenters.length,
+        rowLines: shiftedRowLines,
+        colLines: shiftedColLines,
+        rowCenters: shiftedRowCenters,
+        colCenters: shiftedColCenters,
+        ox: shiftedColLines[0],
+        oy: shiftedRowLines[0],
+        cs
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  AUTO-CALIBRATION
+    //
+    //  Searches over a range of (dx, dy) offsets to find the grid
+    //  alignment that best matches the actual maze image.
+    //
+    //  Two scoring metrics combined:
+    //  1. Intersection darkness: grid intersections should always
+    //     be dark wall pixels in a well-formed maze
+    //  2. Edge bimodality: edge samples should give either clearly
+    //     "wall" (dark) or clearly "open" (light) readings, not
+    //     ambiguous middle values
+    // ══════════════════════════════════════════════════════════════
+
+    function autoAlignGrid(mazeCanvas, baseStructure) {
+      const c = document.createElement('canvas');
+      c.width = mazeCanvas.width; c.height = mazeCanvas.height;
+      const ctx = c.getContext('2d'); ctx.drawImage(mazeCanvas, 0, 0);
+      const imgData = ctx.getImageData(0, 0, c.width, c.height).data;
+      const W = c.width, H = c.height;
+
+      const { rows, cols, cs, rowLines, colLines, rowCenters, colCenters } = baseStructure;
+      const searchRange = Math.max(5, Math.round(cs * 0.45));
+      const darkThreshold = 140;
+      const stripHalf = Math.max(1, Math.round(cs * 0.08));
+      const marginFrac = 0.25;
+
+      // Helper: sample dark fraction along an edge strip (inlined for speed)
+      function quickEdgeFrac(fixedCoord, isVertical, rangeStart, rangeEnd) {
+        const edgeLen = rangeEnd - rangeStart;
+        const margin = Math.max(1, Math.floor(edgeLen * marginFrac));
+        const sStart = rangeStart + margin;
+        const sEnd = rangeEnd - margin;
+        if (sStart >= sEnd) return 0.5; // ambiguous if too small
+
+        let darkCount = 0, total = 0;
+        if (isVertical) {
+          for (let py = sStart; py <= sEnd; py += 2) { // step by 2 for speed
+            for (let dxx = -stripHalf; dxx <= stripHalf; dxx++) {
+              const px = fixedCoord + dxx;
+              if (px < 0 || px >= W || py < 0 || py >= H) continue;
+              const i = (py * W + px) * 4;
+              if ((imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3 < darkThreshold) darkCount++;
+              total++;
+            }
+          }
+        } else {
+          for (let px = sStart; px <= sEnd; px += 2) {
+            for (let dyy = -stripHalf; dyy <= stripHalf; dyy++) {
+              const py = fixedCoord + dyy;
+              if (px < 0 || px >= W || py < 0 || py >= H) continue;
+              const i = (py * W + px) * 4;
+              if ((imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3 < darkThreshold) darkCount++;
+              total++;
+            }
+          }
+        }
+        return total > 0 ? darkCount / total : 0.5;
+      }
+
+      let bestDX = 0, bestDY = 0, bestScore = -Infinity;
+
+      for (let testDX = -searchRange; testDX <= searchRange; testDX++) {
+        for (let testDY = -searchRange; testDY <= searchRange; testDY++) {
+          let score = 0;
+
+          // ── Score 1: Intersection darkness ──────────────────
+          // Grid intersections (where row lines cross col lines) should be dark
+          let intDarkness = 0, intCount = 0;
+          for (let ri = 0; ri < rowLines.length; ri++) {
+            const ry = rowLines[ri] + testDY;
+            for (let ci = 0; ci < colLines.length; ci++) {
+              const cx = colLines[ci] + testDX;
+              // Sample 3×3 area around intersection
+              for (let ddy = -1; ddy <= 1; ddy++) {
+                for (let ddx = -1; ddx <= 1; ddx++) {
+                  const px = Math.round(cx + ddx);
+                  const py = Math.round(ry + ddy);
+                  if (px < 0 || px >= W || py < 0 || py >= H) continue;
+                  const i = (py * W + px) * 4;
+                  intDarkness += 255 - (imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3;
+                  intCount++;
+                }
+              }
+            }
+          }
+          const intersectionScore = intCount > 0 ? intDarkness / intCount / 255 : 0;
+
+          // ── Score 2: Edge bimodality ────────────────────────
+          // Edge dark fractions should be near 0 (open) or near 1 (wall),
+          // not ambiguous ~0.5. Maximize variance = sum of (f-0.5)^2
+          let bimodSum = 0, edgeCount = 0;
+
+          // Vertical edges (between columns)
+          for (let r = 0; r < rows; r++) {
+            for (let col = 0; col < cols - 1; col++) {
+              const f = quickEdgeFrac(
+                colLines[col + 1] + testDX, true,
+                rowLines[r] + testDY, rowLines[r + 1] + testDY
+              );
+              bimodSum += (f - 0.5) * (f - 0.5);
+              edgeCount++;
+            }
+          }
+          // Horizontal edges (between rows)
+          for (let r = 0; r < rows - 1; r++) {
+            for (let col = 0; col < cols; col++) {
+              const f = quickEdgeFrac(
+                rowLines[r + 1] + testDY, false,
+                colLines[col] + testDX, colLines[col + 1] + testDX
+              );
+              bimodSum += (f - 0.5) * (f - 0.5);
+              edgeCount++;
+            }
+          }
+          const bimodalScore = edgeCount > 0 ? bimodSum / edgeCount : 0;
+
+          // ── Combined score ─────────────────────────────────
+          // Weight intersection alignment heavily (it's the most reliable signal)
+          score = intersectionScore * 0.6 + bimodalScore * 0.4;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestDX = testDX;
+            bestDY = testDY;
+          }
+        }
+      }
+
+      console.log(`Auto-calibrated: DX=${bestDX}, DY=${bestDY}, score=${bestScore.toFixed(4)}, range=±${searchRange}`);
+      return { dx: bestDX, dy: bestDY, score: bestScore };
+    }
+
+    // ── Shift a grid structure by (dx, dy) ────────────────────────
+    function shiftStructure(structure, dx, dy) {
+      return {
+        ...structure,
+        rowLines: structure.rowLines.map(v => v + dy),
+        colLines: structure.colLines.map(v => v + dx),
+        rowCenters: structure.rowCenters.map(v => v + dy),
+        colCenters: structure.colCenters.map(v => v + dx),
+        ox: structure.ox + dx,
+        oy: structure.oy + dy
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  EDGE-BASED WALL DETECTION
+    // ══════════════════════════════════════════════════════════════
+
+    function buildWallGraph(imgEl, structure, opts = {}) {
+      const { rows, cols, rowCenters, colCenters, cs, rowLines, colLines } = structure;
+      const c = document.createElement('canvas');
+      c.width = imgEl.width; c.height = imgEl.height;
+      const x = c.getContext('2d'); x.drawImage(imgEl, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      const W = c.width, H = c.height;
+
+      const wallThreshold = (opts.wallThreshold != null) ? opts.wallThreshold : 0.40;
+      const darkThreshold = (opts.darkThreshold != null) ? opts.darkThreshold : 140;
+      const marginFrac = (opts.marginFrac != null) ? opts.marginFrac : 0.25;
+      const stripHalf = (opts.stripHalf != null) ? opts.stripHalf : Math.max(1, Math.round(cs * 0.08));
+
+      const hWalls = Array.from({ length: rows }, () => new Array(Math.max(0, cols - 1)).fill(false));
+      const vWalls = Array.from({ length: Math.max(0, rows - 1) }, () => new Array(cols).fill(false));
+
+      function sampleEdge(fixedCoord, isVerticalLine, rangeStart, rangeEnd) {
+        const edgeLen = rangeEnd - rangeStart;
+        const margin = Math.max(1, Math.floor(edgeLen * marginFrac));
+        const sStart = rangeStart + margin;
+        const sEnd = rangeEnd - margin;
+        if (sStart >= sEnd) return 0;
+
+        let darkCount = 0, total = 0;
+        if (isVerticalLine) {
+          for (let py = sStart; py <= sEnd; py++) {
+            for (let dxx = -stripHalf; dxx <= stripHalf; dxx++) {
+              const px = fixedCoord + dxx;
+              if (px < 0 || px >= W || py < 0 || py >= H) continue;
+              const i = (py * W + px) * 4;
+              if ((d[i] + d[i + 1] + d[i + 2]) / 3 < darkThreshold) darkCount++;
+              total++;
+            }
+          }
+        } else {
+          for (let px = sStart; px <= sEnd; px++) {
+            for (let dyy = -stripHalf; dyy <= stripHalf; dyy++) {
+              const py = fixedCoord + dyy;
+              if (px < 0 || px >= W || py < 0 || py >= H) continue;
+              const i = (py * W + px) * 4;
+              if ((d[i] + d[i + 1] + d[i + 2]) / 3 < darkThreshold) darkCount++;
+              total++;
+            }
+          }
+        }
+        return total > 0 ? (darkCount / total) : 0;
+      }
+
+      // Detect interior walls
+      for (let r = 0; r < rows; r++) {
+        for (let col = 0; col < cols - 1; col++) {
+          const darkFrac = sampleEdge(colLines[col + 1], true, rowLines[r], rowLines[r + 1]);
+          hWalls[r][col] = darkFrac >= wallThreshold;
+        }
+      }
+      for (let r = 0; r < rows - 1; r++) {
+        for (let col = 0; col < cols; col++) {
+          const darkFrac = sampleEdge(rowLines[r + 1], false, colLines[col], colLines[col + 1]);
+          vWalls[r][col] = darkFrac >= wallThreshold;
+        }
+      }
+
+      // Detect outer boundary walls
+      const topWalls = new Array(cols).fill(true);
+      const bottomWalls = new Array(cols).fill(true);
+      const leftWalls = new Array(rows).fill(true);
+      const rightWalls = new Array(rows).fill(true);
+
+      for (let col = 0; col < cols; col++) {
+        topWalls[col] = sampleEdge(rowLines[0], false, colLines[col], colLines[col + 1]) >= wallThreshold;
+        bottomWalls[col] = sampleEdge(rowLines[rows], false, colLines[col], colLines[col + 1]) >= wallThreshold;
+      }
+      for (let r = 0; r < rows; r++) {
+        leftWalls[r] = sampleEdge(colLines[0], true, rowLines[r], rowLines[r + 1]) >= wallThreshold;
+        rightWalls[r] = sampleEdge(colLines[cols], true, rowLines[r], rowLines[r + 1]) >= wallThreshold;
+      }
+
+      return {
+        rows, cols, hWalls, vWalls,
+        topWalls, bottomWalls, leftWalls, rightWalls,
+        centers: { rowCenters, colCenters },
+        cs, rowLines, colLines
+      };
+    }
+
+    // ── BFS on wall graph ─────────────────────────────────────────
+    function bfsWalls(wallData, start, goal) {
+      const { rows, cols, hWalls, vWalls } = wallData;
+      const vis = Array.from({ length: rows }, () => new Array(cols).fill(false));
+      const prev = Array.from({ length: rows }, () => new Array(cols).fill(null));
+      vis[start.row][start.col] = true;
+      const q = [start];
+
+      while (q.length) {
+        const cur = q.shift();
+        if (cur.row === goal.row && cur.col === goal.col) {
+          const path = []; let n = cur;
+          while (n) { path.push(n); n = prev[n.row][n.col]; }
+          return path.reverse();
+        }
+
+        // UP
+        const nr_up = cur.row - 1;
+        if (nr_up >= 0 && !vis[nr_up][cur.col] && !vWalls[nr_up][cur.col]) {
+          vis[nr_up][cur.col] = true;
+          prev[nr_up][cur.col] = cur;
+          q.push({ row: nr_up, col: cur.col });
+        }
+        // DOWN
+        const nr_down = cur.row + 1;
+        if (nr_down < rows && !vis[nr_down][cur.col] && !vWalls[cur.row][cur.col]) {
+          vis[nr_down][cur.col] = true;
+          prev[nr_down][cur.col] = cur;
+          q.push({ row: nr_down, col: cur.col });
+        }
+        // LEFT
+        const nc_left = cur.col - 1;
+        if (nc_left >= 0 && !vis[cur.row][nc_left] && !hWalls[cur.row][nc_left]) {
+          vis[cur.row][nc_left] = true;
+          prev[cur.row][nc_left] = cur;
+          q.push({ row: cur.row, col: nc_left });
+        }
+        // RIGHT
+        const nc_right = cur.col + 1;
+        if (nc_right < cols && !vis[cur.row][nc_right] && !hWalls[cur.row][cur.col]) {
+          vis[cur.row][nc_right] = true;
+          prev[cur.row][nc_right] = cur;
+          q.push({ row: cur.row, col: nc_right });
+        }
+      }
+      return null;
+    }
+
+    // ── Cell lookup ───────────────────────────────────────────────
+    function nearestCell(centers, x, y) {
+      let bestR = 0, bestC = 0, bestDist = Infinity;
+      for (let r = 0; r < centers.rowCenters.length; r++) {
+        for (let c = 0; c < centers.colCenters.length; c++) {
+          const dx = centers.colCenters[c] - x;
+          const dy = centers.rowCenters[r] - y;
+          const dist = dx * dx + dy * dy;
+          if (dist < bestDist) { bestDist = dist; bestR = r; bestC = c; }
+        }
+      }
+      return { row: bestR, col: bestC };
+    }
+
+    // ── Debug drawing ─────────────────────────────────────────────
+    function drawDebugOverlay(ctx, wallData) {
+      const { rows, cols, hWalls, vWalls, centers, cs, rowLines, colLines } = wallData;
+
+      // Cell centers
+      ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          ctx.beginPath();
+          ctx.arc(centers.colCenters[c], centers.rowCenters[r], 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      for (const rl of rowLines) {
+        ctx.beginPath(); ctx.moveTo(colLines[0], rl); ctx.lineTo(colLines[colLines.length - 1], rl); ctx.stroke();
+      }
+      for (const cl of colLines) {
+        ctx.beginPath(); ctx.moveTo(cl, rowLines[0]); ctx.lineTo(cl, rowLines[rowLines.length - 1]); ctx.stroke();
+      }
+
+      // Detected walls — thick red
+      ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
+      ctx.lineWidth = Math.max(2, cs * 0.15);
+      ctx.lineCap = 'round';
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          if (hWalls[r][c]) {
+            ctx.beginPath(); ctx.moveTo(colLines[c + 1], rowLines[r]); ctx.lineTo(colLines[c + 1], rowLines[r + 1]); ctx.stroke();
+          }
+        }
+      }
+      for (let r = 0; r < rows - 1; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (vWalls[r][c]) {
+            ctx.beginPath(); ctx.moveTo(colLines[c], rowLines[r + 1]); ctx.lineTo(colLines[c + 1], rowLines[r + 1]); ctx.stroke();
+          }
+        }
+      }
+
+      // Outer boundary walls
+      const drawBoundary = (walls, getCoords) => {
+        for (let i = 0; i < walls.length; i++) {
+          if (walls[i]) {
+            const [x1, y1, x2, y2] = getCoords(i);
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+          }
+        }
+      };
+      if (wallData.topWalls) drawBoundary(wallData.topWalls, i => [colLines[i], rowLines[0], colLines[i + 1], rowLines[0]]);
+      if (wallData.bottomWalls) drawBoundary(wallData.bottomWalls, i => [colLines[i], rowLines[rows], colLines[i + 1], rowLines[rows]]);
+      if (wallData.leftWalls) drawBoundary(wallData.leftWalls, i => [colLines[0], rowLines[i], colLines[0], rowLines[i + 1]]);
+      if (wallData.rightWalls) drawBoundary(wallData.rightWalls, i => [colLines[cols], rowLines[i], colLines[cols], rowLines[i + 1]]);
+
+      // Open edges — green dashes
+      ctx.strokeStyle = 'rgba(80, 255, 80, 0.5)';
+      ctx.lineWidth = Math.max(1, cs * 0.08);
+      ctx.setLineDash([3, 4]);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          if (!hWalls[r][c]) {
+            ctx.beginPath(); ctx.moveTo(colLines[c + 1], rowLines[r]); ctx.lineTo(colLines[c + 1], rowLines[r + 1]); ctx.stroke();
+          }
+        }
+      }
+      for (let r = 0; r < rows - 1; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (!vWalls[r][c]) {
+            ctx.beginPath(); ctx.moveTo(colLines[c], rowLines[r + 1]); ctx.lineTo(colLines[c + 1], rowLines[r + 1]); ctx.stroke();
+          }
+        }
+      }
+      ctx.setLineDash([]);
+    }
+
+    // ── Redraw ────────────────────────────────────────────────────
+    function redraw() {
+      if (!lastSolveData) return;
+      const { dotImage, mazeCanvas, wallData, path } = lastSolveData;
+
+      setSize(FIXED_DISPLAY_SIZE, FIXED_DISPLAY_SIZE);
+      ctxB.clearRect(0, 0, FIXED_DISPLAY_SIZE, FIXED_DISPLAY_SIZE);
+      ctxB.drawImage(dotImage, 0, 0, dotImage.width, dotImage.height, 0, 0, FIXED_DISPLAY_SIZE, FIXED_DISPLAY_SIZE);
+
+      ctxO.clearRect(0, 0, FIXED_DISPLAY_SIZE, FIXED_DISPLAY_SIZE);
+      ctxO.globalAlpha = 0.6;
+      ctxO.drawImage(mazeCanvas, 0, 0, FIXED_DISPLAY_SIZE, FIXED_DISPLAY_SIZE);
+      ctxO.globalAlpha = 1;
+
+      if (document.getElementById('showDebug').checked) {
+        ctxO.save();
+        ctxO.translate(lastSolveData.offsetX, lastSolveData.offsetY);
+        ctxO.scale(lastSolveData.uniformScale, lastSolveData.uniformScale);
+        drawDebugOverlay(ctxO, wallData);
+        ctxO.restore();
+      }
+
+      ctxP.clearRect(0, 0, FIXED_DISPLAY_SIZE, FIXED_DISPLAY_SIZE);
+      if (path) {
+        ctxP.save();
+        ctxP.translate(lastSolveData.offsetX, lastSolveData.offsetY);
+        ctxP.scale(lastSolveData.uniformScale, lastSolveData.uniformScale);
+        const cs = wallData.cs;
+        ctxP.strokeStyle = '#00aaff';
+        ctxP.lineWidth = Math.max(3, cs * 0.45);
+        ctxP.lineJoin = 'round';
+        ctxP.lineCap = 'round';
+        ctxP.beginPath();
+        path.forEach((n, i) => {
+          const cx = wallData.centers.colCenters[n.col];
+          const cy = wallData.centers.rowCenters[n.row];
+          i === 0 ? ctxP.moveTo(cx, cy) : ctxP.lineTo(cx, cy);
+        });
+        ctxP.stroke();
+        ctxP.restore();
+      }
+
+      document.getElementById('canvasArea').style.display = 'inline-block';
+    }
+
+    function resolveWithCurrentSettings() {
+      if (!img1 || !img2) return;
+      solve();
+    }
+
+    // ── Main solve ────────────────────────────────────────────────
+    function solve() {
+      setStatus('Solving…');
+      setTimeout(doSolve, 50);
+    }
+
+    function doSolve() {
+      const t0 = performance.now();
+
+      const located = locateDotsImage(img1, img2);
+      if (!located) { setStatus('❌ Could not determine which image contains the red/yellow dots.'); return; }
+
+      const { dotImage, mazeImage, dots } = located;
+      const imageW = FIXED_DISPLAY_SIZE;
+      const imageH = FIXED_DISPLAY_SIZE;
+      const mazeCanvas = makeCanvas(mazeImage, imageW, imageH);
+      const scaledDots = scaleDots(dots, dotImage.width, dotImage.height, imageW, imageH);
+
+      const bounds = detectBounds(mazeCanvas);
+      let baseStructure = detectGridLines(mazeCanvas, bounds);
+      if (!baseStructure) { setStatus('❌ Could not detect the maze grid.'); setBoxSizeInfo(''); return; }
+
+      // Force the green grid cell size to 43px
+      const rows = baseStructure.rows;
+      const cols = baseStructure.cols;
+      const ox = baseStructure.ox;
+      const oy = baseStructure.oy;
+      const cs = HARD_CELL_SIZE;
+      baseStructure = {
+        ...baseStructure,
+        cs,
+        rowLines: Array.from({ length: rows + 1 }, (_, i) => oy + i * cs),
+        colLines: Array.from({ length: cols + 1 }, (_, i) => ox + i * cs),
+        rowCenters: Array.from({ length: rows }, (_, i) => oy + (i + 0.5) * cs),
+        colCenters: Array.from({ length: cols }, (_, i) => ox + (i + 0.5) * cs)
+      };
+      setBoxSizeInfo(`Fixed box size: ${HARD_CELL_SIZE} px`);
+
+      // ── Auto-calibrate grid alignment ──────────────────────
+      const calib = autoAlignGrid(mazeCanvas, baseStructure);
+
+      // ── Apply manual nudge on top of auto-calibration ──────
+      const manualDX = parseInt(document.getElementById('nudgeDX').value) || 0;
+      const manualDY = parseInt(document.getElementById('nudgeDY').value) || 0;
+      const totalDX = calib.dx + manualDX;
+      const totalDY = calib.dy + manualDY;
+      const structure = shiftStructure(baseStructure, totalDX, totalDY);
+
+      const calibMs = Math.round(performance.now() - t0);
+      document.getElementById('calibInfo').textContent =
+        `Auto: DX=${calib.dx} DY=${calib.dy} + Manual: DX=${manualDX} DY=${manualDY} = Total: DX=${totalDX} DY=${totalDY} (${calibMs}ms)`;
+
+      // ── Build wall graph + BFS with threshold retries ──────
+      const wallSensitivity = parseInt(document.getElementById('wallSens').value) / 100;
+
+      const tryParams = [
+        { wallThreshold: wallSensitivity, darkThreshold: 140, marginFrac: 0.25 },
+        { wallThreshold: wallSensitivity - 0.05, darkThreshold: 150, marginFrac: 0.20 },
+        { wallThreshold: wallSensitivity - 0.10, darkThreshold: 155, marginFrac: 0.15 },
+        { wallThreshold: wallSensitivity + 0.10, darkThreshold: 130, marginFrac: 0.30 },
+        { wallThreshold: wallSensitivity + 0.15, darkThreshold: 120, marginFrac: 0.20 },
+      ];
+
+      let wallData = null, path = null;
+
+      for (const params of tryParams) {
+        const wd = buildWallGraph(mazeCanvas, structure, params);
+        const start = nearestCell(wd.centers, scaledDots.red.x, scaledDots.red.y);
+        const goal = nearestCell(wd.centers, scaledDots.yellow.x, scaledDots.yellow.y);
+        const p = bfsWalls(wd, start, goal);
+
+        console.log('Attempt:', params, '→', p ? p.length + ' steps' : 'no path');
+
+        if (p) {
+          wallData = wd;
+          path = p;
+          break;
+        }
+      }
+
+      if (!path) {
+        setStatus('❌ No path found. Try adjusting wall sensitivity.');
+        return;
+      }
+
+      lastSolveData = { dotImage, mazeCanvas, wallData, path };
+
+      // Build answer string
+      const moves = [];
+      for (let i = 1; i < path.length; i++) {
+        const dr = path[i].row - path[i - 1].row;
+        const dc = path[i].col - path[i - 1].col;
+        moves.push(dr === -1 ? 'U' : dr === 1 ? 'D' : dc === -1 ? 'L' : 'R');
+      }
+      const el = document.getElementById('ans');
+      el.textContent = moves.join('');
+      el.style.display = 'block';
+
+      const totalMs = Math.round(performance.now() - t0);
+      setStatus(`✅ ${moves.length} steps (${totalMs}ms)`);
+
+      redraw();
+    }
+  </script>
+</body>
+
+</html>
