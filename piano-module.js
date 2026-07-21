@@ -221,13 +221,20 @@
     if (!container) return;
 
     container.innerHTML = `
-      <div class="piano-shell">
-        <h2 style="color:#f5c542; margin-bottom: 20px;">Piano Solver</h2>
+      <div class="piano-shell" style="max-width: 650px; margin: auto;">
+        <h2 style="color:#f5c542; margin-bottom: 20px; text-align:center;">Piano Solver</h2>
         <div id="pianoOpenCvStatus" class="opencv-status">🔴 OpenCV.js Loading (Please wait)...</div>
         
-        <div class="piano-grid">
-          <!-- Left Column -->
-          <div class="piano-card">
+        <!-- Mode Switcher Tabs -->
+        <div style="display:flex; justify-content:center; gap:8px; margin-bottom:20px;">
+          <button id="pianoModeImageBtn" type="button" class="upload-btn active" style="margin-top:0; padding:8px 16px; font-size:14px; font-weight:bold; background:#f5c542; color:#0e0e1e; border-color:#f5c542; box-shadow:0 0 10px rgba(245,216,117,0.3);">📸 Image Input</button>
+          <button id="pianoModeManualBtn" type="button" class="upload-btn" style="margin-top:0; padding:8px 16px; font-size:14px; font-weight:normal; background:#131328; color:#aaa; border-color:#2d2d54;">🎹 Manual Staff</button>
+        </div>
+
+        <div class="piano-card" style="margin-bottom: 20px;">
+          
+          <!-- Image Input Area -->
+          <div id="pianoImageArea">
             <div class="piano-card-title">Image Input</div>
             <div class="piano-paste-box" id="pianoPasteBox" tabindex="0">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
@@ -241,22 +248,76 @@
               </label>
               <input type="file" id="pianoFileInput" accept="image/*" style="display: none;">
             </div>
-            
             <div class="piano-canvas-container">
-              <canvas id="pianoPreviewCanvas" width="440" height="440"></canvas>
+              <canvas id="pianoPreviewCanvas" width="440" height="240" style="background:#0a0a1c;"></canvas>
             </div>
           </div>
 
-          <!-- Right Column -->
-          <div class="piano-card">
-            <div class="piano-card-title">Analysis Result</div>
-            <div class="piano-result-box" id="pianoResultBox">
-              <div style="color:#718096;">Waiting for image paste...</div>
+          <!-- Manual Note Builder Section (Visual Staff in Middle) -->
+          <div id="pianoManualArea" style="display:none; text-align:left;">
+            
+            <!-- Clef Toggle -->
+            <div style="margin-bottom: 16px; display:flex; justify-content:center; gap:20px;">
+              <label style="color:#eee; font-size:14px; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="radio" name="pianoClef" value="treble" checked style="accent-color:#ffd875; transform:scale(1.15);"> Treble Clef
+              </label>
+              <label style="color:#eee; font-size:14px; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="radio" name="pianoClef" value="bass" style="accent-color:#ffd875; transform:scale(1.15);"> Bass Clef
+              </label>
             </div>
 
-            <div class="piano-card-title" style="margin-top:30px;">Interval Codes Config</div>
+            <!-- Manual Staff Canvas (Big and Center) -->
+            <div class="piano-canvas-container" style="margin-bottom: 20px;">
+              <canvas id="pianoManualCanvas" width="540" height="320" style="background:#0f0f1c; width:100%; max-width:540px; height:auto; display:block; cursor:pointer; border-radius: 8px; border: 1px solid #2d2d54;"></canvas>
+            </div>
+
+            <!-- Note Controls (Hidden or collapsed as they are redundant with tap-to-mark) -->
+            <div style="display:none;">
+              <select id="pianoNoteName-1"><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="A">A</option><option value="B">B</option></select>
+              <select id="pianoNoteAcc-1"><option value="none">Natural</option><option value="sharp">Sharp</option><option value="flat">Flat</option></select>
+              <select id="pianoNoteOct-1"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
+              <select id="pianoNoteName-2"><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="A">A</option><option value="B">B</option></select>
+              <select id="pianoNoteAcc-2"><option value="none">Natural</option><option value="sharp">Sharp</option><option value="flat">Flat</option></select>
+              <select id="pianoNoteOct-2"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
+            </div>
+
+            <!-- Accidental Selectors (Just in case they need to add a sharp/flat to Note 1 or Note 2) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div style="background:#13132a; padding:10px; border-radius:8px; border:1px solid #2d2d54;">
+                <label style="color:#4caf50; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">Note 1 Accidental</label>
+                <select id="pianoNoteAccReal-1" style="width:100%; padding:6px; background:#080811; border:1px solid #25253f; color:#fff; border-radius:4px; outline:none; font-size:12px;">
+                  <option value="none" selected>♮ Natural</option>
+                  <option value="sharp">♯ Sharp</option>
+                  <option value="flat">♭ Flat</option>
+                </select>
+              </div>
+              <div style="background:#13132a; padding:10px; border-radius:8px; border:1px solid #2d2d54;">
+                <label style="color:#3b82f6; font-size:11px; font-weight:bold; display:block; margin-bottom:4px;">Note 2 Accidental</label>
+                <select id="pianoNoteAccReal-2" style="width:100%; padding:6px; background:#080811; border:1px solid #25253f; color:#fff; border-radius:4px; outline:none; font-size:12px;">
+                  <option value="none" selected>♮ Natural</option>
+                  <option value="sharp">♯ Sharp</option>
+                  <option value="flat">♭ Flat</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Answer Result Card (Directly Below Staff) -->
+        <div class="piano-card" style="margin-bottom: 20px;">
+          <div class="piano-card-title">Answer</div>
+          <div class="piano-result-box" id="pianoResultBox" style="min-height: 90px; background: #080811; border: 1px solid #1e1e38; border-radius: 8px;">
+            <div style="color:#718096; font-size: 14px;">Waiting for note markings...</div>
+          </div>
+        </div>
+
+        <!-- Interval Codes Config (Collapsible Details at Bottom) -->
+        <details style="background: #0f0f1c; border: 1px solid #25253f; border-radius: 8px; padding: 12px; cursor: pointer; outline: none; margin-bottom: 20px;">
+          <summary style="color:#ffd875; font-size: 14px; font-weight: bold; user-select: none;">⚙️ Interval Codes Config (Click to Expand)</summary>
+          <div style="margin-top: 12px; cursor: default;" onclick="event.stopPropagation()">
             <div style="font-size:12px; color:#718096; margin-bottom:12px; text-align: left;">
-              Codes change each stage. Modify these to match your manual page:
+              If your manual has custom codes, modify them here (they persist in your browser):
             </div>
             <div style="max-height: 250px; overflow-y: auto; border: 1px solid #25253f; border-radius: 8px;">
               <table class="piano-codes-table">
@@ -270,7 +331,8 @@
               </table>
             </div>
           </div>
-        </div>
+        </details>
+
       </div>
     `;
 
@@ -290,6 +352,60 @@
     if (window.openCvReady) {
       statusEl.textContent = "🟢 OpenCV.js Ready";
       statusEl.className = "opencv-status ready";
+    }
+
+    // Tab switcher events
+    const modeImageBtn = document.getElementById("pianoModeImageBtn");
+    const modeManualBtn = document.getElementById("pianoModeManualBtn");
+    const imageArea = document.getElementById("pianoImageArea");
+    const manualArea = document.getElementById("pianoManualArea");
+
+    if (modeImageBtn && modeManualBtn && imageArea && manualArea) {
+      modeImageBtn.addEventListener('click', () => {
+        setPianoMode('image');
+      });
+      modeManualBtn.addEventListener('click', () => {
+        setPianoMode('manual');
+      });
+    }
+
+    function setPianoMode(mode) {
+      if (mode === 'image') {
+        modeImageBtn.className = "upload-btn active";
+        modeImageBtn.style.background = "#f5c542";
+        modeImageBtn.style.color = "#0e0e1e";
+        modeImageBtn.style.borderColor = "#f5c542";
+        modeImageBtn.style.fontWeight = "bold";
+        modeImageBtn.style.boxShadow = "0 0 10px rgba(245,216,117,0.3)";
+
+        modeManualBtn.className = "upload-btn";
+        modeManualBtn.style.background = "#131328";
+        modeManualBtn.style.color = "#aaa";
+        modeManualBtn.style.borderColor = "#2d2d54";
+        modeManualBtn.style.fontWeight = "normal";
+        modeManualBtn.style.boxShadow = "none";
+
+        imageArea.style.display = "block";
+        manualArea.style.display = "none";
+      } else {
+        modeManualBtn.className = "upload-btn active";
+        modeManualBtn.style.background = "#f5c542";
+        modeManualBtn.style.color = "#0e0e1e";
+        modeManualBtn.style.borderColor = "#f5c542";
+        modeManualBtn.style.fontWeight = "bold";
+        modeManualBtn.style.boxShadow = "0 0 10px rgba(245,216,117,0.3)";
+
+        modeImageBtn.className = "upload-btn";
+        modeImageBtn.style.background = "#131328";
+        modeImageBtn.style.color = "#aaa";
+        modeImageBtn.style.borderColor = "#2d2d54";
+        modeImageBtn.style.fontWeight = "normal";
+        modeImageBtn.style.boxShadow = "none";
+
+        imageArea.style.display = "none";
+        manualArea.style.display = "block";
+        evaluatePianoManual();
+      }
     }
 
     // Register paste box events
@@ -326,13 +442,291 @@
       };
       img.src = URL.createObjectURL(file);
     });
+
+    // Register manual note builder inputs event listeners
+    const manualInputs = [
+      "pianoNoteName-1", "pianoNoteAcc-1", "pianoNoteOct-1",
+      "pianoNoteName-2", "pianoNoteAcc-2", "pianoNoteOct-2",
+      "pianoNoteAccReal-1", "pianoNoteAccReal-2"
+    ];
+    manualInputs.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', evaluatePianoManual);
+    });
+
+    document.querySelectorAll('input[name="pianoClef"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        // Adjust default octaves based on clef choice
+        const isBass = radio.value === 'bass';
+        const oct1 = document.getElementById("pianoNoteOct-1");
+        const oct2 = document.getElementById("pianoNoteOct-2");
+        if (oct1 && oct2) {
+          if (isBass) {
+            if (oct1.value > 4) oct1.value = 3;
+            if (oct2.value > 4) oct2.value = 3;
+          } else {
+            if (oct1.value < 3) oct1.value = 4;
+            if (oct2.value < 3) oct2.value = 4;
+          }
+        }
+        evaluatePianoManual();
+      });
+    });
+
+    // Canvas click listener to place notes interactively on lines or spaces
+    const manualCanvas = document.getElementById("pianoManualCanvas");
+    if (manualCanvas) {
+      manualCanvas.addEventListener('click', (e) => {
+        const rect = manualCanvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // Scale coordinates to internal canvas resolution
+        const scaleX = manualCanvas.width / rect.width;
+        const scaleY = manualCanvas.height / rect.height;
+        const canvasX = clickX * scaleX;
+        const canvasY = clickY * scaleY;
+
+        // Note 1 on left half, Note 2 on right half of canvas
+        const isNote1 = canvasX < manualCanvas.width / 2;
+
+        const clefEl = document.querySelector('input[name="pianoClef"]:checked');
+        const isBass = clefEl ? clefEl.value === 'bass' : false;
+
+        const centerY = Math.floor(manualCanvas.height / 2);
+        const lineSpacing = 18; 
+        const stepSpacing = lineSpacing / 2;
+
+        // Calculate step index from click Y
+        const step = Math.round((centerY - canvasY) / stepSpacing);
+
+        // Convert step index back to note letter and octave
+        let noteName, octave;
+        if (isBass) {
+          const idx = step + 1; // Middle line D3 is step 0 (C3 is idx 0)
+          const octOffset = Math.floor(idx / 7);
+          const noteIndex = ((idx % 7) + 7) % 7;
+          noteName = ["C", "D", "E", "F", "G", "A", "B"][noteIndex];
+          octave = 3 + octOffset;
+        } else {
+          const idx = step + 6; // Middle line B4 is step 0 (C4 is idx 0)
+          const octOffset = Math.floor(idx / 7);
+          const noteIndex = ((idx % 7) + 7) % 7;
+          noteName = ["C", "D", "E", "F", "G", "A", "B"][noteIndex];
+          octave = 4 + octOffset;
+        }
+
+        // Clip octaves to valid ranges
+        if (isBass) {
+          if (octave < 2) octave = 2;
+          if (octave > 4) octave = 4;
+        } else {
+          if (octave < 3) octave = 3;
+          if (octave > 6) octave = 6;
+        }
+
+        const num = isNote1 ? 1 : 2;
+        const nameEl = document.getElementById(`pianoNoteName-${num}`);
+        const octEl = document.getElementById(`pianoNoteOct-${num}`);
+        if (nameEl) nameEl.value = noteName;
+        if (octEl) octEl.value = octave;
+
+        evaluatePianoManual();
+      });
+    }
   }
 
   window.updatePianoCode = function(input) {
     const interval = input.getAttribute("data-interval");
     intervalCodes[interval] = input.value;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(intervalCodes));
+    // Re-evaluate if manual mode is active
+    const manualArea = document.getElementById("pianoManualArea");
+    if (manualArea && manualArea.style.display !== "none") {
+      evaluatePianoManual();
+    }
   };
+
+  function drawStaffDiagram(canvasId, isBass, note1, note2) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background
+    ctx.fillStyle = '#0f0f1c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const centerY = Math.floor(canvas.height / 2);
+    const lineSpacing = 18; 
+    const stepSpacing = lineSpacing / 2; 
+
+    // Draw 5 staff lines
+    ctx.strokeStyle = '#38385a';
+    ctx.lineWidth = 2.0;
+    for (let i = -2; i <= 2; i++) {
+      const y = centerY + i * lineSpacing;
+      ctx.beginPath();
+      ctx.moveTo(30, y);
+      ctx.lineTo(canvas.width - 60, y);
+      ctx.stroke();
+    }
+
+    // Draw Clef Badge / unicode
+    ctx.fillStyle = '#ffd875';
+    ctx.font = '48px sans-serif';
+    ctx.fillText(isBass ? '𝄢' : '𝄞', 35, centerY + (isBass ? -6 : 10));
+
+    // Draw guide labels on the right side
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    
+    const stepsToLabel = [4, 3, 2, 1, 0, -1, -2, -3, -4, -5, -6];
+    const trebleNames = {
+      '4': 'F5', '3': 'E5', '2': 'D5', '1': 'C5', '0': 'B4',
+      '-1': 'A4', '-2': 'G4', '-3': 'F4', '-4': 'E4', '-5': 'D4', '-6': 'C4'
+    };
+    const bassNames = {
+      '4': 'A3', '3': 'G3', '2': 'F3', '1': 'E3', '0': 'D3',
+      '-1': 'C3', '-2': 'B2', '-3': 'A2', '-4': 'G2', '-5': 'F2', '-6': 'E2'
+    };
+    const names = isBass ? bassNames : trebleNames;
+
+    stepsToLabel.forEach(step => {
+      const y = centerY - step * stepSpacing;
+      const name = names[step];
+      
+      // Highlight line guides differently than space guides
+      if (step % 2 === 0) {
+        ctx.fillStyle = '#f5c542'; // Golden for line notes
+      } else {
+        ctx.fillStyle = '#718096'; // Muted grey for space notes
+      }
+      ctx.fillText(name, canvas.width - 15, y);
+      
+      // Draw faint dot guide next to the text
+      ctx.fillStyle = step % 2 === 0 ? 'rgba(245,197,66,0.3)' : 'rgba(113,128,150,0.3)';
+      ctx.beginPath();
+      ctx.arc(canvas.width - 38, y, 2.5, 0, 2 * Math.PI);
+      ctx.fill();
+    });
+
+    const getStepIndex = (name, oct, bass) => {
+      const scale = { 'C': 0, 'D': 1, 'E': 2, 'F': 3, 'G': 4, 'A': 5, 'B': 6 };
+      if (bass) {
+        // C3 is 0. G2 is line 1.
+        return scale[name] + 7 * (oct - 3);
+      } else {
+        // C4 is 0. E4 is line 1.
+        return scale[name] + 7 * (oct - 4);
+      }
+    };
+
+    const drawNote = (note, x, color) => {
+      if (!note || note.name === 'none') return;
+      let step;
+      if (isBass) {
+        step = getStepIndex(note.name, note.octave, true) - 1; // Relative to middle line D3 (step 1 relative to C3)
+      } else {
+        step = getStepIndex(note.name, note.octave, false) - 6; // Relative to middle line B4 (step 6 relative to C4)
+      }
+
+      const y = centerY - step * stepSpacing;
+
+      // Draw ledger lines
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 2.0;
+      if (Math.abs(step) >= 6) {
+        const startStep = step > 0 ? 6 : -6;
+        const endStep = step;
+        const dir = step > 0 ? 2 : -2;
+        for (let s = startStep; step > 0 ? s <= endStep : s >= endStep; s += dir) {
+          if (s % 2 === 0) { 
+            const ly = centerY - s * stepSpacing;
+            ctx.beginPath();
+            ctx.moveTo(x - 16, ly);
+            ctx.lineTo(x + 16, ly);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Note circle
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 9, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Accidental symbol
+      if (note.acc && note.acc !== 'none') {
+        ctx.fillStyle = '#ffd875';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(note.acc === 'sharp' ? '♯' : '♭', x - 12, y);
+      }
+
+      // Label
+      ctx.fillStyle = '#a0aec0';
+      ctx.font = 'bold 13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${note.name}${note.acc === 'sharp' ? '#' : (note.acc === 'flat' ? 'b' : '')}${note.octave}`, x, centerY + 105);
+    };
+
+    drawNote(note1, Math.floor(canvas.width * 0.45), '#4caf50');
+    drawNote(note2, Math.floor(canvas.width * 0.65), '#3b82f6');
+  }
+
+  function evaluatePianoManual() {
+    const clefEl = document.querySelector('input[name="pianoClef"]:checked');
+    const isBass = clefEl ? clefEl.value === 'bass' : false;
+
+    const n1Name = document.getElementById("pianoNoteName-1").value;
+    const n1Acc = document.getElementById("pianoNoteAccReal-1").value;
+    const n1Oct = parseInt(document.getElementById("pianoNoteOct-1").value, 10);
+
+    const n2Name = document.getElementById("pianoNoteName-2").value;
+    const n2Acc = document.getElementById("pianoNoteAccReal-2").value;
+    const n2Oct = parseInt(document.getElementById("pianoNoteOct-2").value, 10);
+
+    const p1 = {
+      name: n1Name,
+      acc: n1Acc,
+      octave: n1Oct,
+      str: `${n1Name}${n1Acc === 'sharp' ? '#' : (n1Acc === 'flat' ? 'b' : '')}${n1Oct}`,
+      semitone: getSemitoneValue(n1Name, n1Oct, n1Acc)
+    };
+
+    const p2 = {
+      name: n2Name,
+      acc: n2Acc,
+      octave: n2Oct,
+      str: `${n2Name}${n2Acc === 'sharp' ? '#' : (n2Acc === 'flat' ? 'b' : '')}${n2Oct}`,
+      semitone: getSemitoneValue(n2Name, n2Oct, n2Acc)
+    };
+
+    let lower = p1, upper = p2;
+    if (p1.semitone > p2.semitone) {
+      lower = p2;
+      upper = p1;
+    }
+
+    const diff = upper.semitone - lower.semitone;
+    const intervalName = INTERVALS_DICT[diff] || `Unknown (${diff} semitones)`;
+    const code = intervalCodes[intervalName] || "None";
+
+    const resultBox = document.getElementById("pianoResultBox");
+    if (resultBox) {
+      resultBox.innerHTML = `
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; min-height: 80px;">
+          <div class="piano-solution-press" style="font-size: 54px; color: #00ff66; text-shadow: 0 0 25px rgba(0,255,102,0.6); text-align: center; text-transform: uppercase; margin: 0; font-family:'Outfit', sans-serif; font-weight:900; letter-spacing: 2px;">${intervalName}</div>
+        </div>
+      `;
+    }
+
+    drawStaffDiagram("pianoManualCanvas", isBass, p1, p2);
+  }
 
   function sortedUnique(arr) {
     return Array.from(new Set(arr)).sort((a, b) => a - b);
@@ -673,6 +1067,9 @@
 
         const accSymbol = accType === "sharp" ? "#" : (accType === "flat" ? "b" : "");
         pitches.push({
+          noteName: noteName,
+          octave: octave,
+          accType: accType || 'none',
           str: `${noteName}${accSymbol}${octave}`,
           semitone: getSemitoneValue(noteName, octave, accType)
         });
@@ -690,30 +1087,38 @@
       const intervalName = INTERVALS_DICT[diff] || `Unknown (${diff} semitones)`;
       const code = intervalCodes[intervalName] || "None";
 
+      // Auto-populate manual note inputs with OCR results
+      const noteInputs = [
+        { name: 'pianoNoteName-1', acc: 'pianoNoteAcc-1', oct: 'pianoNoteOct-1' },
+        { name: 'pianoNoteName-2', acc: 'pianoNoteAcc-2', oct: 'pianoNoteOct-2' }
+      ];
+
+      const clefRadios = document.getElementsByName("pianoClef");
+      clefRadios.forEach(radio => {
+        radio.checked = (radio.value === (isBass ? 'bass' : 'treble'));
+      });
+
+      pitches.forEach((p, idx) => {
+        if (idx < 2) {
+          const nameEl = document.getElementById(noteInputs[idx].name);
+          const accEl = document.getElementById(noteInputs[idx].acc);
+          const octEl = document.getElementById(noteInputs[idx].oct);
+          const accRealEl = document.getElementById(`pianoNoteAccReal-${idx + 1}`);
+
+          if (nameEl) nameEl.value = p.noteName;
+          if (accEl) accEl.value = p.accType;
+          if (octEl) octEl.value = p.octave;
+          if (accRealEl) accRealEl.value = p.accType;
+        }
+      });
+
+      // Render manual staff canvas as well
+      drawStaffDiagram("pianoManualCanvas", isBass, pitches[0], pitches[1]);
+
       // Render UI
       resultBox.innerHTML = `
-        <div style="width: 100%;">
-          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #cbd5e0; letter-spacing: 1.5px; margin-bottom: 10px; text-align: center;">
-            Interval Detected (${isBass ? "Bass Clef" : "Treble Clef"})
-          </div>
-          <div class="piano-solution-press">${code}</div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-            <div style="background: #12122a; padding: 10px; border-radius: 6px; border: 1px solid #25253f; text-align: center;">
-              <span style="font-size: 11px; color: #718096; display: block; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Lower Note</span>
-              <strong style="font-size: 18px; color: #ffd875; font-family: monospace;">${lower.str}</strong>
-              <span style="font-size: 11px; color: #4a5568; display: block; margin-top: 2px;">(pitch: ${lower.semitone})</span>
-            </div>
-            <div style="background: #12122a; padding: 10px; border-radius: 6px; border: 1px solid #25253f; text-align: center;">
-              <span style="font-size: 11px; color: #718096; display: block; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Upper Note</span>
-              <strong style="font-size: 18px; color: #ffd875; font-family: monospace;">${upper.str}</strong>
-              <span style="font-size: 11px; color: #4a5568; display: block; margin-top: 2px;">(pitch: ${upper.semitone})</span>
-            </div>
-          </div>
-          
-          <div style="margin-top: 15px; padding: 8px 12px; background: #0c0c1b; border-radius: 6px; border: 1px solid #1e1e38; text-align: center; font-size: 13px; color: #cbd5e0;">
-            Interval: <span style="color: #ffd875; font-weight: bold;">${intervalName}</span> (${diff} semitones)
-          </div>
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; min-height: 80px;">
+          <div class="piano-solution-press" style="font-size: 54px; color: #00ff66; text-shadow: 0 0 25px rgba(0,255,102,0.6); text-align: center; text-transform: uppercase; margin: 0; font-family:'Outfit', sans-serif; font-weight:900; letter-spacing: 2px;">${intervalName}</div>
         </div>
       `;
 
