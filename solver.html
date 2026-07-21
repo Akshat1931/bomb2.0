@@ -476,6 +476,8 @@
     <button class="nav-link" type="button" data-target="memorySection" onclick="showSection('memorySection')">Memory Solver</button>
     <button class="nav-link" type="button" data-target="passwordSection" onclick="showSection('passwordSection')">Password Solver</button>
     <button class="nav-link" type="button" data-target="pianoSection" onclick="showSection('pianoSection')">Piano Solver</button>
+    <button class="nav-link" type="button" data-target="buttonSection" onclick="showSection('buttonSection')">The Button</button>
+    <button class="nav-link" type="button" data-target="wiresSection" onclick="showSection('wiresSection')">Wire Sequences</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -537,7 +539,7 @@
     <div class="venn-shell">
       <h2 style="color:#f5c542; text-align:center; margin-bottom:16px;">Venn Diagram</h2>
 
-      <div class="venn-tools">
+      <div class="venn-tools" style="justify-content:center; margin-bottom:16px;">
         <label style="color:#ddd; font-size:13px; gap:8px; display:inline-flex; align-items:center;">
           <span>Answer needed:</span>
           <select id="vennTargetMode"
@@ -546,19 +548,6 @@
             <option value="shaded">Shaded region</option>
           </select>
         </label>
-        <button type="button" class="upload-btn" onclick="openVennFileDialog()">Upload Image</button>
-      </div>
-
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px;">
-        <div id="vennDropzone" class="morse-dropzone" style="width: 100%; max-width: 480px; padding: 20px; border: 2px dashed #444; border-radius: 10px; text-align: center; cursor: pointer; background: #0c0c1a;">
-          <span style="font-size:32px;">📁</span>
-          <p style="font-size:13px; color:#aaa; margin-top:8px; margin-bottom: 0;">Drag & Drop Venn Diagram here, click to Upload, or press Ctrl+V to paste</p>
-        </div>
-        <canvas id="vennCanvas" width="480" height="360" style="width:100%; max-width:480px; height:auto; border:1px solid #333; border-radius:10px; background:#181826;"></canvas>
-      </div>
-
-      <div style="text-align:center; color:#aaa; font-size:12px; margin:-4px 0 14px;">
-        Grey = shaded, Black = non-shaded
       </div>
 
       <div class="venn-manual">
@@ -1003,6 +992,70 @@
     <!-- Rendered dynamically by piano-module.js -->
   </section>
 
+  <section id="buttonSection" class="page-section">
+    <div style="max-width:900px; margin:auto; background:#0e0e1e; padding:24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:20px; font-family:'Outfit', sans-serif; font-size:26px;">The Button Solver</h2>
+
+      <!-- Dropzone & Preview -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:24px;">
+        <div id="buttonDropzone" class="morse-dropzone" onclick="document.getElementById('buttonFileInput').click()" style="width:100%; max-width:500px; padding:18px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
+          <span style="font-size:32px;">🔘</span>
+          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop Button image, click to Upload, or press <strong>Ctrl+V</strong> to paste</p>
+        </div>
+        <input id="buttonFileInput" type="file" accept="image/*" hidden>
+        <canvas id="buttonCanvas" width="400" height="240" style="width:100%; max-width:400px; height:auto; border:1px solid #282845; border-radius:10px; background:#0a0a16;"></canvas>
+      </div>
+
+      <!-- Controls Grid -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button Color</label>
+          <select id="buttonColorSelect" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
+            <option value="blue">Blue</option>
+            <option value="green" selected>Green</option>
+            <option value="white">White</option>
+            <option value="red">Red</option>
+            <option value="yellow">Yellow</option>
+          </select>
+        </div>
+
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button Label</label>
+          <input id="buttonLabelInput" type="text" value="HOLD" placeholder="e.g. HOLD, PRESS, PUNCH" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+        </div>
+
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial Number</label>
+          <input id="buttonSerialInput" type="text" value="AB3" placeholder="e.g. AB3 (auto checks odd/even)" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+        </div>
+
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Module Count on Bomb</label>
+          <input id="buttonModuleCountInput" type="number" min="1" max="20" value="2" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Result Display Card -->
+      <div id="buttonResultCard" style="padding:20px; border-radius:12px; border:2px solid #4caf50; background:rgba(76, 175, 80, 0.1); text-align:center; margin-bottom:24px; transition:all 0.3s;">
+        <div style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Required Action</div>
+        <div id="buttonActionText" style="color:#fff; font-size:28px; font-weight:700; font-family:'Outfit', sans-serif; text-shadow:0 0 10px rgba(255,255,255,0.2);">Wait 5 seconds</div>
+        <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">Matched Rule: "Otherwise, if there is more than one module on the bomb and the button is green, wait 5 seconds."</div>
+      </div>
+
+      <!-- Dynamic Guidebook Rules Textarea -->
+      <div style="background:#131328; padding:18px; border-radius:12px; border:1px solid #222244;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <label for="buttonRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules (Editable)</label>
+          <button id="buttonResetRulesBtn" type="button" class="upload-btn" style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
+        </div>
+        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules, paste the new instruction lines below. The solver will automatically parse and apply them in order.</p>
+        <textarea id="buttonRulesInput" rows="8" style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
+      </div>
+
+      <div id="buttonStatus" style="margin-top:16px; font-size:13px; color:#aaa; text-align:center;"></div>
+    </div>
+  </section>
+
   <section id="helpSection" class="page-section">
     <div
       style="max-width:700px; margin:auto; color:#ddd; line-height:1.7; font-size:14px; padding:12px; background:#101025; border:1px solid #222; border-radius:12px;">
@@ -1016,6 +1069,128 @@
       </ul>
       <p>Want more modules? Add new sections and menu buttons, then show them with
         <code>showSection('sectionId')</code>.</p>
+    </div>
+  </section>
+
+  <section id="wiresSection" class="page-section">
+    <div style="max-width:920px; margin:auto; background:#0e0e1e; padding:24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:16px; font-family:'Outfit', sans-serif; font-size:26px;">Wire Sequences Solver</h2>
+
+      <!-- Stage Selector Tabs -->
+      <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+        <button id="wireStageBtn-1" type="button" class="upload-btn active" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 1</button>
+        <button id="wireStageBtn-2" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 2</button>
+        <button id="wireStageBtn-3" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 3</button>
+        <button id="wireStageBtn-4" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 4</button>
+        <button id="wireStageBtn-5" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 5</button>
+        <button id="wireResetAllBtn" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0; background:#f44336; border-color:#d32f2f;">Reset All Panels</button>
+      </div>
+
+      <!-- Dropzone & Preview -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:24px;">
+        <div id="wireDropzone" class="morse-dropzone" onclick="document.getElementById('wireFileInput').click()" style="width:100%; max-width:500px; padding:16px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
+          <span style="font-size:32px;">🧵</span>
+          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop Stage image, click to Upload, or press <strong>Ctrl+V</strong> to paste stage screenshot</p>
+        </div>
+        <input id="wireFileInput" type="file" accept="image/*" hidden>
+        <canvas id="wireCanvas" width="400" height="240" style="width:100%; max-width:400px; height:auto; border:1px solid #282845; border-radius:10px; background:#0a0a16;"></canvas>
+      </div>
+
+      <!-- Active Stage Manual Controls Card -->
+      <div style="background:#131328; padding:20px; border-radius:12px; border:1px solid #222244; margin-bottom:24px;">
+        <h3 id="wireCurrentStageTitle" style="color:#f5c542; margin-top:0; margin-bottom:16px; font-size:16px;">Stage 1 / 5 Inputs</h3>
+
+        <!-- 3 Wire Slots -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Wire Slot 1 -->
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
+            <div style="color:#fff; font-weight:600; min-width:80px;">Wire 1 (Top)</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="color:#aaa; font-size:13px;">Color:</label>
+              <select id="wireColorSelect-1" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+                <option value="none">None (Empty)</option>
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+                <option value="black">Black</option>
+              </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="color:#aaa; font-size:13px;">Connected To:</label>
+              <select id="wireToSelect-1" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+                <option value="none">None</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Wire Slot 2 -->
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
+            <div style="color:#fff; font-weight:600; min-width:80px;">Wire 2 (Mid)</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="color:#aaa; font-size:13px;">Color:</label>
+              <select id="wireColorSelect-2" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+                <option value="none">None (Empty)</option>
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+                <option value="black">Black</option>
+              </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="color:#aaa; font-size:13px;">Connected To:</label>
+              <select id="wireToSelect-2" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+                <option value="none">None</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Wire Slot 3 -->
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
+            <div style="color:#fff; font-weight:600; min-width:80px;">Wire 3 (Bot)</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="color:#aaa; font-size:13px;">Color:</label>
+              <select id="wireColorSelect-3" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+                <option value="none">None (Empty)</option>
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+                <option value="black">Black</option>
+              </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <label style="color:#aaa; font-size:13px;">Connected To:</label>
+              <select id="wireToSelect-3" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+                <option value="none">None</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Display Card -->
+      <div id="wireResultCard" style="padding:20px; border-radius:12px; border:2px solid #333366; background:#101025; margin-bottom:24px; transition:all 0.3s;">
+        <div style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Active Stage Instructions</div>
+        <div id="wireActionText" style="color:#fff; font-size:22px; font-weight:700; font-family:'Outfit', sans-serif; margin-bottom:12px;">No wires connected on this stage</div>
+        <div id="wireSummaryList"></div>
+      </div>
+
+      <!-- Dynamic Guidebook Rules Textarea -->
+      <div style="background:#131328; padding:18px; border-radius:12px; border:1px solid #222244;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <label for="wireRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules (Editable)</label>
+          <button id="wireResetRulesBtn" type="button" class="upload-btn" style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
+        </div>
+        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules, paste the new occurrence rules below. Occurrence counts auto-accumulate across all 5 panels.</p>
+        <textarea id="wireRulesInput" rows="10" style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
+      </div>
+
+      <div id="wireStatus" style="margin-top:16px; font-size:13px; color:#aaa; text-align:center;"></div>
     </div>
   </section>
 
@@ -1040,6 +1215,8 @@
   <script src="./memory-module.js"></script>
   <script src="./password-module.js"></script>
   <script src="./piano-module.js"></script>
+  <script src="./button-module.js"></script>
+  <script src="./wires-module.js"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -1056,7 +1233,7 @@
 
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active')) return;
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
       for (const item of items) {
@@ -1179,6 +1356,18 @@
           window.initPianoModule();
         }
         window.pianoLoaded = true;
+      }
+      if (id === 'buttonSection' && !window.buttonLoaded) {
+        if (typeof window.initButtonModule === 'function') {
+          window.initButtonModule();
+        }
+        window.buttonLoaded = true;
+      }
+      if (id === 'wiresSection' && !window.wiresLoaded) {
+        if (typeof window.initWiresModule === 'function') {
+          window.initWiresModule();
+        }
+        window.wiresLoaded = true;
       }
     }
 
