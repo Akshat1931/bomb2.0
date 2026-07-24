@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Search Solver Module for Keep Talking and Nobody Explains
  * Finds stage words in a 5x5 letter grid in any direction.
  * Supports automatic client-side cell-by-cell OCR (Tesseract.js) to extract grid letters with 100% layout accuracy.
@@ -54,7 +54,7 @@ const SEARCH_DIRS = [
 
 let tesseractWorker = null;
 
-// ── DYNAMIC STYLE INJECTION ───────────────────────────────
+// â”€â”€ DYNAMIC STYLE INJECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function injectSearchStyles() {
   const css = `
@@ -304,7 +304,7 @@ function injectSearchStyles() {
   document.head.appendChild(styleEl);
 }
 
-// ── INITIALIZATION ─────────────────────────────────────────
+// â”€â”€ INITIALIZATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function initSearchModule() {
   if (searchState.initialized) return;
@@ -340,7 +340,7 @@ function renderSearchUI() {
       <div class="search-card">
         <div class="search-card-title">1. Screenshot Upload & OCR</div>
         <div id="searchDropzone" class="search-dropzone" onclick="openSearchFileDialog()">
-          <span style="font-size:32px;">📸</span>
+          <span style="font-size:32px;">ðŸ“¸</span>
           <p style="font-size:12px; color:#aaa; margin-top:8px;">Drag & Drop Grid Screenshot here, or click to Upload</p>
           <input id="searchFileInput" type="file" accept="image/*" style="display:none;" onchange="handleSearchFileSelect(this)">
         </div>
@@ -392,7 +392,7 @@ function renderSearchUI() {
 
       <!-- 5. Advanced Config (Collapsible) -->
       <details style="background: #0f0f1c; border: 1px solid #25253f; border-radius: 8px; padding: 12px; cursor: pointer; outline: none; margin-bottom: 20px;">
-        <summary style="color:#ffd875; font-size: 14px; font-weight: bold; user-select: none;">⚙️ Stage Word Lists (Click to Expand)</summary>
+        <summary style="color:#ffd875; font-size: 14px; font-weight: bold; user-select: none;">âš™ï¸ Stage Word Lists (Click to Expand)</summary>
         <div style="margin-top: 12px; cursor: default;" onclick="event.stopPropagation()">
           <div style="font-size:12px; color:#718096; margin-bottom:12px; text-align: left;">
             Paste stage word lists here to customize standard/modded manual words:
@@ -404,7 +404,7 @@ function renderSearchUI() {
   `;
 }
 
-// ── EVENTS & GRID INPUT MANAGEMENT ─────────────────────────
+// â”€â”€ EVENTS & GRID INPUT MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function setupGridEvents() {
   const container = document.getElementById('searchGridContainer');
@@ -545,7 +545,7 @@ function setupPasteEvents() {
   });
 }
 
-// ── IMAGE UPLOAD HANDLING ──────────────────────────────────
+// â”€â”€ IMAGE UPLOAD HANDLING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function setupImageUploadEvents() {
   const dropzone = document.getElementById('searchDropzone');
@@ -629,7 +629,7 @@ function clearSearchImage() {
   if (statusEl) statusEl.textContent = "";
 }
 
-// ── OCR PIPELINE: BOUNDS DETECTION & BINARIZATION ──────────
+// â”€â”€ OCR PIPELINE: BOUNDS DETECTION & BINARIZATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function detectGridBounds(ctx, width, height) {
   const imgData = ctx.getImageData(0, 0, width, height).data;
@@ -774,7 +774,7 @@ async function getTesseractWorker() {
   
   const statusEl = document.getElementById('searchOcrStatus');
   if (statusEl) {
-    statusEl.innerHTML = `<span style="color:#ffd875;">⏳ Initializing OCR Engine...</span>`;
+    statusEl.innerHTML = `<span style="color:#ffd875;">â³ Initializing OCR Engine...</span>`;
   }
   
   tesseractWorker = await Tesseract.createWorker('eng');
@@ -792,169 +792,105 @@ async function runSearchOcrCellByCell(bounds) {
   if (statusEl) {
     statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters...</span>`;
   }
-  
-  // ── Compute projection profiles (horizontal + vertical) ──
-  // Font-invariant: the 'where strokes exist' pattern is the same regardless
-  // of whether the font is Arial, Impact, or the game font.
-  function getProfiles(binary, size) {
-    const hproj = new Float32Array(size); // sum of black pixels per ROW
-    const vproj = new Float32Array(size); // sum of black pixels per COL
-    let total = 0;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        if (binary[y * size + x] === 1) {
-          hproj[y]++;
-          vproj[x]++;
-          total++;
+
+  const SIZE = 40;
+
+  // Zhang-Suen thinning: reduces thick letter to 1-pixel-wide skeleton.
+  // This makes matching FONT-INDEPENDENT — the skeleton shape of any letter
+  // is the same regardless of font weight/thickness.
+  function thinBinary(src) {
+    const img = new Uint8Array(src);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let step = 0; step < 2; step++) {
+        const del = [];
+        for (let y = 1; y < SIZE - 1; y++) {
+          for (let x = 1; x < SIZE - 1; x++) {
+            if (!img[y * SIZE + x]) continue;
+            const p2 = img[(y-1)*SIZE+x],   p3 = img[(y-1)*SIZE+x+1];
+            const p4 = img[y*SIZE+x+1],     p5 = img[(y+1)*SIZE+x+1];
+            const p6 = img[(y+1)*SIZE+x],   p7 = img[(y+1)*SIZE+x-1];
+            const p8 = img[y*SIZE+x-1],     p9 = img[(y-1)*SIZE+x-1];
+            const n = p2+p3+p4+p5+p6+p7+p8+p9;
+            if (n < 2 || n > 6) continue;
+            const ring = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+            let t = 0;
+            for (let i = 0; i < 8; i++) if (!ring[i] && ring[i+1]) t++;
+            if (t !== 1) continue;
+            if (step === 0 && (p2*p4*p6 !== 0 || p4*p6*p8 !== 0)) continue;
+            if (step === 1 && (p2*p4*p8 !== 0 || p2*p6*p8 !== 0)) continue;
+            del.push(y * SIZE + x);
+          }
         }
+        if (del.length) { del.forEach(i => { img[i] = 0; }); changed = true; }
       }
     }
-    // Normalize by total so density does not affect comparison — only distribution
-    if (total > 0) {
-      for (let i = 0; i < size; i++) {
-        hproj[i] /= total;
-        vproj[i] /= total;
-      }
-    }
-    return { hproj, vproj, total };
+    return img;
   }
 
-  // Normalized cross-correlation of two 1D profiles
-  function corrCoeff(a, b, len) {
+  // Projection profiles on skeletonized image
+  function getProfiles(binary) {
+    const h = new Float32Array(SIZE), v = new Float32Array(SIZE);
+    let total = 0;
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++)
+        if (binary[y * SIZE + x]) { h[y]++; v[x]++; total++; }
+    if (total > 0)
+      for (let i = 0; i < SIZE; i++) { h[i] /= total; v[i] /= total; }
+    return { h, v, total };
+  }
+
+  // Normalized cross-correlation of two profile arrays
+  function corr(a, b) {
     let dot = 0, aa = 0, bb = 0;
-    for (let i = 0; i < len; i++) {
-      dot += a[i] * b[i];
-      aa  += a[i] * a[i];
-      bb  += b[i] * b[i];
-    }
+    for (let i = 0; i < SIZE; i++) { dot += a[i]*b[i]; aa += a[i]*a[i]; bb += b[i]*b[i]; }
     return (aa > 0 && bb > 0) ? dot / Math.sqrt(aa * bb) : 0;
   }
 
-  // Combined score: average of horizontal + vertical correlation
-  function profileSimilarity(p1, p2, size) {
-    const hc = corrCoeff(p1.hproj, p2.hproj, size);
-    const vc = corrCoeff(p1.vproj, p2.vproj, size);
-    return (hc + vc) / 2;
-  }
-
-  // STUB to keep compat (not used below)
-  function normalizeLetter(pixels40x40) {
-    let minX = 40, maxX = 0, minY = 40, maxY = 0;
-    let hasPixels = false;
-    
-    for (let y = 0; y < 40; y++) {
-      for (let x = 0; x < 40; x++) {
-        if (pixels40x40[y * 40 + x] < 128) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-          hasPixels = true;
-        }
-      }
-    }
-    
-    const norm = new Uint8Array(24 * 24).fill(255);
-    if (!hasPixels) return norm;
-    
-    const srcW = maxX - minX + 1;
-    const srcH = maxY - minY + 1;
-    
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = srcW;
-    tempCanvas.height = srcH;
-    const tempCtx = tempCanvas.getContext('2d');
-    
-    const croppedData = tempCtx.createImageData(srcW, srcH);
-    for (let y = 0; y < srcH; y++) {
-      for (let x = 0; x < srcW; x++) {
-        const srcVal = pixels40x40[(minY + y) * 40 + (minX + x)];
-        const idx = (y * srcW + x) * 4;
-        croppedData.data[idx] = srcVal;
-        croppedData.data[idx+1] = srcVal;
-        croppedData.data[idx+2] = srcVal;
-        croppedData.data[idx+3] = 255;
-      }
-    }
-    tempCtx.putImageData(croppedData, 0, 0);
-    
-    const destCanvas = document.createElement('canvas');
-    destCanvas.width = 24;
-    destCanvas.height = 24;
-    const destCtx = destCanvas.getContext('2d');
-    destCtx.drawImage(tempCanvas, 0, 0, srcW, srcH, 0, 0, 24, 24);
-    
-    const destData = destCtx.getImageData(0, 0, 24, 24).data;
-    for (let i = 0; i < 576; i++) {
-      norm[i] = destData[i * 4] < 128 ? 0 : 255;
-    }
-    
-    return norm;
-  }
-  
   try {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const SIZE = 40;
     const templates = {};
 
-    // Build templates using a bold condensed font (Impact is widely available
-    // and is thick/condensed — closest structural match to the game font)
-    for (let i = 0; i < alphabet.length; i++) {
-      const char = alphabet[i];
+    for (const char of alphabet) {
       const tmpC = document.createElement('canvas');
       tmpC.width = SIZE; tmpC.height = SIZE;
       const tmpX = tmpC.getContext('2d');
-      tmpX.fillStyle = '#fff';
-      tmpX.fillRect(0, 0, SIZE, SIZE);
+      tmpX.fillStyle = '#fff'; tmpX.fillRect(0, 0, SIZE, SIZE);
       tmpX.fillStyle = '#000';
-      tmpX.font = `bold 34px "Impact", "Arial Black", sans-serif`;
-      tmpX.textAlign = 'center';
-      tmpX.textBaseline = 'middle';
-      tmpX.fillText(char, SIZE / 2, SIZE / 2);
-
-      const imgData = tmpX.getImageData(0, 0, SIZE, SIZE).data;
-      const binary = new Uint8Array(SIZE * SIZE);
-      // Strict threshold to strip anti-aliased pixels
-      for (let j = 0; j < SIZE * SIZE; j++) {
-        binary[j] = imgData[j * 4] < 80 ? 1 : 0;
-      }
-      templates[char] = getProfiles(binary, SIZE);
+      tmpX.font = `bold 34px "Impact","Arial Black",sans-serif`;
+      tmpX.textAlign = 'center'; tmpX.textBaseline = 'middle';
+      tmpX.fillText(char, SIZE/2, SIZE/2);
+      const d = tmpX.getImageData(0, 0, SIZE, SIZE).data;
+      const bin = new Uint8Array(SIZE * SIZE);
+      for (let j = 0; j < SIZE * SIZE; j++) bin[j] = d[j*4] < 80 ? 1 : 0;
+      templates[char] = getProfiles(thinBinary(bin));
     }
 
     clearSearchGrid();
 
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
-        const cellCanvas = preprocessCell(searchState.image, bounds, r, c);
-        const cellCtx = cellCanvas.getContext('2d');
-        const cellData = cellCtx.getImageData(0, 0, SIZE, SIZE).data;
-
-        // Cell is already binarized (0 = letter pixel, 255 = background)
+        const cellC = preprocessCell(searchState.image, bounds, r, c);
+        const cellD = cellC.getContext('2d').getImageData(0, 0, SIZE, SIZE).data;
         const cellBin = new Uint8Array(SIZE * SIZE);
-        for (let j = 0; j < SIZE * SIZE; j++) {
-          cellBin[j] = cellData[j * 4] < 128 ? 1 : 0;
-        }
+        for (let j = 0; j < SIZE * SIZE; j++) cellBin[j] = cellD[j*4] < 128 ? 1 : 0;
 
-        const cellProf = getProfiles(cellBin, SIZE);
+        const cellSk = thinBinary(cellBin);
+        const cellProf = getProfiles(cellSk);
 
-        // Skip nearly-empty cells (no letter detected)
-        if (cellProf.total < 10) {
+        if (cellProf.total < 5) {
           searchState.grid[r][c] = '?';
           const el = document.getElementById(`cell-${r}-${c}`);
           if (el) el.value = '?';
           continue;
         }
 
-        let bestChar = '?';
-        let bestScore = -1;
-
-        for (let i = 0; i < alphabet.length; i++) {
-          const char = alphabet[i];
-          const score = profileSimilarity(cellProf, templates[char], SIZE);
-          if (score > bestScore) {
-            bestScore = score;
-            bestChar = char;
-          }
+        let bestChar = '?', bestScore = -1;
+        for (const char of alphabet) {
+          const t = templates[char];
+          const score = (corr(cellProf.h, t.h) + corr(cellProf.v, t.v)) / 2;
+          if (score > bestScore) { bestScore = score; bestChar = char; }
         }
 
         searchState.grid[r][c] = bestChar;
@@ -966,29 +902,23 @@ async function runSearchOcrCellByCell(bounds) {
     solveSearch();
 
     let unknownCount = 0;
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
+    for (let r = 0; r < 5; r++)
+      for (let c = 0; c < 5; c++)
         if (searchState.grid[r][c] === '?') unknownCount++;
-      }
-    }
 
     if (statusEl) {
-      if (unknownCount > 0) {
-        statusEl.innerHTML = `<span style="color:#ffd875;">⚠️ OCR completed with ${unknownCount} uncertain letters. Please edit them.</span>`;
-      } else {
-        statusEl.innerHTML = `<span style="color:#00ff66;">✓ OCR Extracted all 25 letters successfully!</span>`;
-      }
+      statusEl.innerHTML = unknownCount > 0
+        ? `<span style="color:#ffd875;">⚠️ OCR done with ${unknownCount} uncertain letters — please correct them.</span>`
+        : `<span style="color:#00ff66;">✓ OCR extracted all 25 letters!</span>`;
     }
 
   } catch (err) {
-    console.error("OCR Cell Error:", err);
-    if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#f44336;">❌ OCR Error: ${err.message || err}</span>`;
-    }
+    console.error("OCR Error:", err);
+    if (statusEl) statusEl.innerHTML = `<span style="color:#f44336;">❌ OCR Error: ${err.message||err}</span>`;
   }
 }
 
-// ── WORD LIST DYNAMIC PARSING ──────────────────────────────
+// â”€â”€ WORD LIST DYNAMIC PARSING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function handleWordlistsAreaChange(textarea) {
   const text = textarea.value;
@@ -1043,7 +973,7 @@ function parseStageWordListsText(text) {
   return lists;
 }
 
-// ── ACTIONS ────────────────────────────────────────────────
+// â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function selectSearchStage(stageNum) {
   searchState.stage = stageNum;
@@ -1151,7 +1081,7 @@ function updateWordListUI() {
   container.innerHTML = html;
 }
 
-// ── CORE WORD GRID SEARCH ALGORITHM ────────────────────────
+// â”€â”€ CORE WORD GRID SEARCH ALGORITHM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function checkWordInGrid(word, r, c, dir) {
   const cells = [];
@@ -1279,11 +1209,11 @@ function solveSearch() {
     }
     
     let statusText = isFull 
-      ? "❌ No 4-letter stage words found in this grid." 
+      ? "âŒ No 4-letter stage words found in this grid." 
       : "Searching... Fill the grid to find a match.";
       
     if (searchState.manualWord && searchState.manualWord.length >= 2) {
-      statusText = `❌ Manual word "${searchState.manualWord}" not found in grid.`;
+      statusText = `âŒ Manual word "${searchState.manualWord}" not found in grid.`;
     }
     
     renderResultPanel(null, statusText);
@@ -1332,7 +1262,7 @@ function renderResultPanel(match, customHeader = "") {
       ${headerHtml}
       <div class="search-result-word" ${wordColorClass}>${match.word}</div>
       <div class="search-result-coords">
-        Starts at <strong>Row ${match.start.r}, Col ${match.start.c}</strong> · Direction: <strong>${match.dir}</strong>
+        Starts at <strong>Row ${match.start.r}, Col ${match.start.c}</strong> Â· Direction: <strong>${match.dir}</strong>
       </div>
     `;
   } else {
@@ -1340,7 +1270,7 @@ function renderResultPanel(match, customHeader = "") {
   }
 }
 
-// ── PUBLIC EXPORTS ─────────────────────────────────────────
+// â”€â”€ PUBLIC EXPORTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 window.initSearchModule = initSearchModule;
 window.selectSearchStage = selectSearchStage;
