@@ -330,111 +330,76 @@ function renderSearchUI() {
   if (!container) return;
 
   container.innerHTML = `
-    <div class="search-shell">
+    <div class="search-shell" style="max-width: 600px; margin: auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
         <h2 style="color:#f5c542; margin:0;">Search Solver</h2>
         <button id="searchResetBtn" class="upload-btn" type="button" style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetSearchSolver()">Reset Solver</button>
       </div>
 
-      <div class="search-layout">
-        <!-- Left Column: Input and Grid -->
-        <div>
-          <!-- Visual Reference Image Box & OCR -->
-          <div class="search-card">
-            <div class="search-card-title">1. Screenshot Upload & OCR</div>
-            <div id="searchDropzone" class="search-dropzone" onclick="openSearchFileDialog()">
-              <span style="font-size:32px;">📸</span>
-              <p style="font-size:12px; color:#aaa; margin-top:8px;">Drag & Drop Grid Screenshot here, or click to Upload</p>
-              <input id="searchFileInput" type="file" accept="image/*" style="display:none;" onchange="handleSearchFileSelect(this)">
-            </div>
-            <div id="searchImageContainer" style="display:none; text-align:center; margin-top:10px; border:1px solid #25253f; border-radius:8px; overflow:hidden; background:#070712; padding:10px;">
-              <canvas id="searchImageCanvas" style="max-width:100%; height:auto; border-radius:4px; max-height:200px; display:inline-block;"></canvas>
-              
-              <!-- OCR status and preprocessed preview -->
-              <div id="searchOcrStatus" style="font-size:13px; font-weight:bold; margin-top:10px; text-align:center;"></div>
-              
-              <div id="searchOcrPreviewLabel" style="font-size:11px; color:#888; margin-top:8px; display:none;">OCR Binarized View:</div>
-              <canvas id="searchOcrPreviewCanvas" style="max-width:100%; height:auto; border-radius:4px; max-height:100px; margin-top:4px; border:1px solid #333; background:#fff; display:none;"></canvas>
-              
-              <button class="search-action-btn" style="margin-top:12px; width:100%; border-color:#f44336; color:#f44336;" onclick="clearSearchImage()">Remove Image</button>
-            </div>
-          </div>
-
-          <!-- Pasted Word Lists Area -->
-          <div class="search-card">
-            <div class="search-card-title">2. Paste Stage Word Lists Here</div>
-            <div style="font-size:12px; color:#aaa; margin-bottom:10px;">
-              Paste the stage list from your manual or guide. It will parse Stage 1, 2, & 3 automatically.
-            </div>
-            <textarea id="searchWordlistsInput" class="search-textarea wordlists-area" oninput="handleWordlistsAreaChange(this)" placeholder="Paste stage lists here..."></textarea>
-          </div>
-
-          <!-- Stage Selector -->
-          <div class="search-card">
-            <div class="search-card-title">3. Current Active Stage</div>
-            <div class="stage-buttons">
-              <button class="stage-btn" id="stageBtn-1" onclick="selectSearchStage(1)">Stage 1</button>
-              <button class="stage-btn" id="stageBtn-2" onclick="selectSearchStage(2)">Stage 2</button>
-              <button class="stage-btn" id="stageBtn-3" onclick="selectSearchStage(3)">Stage 3</button>
-            </div>
-          </div>
-
-          <!-- Grid letters -->
-          <div class="search-card">
-            <div class="search-card-title">4. Letter Grid (5x5)</div>
-            <div style="font-size:12px; color:#888; margin-bottom:10px; text-align:center;">
-              Type letters directly. Use Arrow keys to navigate.
-            </div>
-            
-            <div class="search-grid" id="searchGridContainer">
-              <!-- 25 Cells -->
-              ${Array.from({ length: 5 }, (_, r) => 
-                Array.from({ length: 5 }, (_, c) => 
-                  `<input type="text" class="search-cell" id="cell-${r}-${c}" data-row="${r}" data-col="${c}" maxlength="1" autocomplete="off" spellcheck="false">`
-                ).join('')
-              ).join('')}
-            </div>
-
-            <div class="search-action-row">
-              <button class="search-action-btn" onclick="clearSearchGrid()">Clear Grid</button>
-            </div>
-
-            <div style="margin-top:15px;">
-              <div class="search-card-title" style="margin-bottom:6px;">Or Paste Grid Letters</div>
-              <textarea id="searchPasteInput" class="search-textarea" rows="3" placeholder="Paste grid letters here...&#10;e.g. C U H L G M A M F A..."></textarea>
-              <button class="search-action-btn primary" style="width:100%; margin-top:8px;" onclick="parseSearchPasteText()">Load & Solve Grid</button>
-            </div>
-          </div>
+      <!-- 1. Screenshot Upload & OCR -->
+      <div class="search-card">
+        <div class="search-card-title">1. Screenshot Upload & OCR</div>
+        <div id="searchDropzone" class="search-dropzone" onclick="openSearchFileDialog()">
+          <span style="font-size:32px;">📸</span>
+          <p style="font-size:12px; color:#aaa; margin-top:8px;">Drag & Drop Grid Screenshot here, or click to Upload</p>
+          <input id="searchFileInput" type="file" accept="image/*" style="display:none;" onchange="handleSearchFileSelect(this)">
         </div>
-
-        <!-- Right Column: Solution & Word List -->
-        <div>
-          <div class="search-card" style="margin-bottom:20px;">
-            <div class="search-card-title">Solution</div>
-            <div class="search-result-box" id="searchResultPanel">
-              <div style="color:#888; font-size:14px;">Fill the grid to search for stage words...</div>
-            </div>
-          </div>
-
-          <div class="search-card" style="margin-bottom:20px;">
-            <div class="search-card-title">Word Finder (Manual Search)</div>
-            <div style="font-size:12px; color:#aaa; margin-bottom:10px;">
-              Type any word below to search and highlight it on the grid.
-            </div>
-            <input type="text" id="searchManualWordInput" class="search-highlight-input" placeholder="TYPE WORD TO FIND..." oninput="handleManualWordInput(this)">
-          </div>
-
-          <div class="search-card">
-            <div class="search-card-title">Active Stage Word List</div>
-            <div style="font-size:12px; color:#aaa; margin-bottom:10px;">
-              The matching word in the grid will be highlighted in green.
-            </div>
-            <div class="wordlist-grid" id="searchWordListContainer">
-              <!-- Words populated dynamically -->
-            </div>
-          </div>
+        <div id="searchImageContainer" style="display:none; text-align:center; margin-top:10px; border:1px solid #25253f; border-radius:8px; overflow:hidden; background:#070712; padding:10px;">
+          <canvas id="searchImageCanvas" style="max-width:100%; height:auto; border-radius:4px; max-height:200px; display:inline-block;"></canvas>
+          
+          <div id="searchOcrStatus" style="font-size:13px; font-weight:bold; margin-top:10px; text-align:center;"></div>
+          
+          <div id="searchOcrPreviewLabel" style="font-size:11px; color:#888; margin-top:8px; display:none;">OCR Binarized View:</div>
+          <canvas id="searchOcrPreviewCanvas" style="max-width:100%; height:auto; border-radius:4px; max-height:100px; margin-top:4px; border:1px solid #333; background:#fff; display:none;"></canvas>
+          
+          <button class="search-action-btn" style="margin-top:12px; width:100%; border-color:#f44336; color:#f44336;" onclick="clearSearchImage()">Remove Image</button>
         </div>
       </div>
+
+      <!-- 2. Letter Grid (5x5) -->
+      <div class="search-card">
+        <div class="search-card-title">2. Letter Grid (5x5)</div>
+        <div style="font-size:12px; color:#888; margin-bottom:10px; text-align:center;">
+          Type letters directly or check OCR output below:
+        </div>
+        
+        <div class="search-grid" id="searchGridContainer">
+          ${Array.from({ length: 5 }, (_, r) => 
+            Array.from({ length: 5 }, (_, c) => 
+              `<input type="text" class="search-cell" id="cell-${r}-${c}" data-row="${r}" data-col="${c}" maxlength="1" autocomplete="off" spellcheck="false">`
+            ).join('')
+          ).join('')}
+        </div>
+
+        <div class="search-action-row">
+          <button class="search-action-btn" onclick="clearSearchGrid()">Clear Grid</button>
+        </div>
+      </div>
+
+      <!-- 3. Result / Answer Box -->
+      <div class="search-card">
+        <div class="search-card-title">Answer</div>
+        <div class="search-result-box" id="searchResultPanel" style="min-height: 80px;">
+          <div style="color:#888; font-size:14px;">Upload screenshot or type grid to find words...</div>
+        </div>
+      </div>
+
+      <!-- 4. Word Finder / Search Box -->
+      <div class="search-card">
+        <div class="search-card-title">Manual Word Highlight</div>
+        <input type="text" id="searchManualWordInput" class="search-highlight-input" placeholder="TYPE CUSTOM WORD TO HIGHLIGHT..." oninput="handleManualWordInput(this)">
+      </div>
+
+      <!-- 5. Advanced Config (Collapsible) -->
+      <details style="background: #0f0f1c; border: 1px solid #25253f; border-radius: 8px; padding: 12px; cursor: pointer; outline: none; margin-bottom: 20px;">
+        <summary style="color:#ffd875; font-size: 14px; font-weight: bold; user-select: none;">⚙️ Stage Word Lists (Click to Expand)</summary>
+        <div style="margin-top: 12px; cursor: default;" onclick="event.stopPropagation()">
+          <div style="font-size:12px; color:#718096; margin-bottom:12px; text-align: left;">
+            Paste stage word lists here to customize standard/modded manual words:
+          </div>
+          <textarea id="searchWordlistsInput" class="search-textarea wordlists-area" style="height: 140px;" oninput="handleWordlistsAreaChange(this)" placeholder="Paste stage lists here..."></textarea>
+        </div>
+      </details>
     </div>
   `;
 }
@@ -1132,9 +1097,18 @@ function solveSearch() {
     return;
   }
 
-  // 1. First search for the stage words
+  // 1. Gather all 4-letter words from all stage lists
+  const all4LetterWords = new Set();
+  for (const st in searchState.wordLists) {
+    searchState.wordLists[st].forEach(w => {
+      if (w && w.length === 4) {
+        all4LetterWords.add(w.toUpperCase());
+      }
+    });
+  }
+
   const stageMatches = [];
-  for (const word of words) {
+  for (const word of all4LetterWords) {
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         for (const dir of SEARCH_DIRS) {
@@ -1179,13 +1153,17 @@ function solveSearch() {
   if (stageMatches.length > 0) {
     searchState.foundWord = stageMatches[0];
     
-    // Highlight cells of found stage word in Green
-    searchState.foundWord.cells.forEach(cell => {
-      const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
-      if (cellEl) cellEl.classList.add('highlighted');
+    // Highlight cells of all found words (primary in green, others in semi-green)
+    stageMatches.forEach((match, idx) => {
+      match.cells.forEach(cell => {
+        const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
+        if (cellEl) {
+          cellEl.classList.add('highlighted');
+        }
+      });
     });
 
-    renderResultPanel(searchState.foundWord);
+    renderMultiResultPanel(stageMatches);
   } else if (manualMatch) {
     // Highlight manual search word in Blue
     manualMatch.cells.forEach(cell => {
@@ -1204,7 +1182,7 @@ function solveSearch() {
     }
     
     let statusText = isFull 
-      ? `❌ No words from Stage ${searchState.stage} found in this grid.` 
+      ? "❌ No 4-letter stage words found in this grid." 
       : "Searching... Fill the grid to find a match.";
       
     if (searchState.manualWord && searchState.manualWord.length >= 2) {
@@ -1216,6 +1194,34 @@ function solveSearch() {
 
   // Update active word highlights in list
   updateWordListUI();
+}
+
+function renderMultiResultPanel(matches) {
+  const panel = document.getElementById('searchResultPanel');
+  if (!panel) return;
+
+  if (matches.length === 1) {
+    renderResultPanel(matches[0]);
+    return;
+  }
+
+  // Render a list of multiple matches
+  let html = `<div style="width: 100%; text-align: left;">`;
+  html += `<div style="color: #ffd875; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">Found ${matches.length} Matches:</div>`;
+  
+  matches.forEach((m, idx) => {
+    html += `
+      <div style="margin-bottom: 8px; border-bottom: 1px solid #131326; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="color: #00ff66; font-size: 18px; text-shadow: 0 0 10px rgba(0, 255, 102, 0.2);">${m.word}</strong>
+          <span style="color: #888; font-size: 11px; margin-left: 8px;">(R${m.start.r}, C${m.start.c})</span>
+        </div>
+        <div style="color: #cbd5e0; font-size: 12px; font-weight: bold;">${m.dir}</div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  panel.innerHTML = html;
 }
 
 function renderResultPanel(match, customHeader = "") {
