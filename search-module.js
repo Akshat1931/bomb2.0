@@ -877,6 +877,13 @@ async function runSearchOcrCellByCell(bounds) {
     // Re-solve!
     solveSearch();
     
+    let unknownCount = 0;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (searchState.grid[r][c] === '?') unknownCount++;
+      }
+    }
+
     if (statusEl) {
       if (unknownCount > 0) {
         statusEl.innerHTML = `<span style="color:#ffd875;">⚠️ OCR completed with ${unknownCount} uncertain letters. Please edit them.</span>`;
