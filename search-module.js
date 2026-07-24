@@ -789,16 +789,12 @@ async function getTesseractWorker() {
 
 async function runSearchOcrCellByCell(bounds) {
   const statusEl = document.getElementById('searchOcrStatus');
-  if (statusEl) {
-    statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters...</span>`;
-  }
+  if (statusEl) statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters...</span>`;
 
-  const SIZE = 40;
+  const SIZE = 40, NORM = 20;
 
-  // Zhang-Suen thinning: reduces thick letter to 1-pixel-wide skeleton.
-  // This makes matching FONT-INDEPENDENT — the skeleton shape of any letter
-  // is the same regardless of font weight/thickness.
-  function thinBinary(src) {
+  // Zhang-Suen thinning: reduces fat letter to 1-pixel-wide skeleton
+  function thin(src) {
     const img = new Uint8Array(src);
     let changed = true;
     while (changed) {
@@ -807,45 +803,50 @@ async function runSearchOcrCellByCell(bounds) {
         const del = [];
         for (let y = 1; y < SIZE - 1; y++) {
           for (let x = 1; x < SIZE - 1; x++) {
-            if (!img[y * SIZE + x]) continue;
-            const p2 = img[(y-1)*SIZE+x],   p3 = img[(y-1)*SIZE+x+1];
-            const p4 = img[y*SIZE+x+1],     p5 = img[(y+1)*SIZE+x+1];
-            const p6 = img[(y+1)*SIZE+x],   p7 = img[(y+1)*SIZE+x-1];
-            const p8 = img[y*SIZE+x-1],     p9 = img[(y-1)*SIZE+x-1];
-            const n = p2+p3+p4+p5+p6+p7+p8+p9;
-            if (n < 2 || n > 6) continue;
-            const ring = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
-            let t = 0;
-            for (let i = 0; i < 8; i++) if (!ring[i] && ring[i+1]) t++;
-            if (t !== 1) continue;
-            if (step === 0 && (p2*p4*p6 !== 0 || p4*p6*p8 !== 0)) continue;
-            if (step === 1 && (p2*p4*p8 !== 0 || p2*p6*p8 !== 0)) continue;
-            del.push(y * SIZE + x);
+            if (!img[y*SIZE+x]) continue;
+            const p2=img[(y-1)*SIZE+x], p3=img[(y-1)*SIZE+x+1], p4=img[y*SIZE+x+1];
+            const p5=img[(y+1)*SIZE+x+1], p6=img[(y+1)*SIZE+x], p7=img[(y+1)*SIZE+x-1];
+            const p8=img[y*SIZE+x-1], p9=img[(y-1)*SIZE+x-1];
+            const n=p2+p3+p4+p5+p6+p7+p8+p9;
+            if (n<2||n>6) continue;
+            const ring=[p2,p3,p4,p5,p6,p7,p8,p9,p2];
+            let t=0; for(let i=0;i<8;i++) if(!ring[i]&&ring[i+1]) t++;
+            if (t!==1) continue;
+            if (step===0&&(p2*p4*p6!==0||p4*p6*p8!==0)) continue;
+            if (step===1&&(p2*p4*p8!==0||p2*p6*p8!==0)) continue;
+            del.push(y*SIZE+x);
           }
         }
-        if (del.length) { del.forEach(i => { img[i] = 0; }); changed = true; }
+        if (del.length) { del.forEach(i=>{img[i]=0;}); changed=true; }
       }
     }
     return img;
   }
 
-  // Projection profiles on skeletonized image
-  function getProfiles(binary) {
-    const h = new Float32Array(SIZE), v = new Float32Array(SIZE);
-    let total = 0;
-    for (let y = 0; y < SIZE; y++)
-      for (let x = 0; x < SIZE; x++)
-        if (binary[y * SIZE + x]) { h[y]++; v[x]++; total++; }
-    if (total > 0)
-      for (let i = 0; i < SIZE; i++) { h[i] /= total; v[i] /= total; }
-    return { h, v, total };
+  // Normalize skeleton: crop to tight bounding box, resize to NORM x NORM
+  // This makes matching position-invariant AND scale-invariant
+  function normSkel(binary) {
+    const sk = thin(binary);
+    let x0=SIZE,x1=0,y0=SIZE,y1=0;
+    for (let y=0;y<SIZE;y++) for (let x=0;x<SIZE;x++) if (sk[y*SIZE+x]) {
+      if(x<x0) x0=x; if(x>x1) x1=x; if(y<y0) y0=y; if(y>y1) y1=y;
+    }
+    const out = new Uint8Array(NORM*NORM);
+    if (x1<x0) return out;
+    const sw=x1-x0||1, sh=y1-y0||1;
+    for (let ty=0;ty<NORM;ty++) for (let tx=0;tx<NORM;tx++) {
+      const sx=Math.round(tx*sw/(NORM-1))+x0;
+      const sy=Math.round(ty*sh/(NORM-1))+y0;
+      out[ty*NORM+tx] = sk[sy*SIZE+sx];
+    }
+    return out;
   }
 
-  // Normalized cross-correlation of two profile arrays
-  function corr(a, b) {
-    let dot = 0, aa = 0, bb = 0;
-    for (let i = 0; i < SIZE; i++) { dot += a[i]*b[i]; aa += a[i]*a[i]; bb += b[i]*b[i]; }
-    return (aa > 0 && bb > 0) ? dot / Math.sqrt(aa * bb) : 0;
+  // Jaccard similarity on two NORM x NORM skeletons
+  function jaccard(a,b) {
+    let isect=0,union=0;
+    for (let i=0;i<NORM*NORM;i++) { if(a[i]&&b[i]) isect++; if(a[i]||b[i]) union++; }
+    return union>0?isect/union:0;
   }
 
   try {
@@ -853,68 +854,66 @@ async function runSearchOcrCellByCell(bounds) {
     const templates = {};
 
     for (const char of alphabet) {
-      const tmpC = document.createElement('canvas');
-      tmpC.width = SIZE; tmpC.height = SIZE;
-      const tmpX = tmpC.getContext('2d');
-      tmpX.fillStyle = '#fff'; tmpX.fillRect(0, 0, SIZE, SIZE);
-      tmpX.fillStyle = '#000';
-      tmpX.font = `bold 34px "Impact","Arial Black",sans-serif`;
-      tmpX.textAlign = 'center'; tmpX.textBaseline = 'middle';
-      tmpX.fillText(char, SIZE/2, SIZE/2);
-      const d = tmpX.getImageData(0, 0, SIZE, SIZE).data;
-      const bin = new Uint8Array(SIZE * SIZE);
-      for (let j = 0; j < SIZE * SIZE; j++) bin[j] = d[j*4] < 80 ? 1 : 0;
-      templates[char] = getProfiles(thinBinary(bin));
+      const tmpC=document.createElement('canvas');
+      tmpC.width=SIZE; tmpC.height=SIZE;
+      const ctx=tmpC.getContext('2d');
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,SIZE,SIZE);
+      ctx.fillStyle='#000';
+      ctx.font=`bold 34px "Impact","Arial Black",sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(char,SIZE/2,SIZE/2);
+      const d=ctx.getImageData(0,0,SIZE,SIZE).data;
+      const bin=new Uint8Array(SIZE*SIZE);
+      for (let j=0;j<SIZE*SIZE;j++) bin[j]=d[j*4]<80?1:0;
+      templates[char]=normSkel(bin);
     }
 
     clearSearchGrid();
 
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const cellC = preprocessCell(searchState.image, bounds, r, c);
-        const cellD = cellC.getContext('2d').getImageData(0, 0, SIZE, SIZE).data;
-        const cellBin = new Uint8Array(SIZE * SIZE);
-        for (let j = 0; j < SIZE * SIZE; j++) cellBin[j] = cellD[j*4] < 128 ? 1 : 0;
+    for (let r=0;r<5;r++) {
+      for (let c=0;c<5;c++) {
+        const cellC=preprocessCell(searchState.image,bounds,r,c);
+        const cellD=cellC.getContext('2d').getImageData(0,0,SIZE,SIZE).data;
+        const cellBin=new Uint8Array(SIZE*SIZE);
+        for (let j=0;j<SIZE*SIZE;j++) cellBin[j]=cellD[j*4]<128?1:0;
 
-        const cellSk = thinBinary(cellBin);
-        const cellProf = getProfiles(cellSk);
+        const cellNs=normSkel(cellBin);
 
-        if (cellProf.total < 5) {
-          searchState.grid[r][c] = '?';
-          const el = document.getElementById(`cell-${r}-${c}`);
-          if (el) el.value = '?';
+        // Skip empty cells
+        let total=0; for(let j=0;j<NORM*NORM;j++) total+=cellNs[j];
+        if (total<3) {
+          searchState.grid[r][c]='?';
+          const el=document.getElementById(`cell-${r}-${c}`);
+          if(el) el.value='?';
           continue;
         }
 
-        let bestChar = '?', bestScore = -1;
+        let best='?', bestScore=-1;
         for (const char of alphabet) {
-          const t = templates[char];
-          const score = (corr(cellProf.h, t.h) + corr(cellProf.v, t.v)) / 2;
-          if (score > bestScore) { bestScore = score; bestChar = char; }
+          const score=jaccard(cellNs,templates[char]);
+          if (score>bestScore) { bestScore=score; best=char; }
         }
 
-        searchState.grid[r][c] = bestChar;
-        const cellEl = document.getElementById(`cell-${r}-${c}`);
-        if (cellEl) cellEl.value = bestChar;
+        searchState.grid[r][c]=best;
+        const cellEl=document.getElementById(`cell-${r}-${c}`);
+        if(cellEl) cellEl.value=best;
       }
     }
 
     solveSearch();
 
-    let unknownCount = 0;
-    for (let r = 0; r < 5; r++)
-      for (let c = 0; c < 5; c++)
-        if (searchState.grid[r][c] === '?') unknownCount++;
+    let unknownCount=0;
+    for(let r=0;r<5;r++) for(let c=0;c<5;c++) if(searchState.grid[r][c]==='?') unknownCount++;
 
     if (statusEl) {
-      statusEl.innerHTML = unknownCount > 0
-        ? `<span style="color:#ffd875;">⚠️ OCR done with ${unknownCount} uncertain letters — please correct them.</span>`
+      statusEl.innerHTML = unknownCount>0
+        ? `<span style="color:#ffd875;">⚠️ OCR done — ${unknownCount} uncertain letters, please correct them.</span>`
         : `<span style="color:#00ff66;">✓ OCR extracted all 25 letters!</span>`;
     }
 
-  } catch (err) {
-    console.error("OCR Error:", err);
-    if (statusEl) statusEl.innerHTML = `<span style="color:#f44336;">❌ OCR Error: ${err.message||err}</span>`;
+  } catch(err) {
+    console.error("OCR Error:",err);
+    if(statusEl) statusEl.innerHTML=`<span style="color:#f44336;">❌ OCR Error: ${err.message||err}</span>`;
   }
 }
 
