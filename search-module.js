@@ -825,55 +825,87 @@ async function getTesseractWorker() {
 async function runSearchOcrCellByCell(bounds) {
   const statusEl = document.getElementById('searchOcrStatus');
   if (statusEl) {
-    statusEl.innerHTML = `<span style="color:#ffd875;">⏳ Initializing OCR Engine...</span>`;
+    statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters...</span>`;
   }
   
   try {
-    const worker = await getTesseractWorker();
+    // Generate templates for all 26 letters once
+    const templates = {};
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 40;
+    tempCanvas.height = 40;
+    const tempCtx = tempCanvas.getContext('2d');
     
-    if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters (0/25)...</span>`;
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < alphabet.length; i++) {
+      const char = alphabet[i];
+      tempCtx.fillStyle = '#ffffff';
+      tempCtx.fillRect(0, 0, 40, 40);
+      tempCtx.fillStyle = '#000000';
+      tempCtx.font = 'bold 28px "Outfit", "Arial", sans-serif';
+      tempCtx.textAlign = 'center';
+      tempCtx.textBaseline = 'middle';
+      tempCtx.fillText(char, 20, 18);
+      
+      const imgData = tempCtx.getImageData(0, 0, 40, 40).data;
+      const binData = new Uint8Array(1600);
+      for (let j = 0; j < 1600; j++) {
+        binData[j] = imgData[j * 4];
+      }
+      templates[char] = binData;
     }
     
     // Clear current grid
     clearSearchGrid();
     
-    let completed = 0;
-    
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         const cellCanvas = preprocessCell(searchState.image, bounds, r, c);
+        const cellCtx = cellCanvas.getContext('2d');
+        const cellData = cellCtx.getImageData(0, 0, 40, 40).data;
+        const cellBin = new Uint8Array(1600);
+        for (let j = 0; j < 1600; j++) {
+          cellBin[j] = cellData[j * 4];
+        }
         
-        const { data: { text } } = await worker.recognize(cellCanvas);
-        let char = text.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+        let bestChar = '?';
+        let bestScore = Infinity;
         
-        // Apply character lookalike mapping
-        char = OCR_CHAR_MAP[char] || char;
-        
-        // Strip non-letters
-        char = char.replace(/[^A-Z]/g, '');
-        
-        if (!char || char.length === 0) char = '?';
+        // Find template with lowest absolute pixel difference (testing small shifts to be alignment-robust)
+        for (let i = 0; i < alphabet.length; i++) {
+          const char = alphabet[i];
+          const temp = templates[char];
+          let minDiff = Infinity;
+          
+          for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+              let diff = 0;
+              for (let y = 0; y < 40; y++) {
+                const ty = y + dy;
+                if (ty < 0 || ty >= 40) continue;
+                for (let x = 0; x < 40; x++) {
+                  const tx = x + dx;
+                  if (tx < 0 || tx >= 40) continue;
+                  
+                  const cellVal = cellBin[y * 40 + x];
+                  const tempVal = temp[ty * 40 + tx];
+                  diff += Math.abs(cellVal - tempVal);
+                }
+              }
+              if (diff < minDiff) minDiff = diff;
+            }
+          }
+          
+          if (minDiff < bestScore) {
+            bestScore = minDiff;
+            bestChar = char;
+          }
+        }
         
         // Fill cell immediately
-        searchState.grid[r][c] = char;
+        searchState.grid[r][c] = bestChar;
         const cellEl = document.getElementById(`cell-${r}-${c}`);
-        if (cellEl) cellEl.value = char;
-        
-        completed++;
-        if (statusEl) {
-          statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters (${completed}/25)...</span>`;
-        }
-      }
-    }
-    
-    // Check if we extracted everything
-    let unknownCount = 0;
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        if (searchState.grid[r][c] === '?' || !searchState.grid[r][c]) {
-          unknownCount++;
-        }
+        if (cellEl) cellEl.value = bestChar;
       }
     }
     
