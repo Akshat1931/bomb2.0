@@ -813,11 +813,16 @@ async function runSearchOcrCellByCell(bounds) {
       tempCtx.fillText(char, 20, 18);
       
       const imgData = tempCtx.getImageData(0, 0, 40, 40).data;
-      const binData = new Uint8Array(1600);
-      for (let j = 0; j < 1600; j++) {
-        binData[j] = imgData[j * 4];
+      const blackPixels = [];
+      for (let y = 0; y < 40; y++) {
+        for (let x = 0; x < 40; x++) {
+          const idx = (y * 40 + x) * 4;
+          if (imgData[idx] < 128) {
+            blackPixels.push({ x, y });
+          }
+        }
       }
-      templates[char] = binData;
+      templates[char] = blackPixels;
     }
     
     // Clear current grid
@@ -828,41 +833,49 @@ async function runSearchOcrCellByCell(bounds) {
         const cellCanvas = preprocessCell(searchState.image, bounds, r, c);
         const cellCtx = cellCanvas.getContext('2d');
         const cellData = cellCtx.getImageData(0, 0, 40, 40).data;
-        const cellBin = new Uint8Array(1600);
-        for (let j = 0; j < 1600; j++) {
-          cellBin[j] = cellData[j * 4];
+        
+        const cellGrid = new Uint8Array(1600);
+        let cellBlackCount = 0;
+        for (let y = 0; y < 40; y++) {
+          for (let x = 0; x < 40; x++) {
+            const idx = (y * 40 + x) * 4;
+            if (cellData[idx] < 128) {
+              cellGrid[y * 40 + x] = 1;
+              cellBlackCount++;
+            }
+          }
         }
         
         let bestChar = '?';
-        let bestScore = Infinity;
+        let bestScore = -1;
         
-        // Find template with lowest absolute pixel difference (testing small shifts to be alignment-robust)
         for (let i = 0; i < alphabet.length; i++) {
           const char = alphabet[i];
-          const temp = templates[char];
-          let minDiff = Infinity;
+          const tempPixels = templates[char];
+          let maxJaccard = -1;
           
-          for (let dy = -2; dy <= 2; dy++) {
-            for (let dx = -2; dx <= 2; dx++) {
-              let diff = 0;
-              for (let y = 0; y < 40; y++) {
-                const ty = y + dy;
-                if (ty < 0 || ty >= 40) continue;
-                for (let x = 0; x < 40; x++) {
-                  const tx = x + dx;
-                  if (tx < 0 || tx >= 40) continue;
-                  
-                  const cellVal = cellBin[y * 40 + x];
-                  const tempVal = temp[ty * 40 + tx];
-                  diff += Math.abs(cellVal - tempVal);
+          for (let dy = -3; dy <= 3; dy++) {
+            for (let dx = -3; dx <= 3; dx++) {
+              let intersection = 0;
+              for (let pIdx = 0; pIdx < tempPixels.length; pIdx++) {
+                const tx = tempPixels[pIdx].x - dx;
+                const ty = tempPixels[pIdx].y - dy;
+                if (tx >= 0 && tx < 40 && ty >= 0 && ty < 40) {
+                  if (cellGrid[ty * 40 + tx] === 1) {
+                    intersection++;
+                  }
                 }
               }
-              if (diff < minDiff) minDiff = diff;
+              const union = tempPixels.length + cellBlackCount - intersection;
+              const jaccard = union > 0 ? (intersection / union) : 0;
+              if (jaccard > maxJaccard) {
+                maxJaccard = jaccard;
+              }
             }
           }
           
-          if (minDiff < bestScore) {
-            bestScore = minDiff;
+          if (maxJaccard > bestScore) {
+            bestScore = maxJaccard;
             bestChar = char;
           }
         }
