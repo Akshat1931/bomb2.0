@@ -978,8 +978,10 @@ function clearSearchGrid() {
       }
     }
   }
-  document.getElementById('searchPasteInput').value = '';
-  document.getElementById('searchManualWordInput').value = '';
+  const pasteInput = document.getElementById('searchPasteInput');
+  if (pasteInput) pasteInput.value = '';
+  const manualInput = document.getElementById('searchManualWordInput');
+  if (manualInput) manualInput.value = '';
   searchState.manualWord = "";
   solveSearch();
 }
