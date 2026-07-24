@@ -793,103 +793,178 @@ async function runSearchOcrCellByCell(bounds) {
     statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">⏳ Extracting grid letters...</span>`;
   }
   
-  try {
-    // Generate templates for all 26 letters once
-    const templates = {};
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 40;
-    tempCanvas.height = 40;
-    const tempCtx = tempCanvas.getContext('2d');
-    
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (let i = 0; i < alphabet.length; i++) {
-      const char = alphabet[i];
-      tempCtx.fillStyle = '#ffffff';
-      tempCtx.fillRect(0, 0, 40, 40);
-      tempCtx.fillStyle = '#000000';
-      tempCtx.font = 'bold 28px "Outfit", "Arial", sans-serif';
-      tempCtx.textAlign = 'center';
-      tempCtx.textBaseline = 'middle';
-      tempCtx.fillText(char, 20, 18);
-      
-      const imgData = tempCtx.getImageData(0, 0, 40, 40).data;
-      const blackPixels = [];
-      for (let y = 0; y < 40; y++) {
-        for (let x = 0; x < 40; x++) {
-          const idx = (y * 40 + x) * 4;
-          if (imgData[idx] < 128) {
-            blackPixels.push({ x, y });
-          }
+  // ── Compute projection profiles (horizontal + vertical) ──
+  // Font-invariant: the 'where strokes exist' pattern is the same regardless
+  // of whether the font is Arial, Impact, or the game font.
+  function getProfiles(binary, size) {
+    const hproj = new Float32Array(size); // sum of black pixels per ROW
+    const vproj = new Float32Array(size); // sum of black pixels per COL
+    let total = 0;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (binary[y * size + x] === 1) {
+          hproj[y]++;
+          vproj[x]++;
+          total++;
         }
       }
-      templates[char] = blackPixels;
+    }
+    // Normalize by total so density does not affect comparison — only distribution
+    if (total > 0) {
+      for (let i = 0; i < size; i++) {
+        hproj[i] /= total;
+        vproj[i] /= total;
+      }
+    }
+    return { hproj, vproj, total };
+  }
+
+  // Normalized cross-correlation of two 1D profiles
+  function corrCoeff(a, b, len) {
+    let dot = 0, aa = 0, bb = 0;
+    for (let i = 0; i < len; i++) {
+      dot += a[i] * b[i];
+      aa  += a[i] * a[i];
+      bb  += b[i] * b[i];
+    }
+    return (aa > 0 && bb > 0) ? dot / Math.sqrt(aa * bb) : 0;
+  }
+
+  // Combined score: average of horizontal + vertical correlation
+  function profileSimilarity(p1, p2, size) {
+    const hc = corrCoeff(p1.hproj, p2.hproj, size);
+    const vc = corrCoeff(p1.vproj, p2.vproj, size);
+    return (hc + vc) / 2;
+  }
+
+  // STUB to keep compat (not used below)
+  function normalizeLetter(pixels40x40) {
+    let minX = 40, maxX = 0, minY = 40, maxY = 0;
+    let hasPixels = false;
+    
+    for (let y = 0; y < 40; y++) {
+      for (let x = 0; x < 40; x++) {
+        if (pixels40x40[y * 40 + x] < 128) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+          hasPixels = true;
+        }
+      }
     }
     
-    // Clear current grid
-    clearSearchGrid();
+    const norm = new Uint8Array(24 * 24).fill(255);
+    if (!hasPixels) return norm;
     
+    const srcW = maxX - minX + 1;
+    const srcH = maxY - minY + 1;
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = srcW;
+    tempCanvas.height = srcH;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    const croppedData = tempCtx.createImageData(srcW, srcH);
+    for (let y = 0; y < srcH; y++) {
+      for (let x = 0; x < srcW; x++) {
+        const srcVal = pixels40x40[(minY + y) * 40 + (minX + x)];
+        const idx = (y * srcW + x) * 4;
+        croppedData.data[idx] = srcVal;
+        croppedData.data[idx+1] = srcVal;
+        croppedData.data[idx+2] = srcVal;
+        croppedData.data[idx+3] = 255;
+      }
+    }
+    tempCtx.putImageData(croppedData, 0, 0);
+    
+    const destCanvas = document.createElement('canvas');
+    destCanvas.width = 24;
+    destCanvas.height = 24;
+    const destCtx = destCanvas.getContext('2d');
+    destCtx.drawImage(tempCanvas, 0, 0, srcW, srcH, 0, 0, 24, 24);
+    
+    const destData = destCtx.getImageData(0, 0, 24, 24).data;
+    for (let i = 0; i < 576; i++) {
+      norm[i] = destData[i * 4] < 128 ? 0 : 255;
+    }
+    
+    return norm;
+  }
+  
+  try {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const SIZE = 40;
+    const templates = {};
+
+    // Build templates using a bold condensed font (Impact is widely available
+    // and is thick/condensed — closest structural match to the game font)
+    for (let i = 0; i < alphabet.length; i++) {
+      const char = alphabet[i];
+      const tmpC = document.createElement('canvas');
+      tmpC.width = SIZE; tmpC.height = SIZE;
+      const tmpX = tmpC.getContext('2d');
+      tmpX.fillStyle = '#fff';
+      tmpX.fillRect(0, 0, SIZE, SIZE);
+      tmpX.fillStyle = '#000';
+      tmpX.font = `bold 34px "Impact", "Arial Black", sans-serif`;
+      tmpX.textAlign = 'center';
+      tmpX.textBaseline = 'middle';
+      tmpX.fillText(char, SIZE / 2, SIZE / 2);
+
+      const imgData = tmpX.getImageData(0, 0, SIZE, SIZE).data;
+      const binary = new Uint8Array(SIZE * SIZE);
+      // Strict threshold to strip anti-aliased pixels
+      for (let j = 0; j < SIZE * SIZE; j++) {
+        binary[j] = imgData[j * 4] < 80 ? 1 : 0;
+      }
+      templates[char] = getProfiles(binary, SIZE);
+    }
+
+    clearSearchGrid();
+
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         const cellCanvas = preprocessCell(searchState.image, bounds, r, c);
         const cellCtx = cellCanvas.getContext('2d');
-        const cellData = cellCtx.getImageData(0, 0, 40, 40).data;
-        
-        const cellGrid = new Uint8Array(1600);
-        let cellBlackCount = 0;
-        for (let y = 0; y < 40; y++) {
-          for (let x = 0; x < 40; x++) {
-            const idx = (y * 40 + x) * 4;
-            if (cellData[idx] < 128) {
-              cellGrid[y * 40 + x] = 1;
-              cellBlackCount++;
-            }
-          }
+        const cellData = cellCtx.getImageData(0, 0, SIZE, SIZE).data;
+
+        // Cell is already binarized (0 = letter pixel, 255 = background)
+        const cellBin = new Uint8Array(SIZE * SIZE);
+        for (let j = 0; j < SIZE * SIZE; j++) {
+          cellBin[j] = cellData[j * 4] < 128 ? 1 : 0;
         }
-        
+
+        const cellProf = getProfiles(cellBin, SIZE);
+
+        // Skip nearly-empty cells (no letter detected)
+        if (cellProf.total < 10) {
+          searchState.grid[r][c] = '?';
+          const el = document.getElementById(`cell-${r}-${c}`);
+          if (el) el.value = '?';
+          continue;
+        }
+
         let bestChar = '?';
         let bestScore = -1;
-        
+
         for (let i = 0; i < alphabet.length; i++) {
           const char = alphabet[i];
-          const tempPixels = templates[char];
-          let maxJaccard = -1;
-          
-          for (let dy = -3; dy <= 3; dy++) {
-            for (let dx = -3; dx <= 3; dx++) {
-              let intersection = 0;
-              for (let pIdx = 0; pIdx < tempPixels.length; pIdx++) {
-                const tx = tempPixels[pIdx].x - dx;
-                const ty = tempPixels[pIdx].y - dy;
-                if (tx >= 0 && tx < 40 && ty >= 0 && ty < 40) {
-                  if (cellGrid[ty * 40 + tx] === 1) {
-                    intersection++;
-                  }
-                }
-              }
-              const union = tempPixels.length + cellBlackCount - intersection;
-              const jaccard = union > 0 ? (intersection / union) : 0;
-              if (jaccard > maxJaccard) {
-                maxJaccard = jaccard;
-              }
-            }
-          }
-          
-          if (maxJaccard > bestScore) {
-            bestScore = maxJaccard;
+          const score = profileSimilarity(cellProf, templates[char], SIZE);
+          if (score > bestScore) {
+            bestScore = score;
             bestChar = char;
           }
         }
-        
-        // Fill cell immediately
+
         searchState.grid[r][c] = bestChar;
         const cellEl = document.getElementById(`cell-${r}-${c}`);
         if (cellEl) cellEl.value = bestChar;
       }
     }
-    
-    // Re-solve!
+
     solveSearch();
-    
+
     let unknownCount = 0;
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
@@ -901,10 +976,10 @@ async function runSearchOcrCellByCell(bounds) {
       if (unknownCount > 0) {
         statusEl.innerHTML = `<span style="color:#ffd875;">⚠️ OCR completed with ${unknownCount} uncertain letters. Please edit them.</span>`;
       } else {
-        statusEl.innerHTML = `<span style="color:#00ff66;">✓ OCR Extracted all 25 letters with 100% layout accuracy!</span>`;
+        statusEl.innerHTML = `<span style="color:#00ff66;">✓ OCR Extracted all 25 letters successfully!</span>`;
       }
     }
-    
+
   } catch (err) {
     console.error("OCR Cell Error:", err);
     if (statusEl) {
