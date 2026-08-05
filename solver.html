@@ -479,6 +479,7 @@
     <button class="nav-link" type="button" data-target="buttonSection" onclick="showSection('buttonSection')">The Button</button>
     <button class="nav-link" type="button" data-target="whosSection" onclick="showSection('whosSection')">Who's on First</button>
     <button class="nav-link" type="button" data-target="wiresSection" onclick="showSection('wiresSection')">Wire Sequences</button>
+    <button class="nav-link" type="button" data-target="circuitSection" onclick="showSection('circuitSection')">Circuit Solver</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1199,6 +1200,9 @@
     </div>
   </section>
 
+  <section id="circuitSection" class="page-section">
+  </section>
+
   <section id="aboutSection" class="page-section">
     <div
       style="max-width:700px; margin:auto; color:#ddd; line-height:1.7; font-size:14px; padding:12px; background:#101025; border:1px solid #222; border-radius:12px;">
@@ -1223,6 +1227,7 @@
   <script src="./button-module.js"></script>
   <script src="./whos-module.js"></script>
   <script src="./wires-module.js"></script>
+  <script src="./circuit-module.js"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -1239,7 +1244,7 @@
 
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active')) return;
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
       for (const item of items) {
@@ -1380,6 +1385,12 @@
           window.initWiresModule();
         }
         window.wiresLoaded = true;
+      }
+      if (id === 'circuitSection' && !window.circuitLoaded) {
+        if (typeof window.initCircuitModule === 'function') {
+          window.initCircuitModule();
+        }
+        window.circuitLoaded = true;
       }
     }
 
