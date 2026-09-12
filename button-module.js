@@ -1,26 +1,32 @@
 /**
  * The Button Module Solver
- * Supports dynamic guidebook rule parsing, image OCR/color recognition, and manual input controls.
+ * Supports dynamic guidebook rule parsing, image OCR/color recognition,
+ * multi-option branching for unknown/empty bomb parameters, and manual input controls.
  */
 
 (function() {
-const DEFAULT_BUTTON_RULES = `If the button is blue and says Hold, wait 10 seconds.
-Otherwise, if there is more than one module on the bomb and the button is green, wait 5 seconds.
-Otherwise, if the button is white and says Hold, wait 7 seconds.
-Otherwise, if the last digit of the serial number is odd and the button is red, wait 12 seconds.
-Otherwise, if the button is white, wait 3 seconds.
-Otherwise, if the button says Hold, wait 5 seconds.
-Otherwise, if the button says Punch, wait 10 seconds.
-Otherwise, wait 7 seconds.`;
+const DEFAULT_BUTTON_RULES = `button is green and label says Press: 5s
+button is red and label says Blue: 10s
+button is white and label says Detonate: 12s
+there is exactly 1 needy module, button is white, and label says Punch: 11s
+non-needy module count is odd, button is yellow, and label says Blue: 5s
+rightmost serial digit is even and button is yellow: 7s
+serial has more digits than letters and label says Detonate: 3s
+serial has fewer than 2 vowels and label says Blue: 4s
+this is button 2 and label says Red: 5s
+Otherwise: 7s`;
 
 const buttonState = {
   initialized: false,
   rulesText: DEFAULT_BUTTON_RULES,
   parsedRules: [],
   color: 'green',
-  label: 'HOLD',
+  label: 'Press',
   serial: 'AB3',
-  moduleCount: 2,
+  nonNeedyCount: 'unknown',
+  needyCount: 'unknown',
+  disarmedCount: 'unknown',
+  buttonIndex: '1',
   image: null
 };
 
@@ -31,13 +37,17 @@ function initButtonModule() {
   const colorSelect = document.getElementById('buttonColorSelect');
   const labelInput = document.getElementById('buttonLabelInput');
   const serialInput = document.getElementById('buttonSerialInput');
-  const moduleCountInput = document.getElementById('buttonModuleCountInput');
+  const nonNeedySelect = document.getElementById('buttonNonNeedySelect');
+  const needySelect = document.getElementById('buttonNeedySelect');
+  const disarmedSelect = document.getElementById('buttonDisarmedSelect');
+  const buttonIndexSelect = document.getElementById('buttonIndexSelect');
   const rulesArea = document.getElementById('buttonRulesInput');
   const resetRulesBtn = document.getElementById('buttonResetRulesBtn');
   const dropzone = document.getElementById('buttonDropzone');
   const fileInput = document.getElementById('buttonFileInput');
 
   if (colorSelect) {
+    colorSelect.value = buttonState.color;
     colorSelect.addEventListener('change', () => {
       buttonState.color = colorSelect.value;
       evaluateButton();
@@ -45,6 +55,7 @@ function initButtonModule() {
   }
 
   if (labelInput) {
+    labelInput.value = buttonState.label;
     labelInput.addEventListener('input', () => {
       buttonState.label = labelInput.value.trim();
       evaluateButton();
@@ -52,15 +63,42 @@ function initButtonModule() {
   }
 
   if (serialInput) {
+    serialInput.value = buttonState.serial;
     serialInput.addEventListener('input', () => {
       buttonState.serial = serialInput.value.trim();
+      updateSerialDetailsUI(buttonState.serial);
       evaluateButton();
     });
   }
 
-  if (moduleCountInput) {
-    moduleCountInput.addEventListener('input', () => {
-      buttonState.moduleCount = parseInt(moduleCountInput.value, 10) || 1;
+  if (nonNeedySelect) {
+    nonNeedySelect.value = buttonState.nonNeedyCount;
+    nonNeedySelect.addEventListener('change', () => {
+      buttonState.nonNeedyCount = nonNeedySelect.value;
+      evaluateButton();
+    });
+  }
+
+  if (needySelect) {
+    needySelect.value = buttonState.needyCount;
+    needySelect.addEventListener('change', () => {
+      buttonState.needyCount = needySelect.value;
+      evaluateButton();
+    });
+  }
+
+  if (disarmedSelect) {
+    disarmedSelect.value = buttonState.disarmedCount;
+    disarmedSelect.addEventListener('change', () => {
+      buttonState.disarmedCount = disarmedSelect.value;
+      evaluateButton();
+    });
+  }
+
+  if (buttonIndexSelect) {
+    buttonIndexSelect.value = buttonState.buttonIndex;
+    buttonIndexSelect.addEventListener('change', () => {
+      buttonState.buttonIndex = buttonIndexSelect.value;
       evaluateButton();
     });
   }
@@ -107,8 +145,23 @@ function initButtonModule() {
 
   document.addEventListener('paste', handleButtonPaste);
 
+  updateSerialDetailsUI(buttonState.serial);
   buttonState.parsedRules = parseButtonRulesText(buttonState.rulesText);
   evaluateButton();
+}
+
+function updateSerialDetailsUI(serial) {
+  const el = document.getElementById('buttonSerialDetails');
+  if (!el) return;
+  const s = (serial || '').trim().toUpperCase();
+  const digits = s.match(/\d/g) || [];
+  const letters = s.match(/[A-Z]/g) || [];
+  const vowels = s.match(/[AEIOU]/g) || [];
+  const lastDigit = digits.length > 0 ? parseInt(digits[digits.length - 1], 10) : null;
+  const rightmostStr = lastDigit !== null ? `${lastDigit} (${lastDigit % 2 === 0 ? 'Even' : 'Odd'})` : 'None';
+  const vowelsStr = vowels.length > 0 ? `${vowels.length} (${vowels.join(', ')})` : '0';
+
+  el.textContent = `Digits: ${digits.length} | Letters: ${letters.length} | Vowels: ${vowelsStr} | Rightmost: ${rightmostStr}`;
 }
 
 function handleButtonPaste(e) {
@@ -142,121 +195,375 @@ function parseButtonRulesText(text) {
 }
 
 function parseSingleRuleLine(line) {
-  // Normalize
-  const lower = line.toLowerCase();
-  
-  // Extract action (e.g. "wait 10 seconds", "hold the button", "press and release")
+  const raw = line.trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+
   let action = "Follow manual rule";
-  const actionMatch = line.match(/(?:wait\s+\d+\s*seconds?|press\s+and\s+release|hold\s+(?:the\s+)?button|release\s+when|click\s+immediately|press\s+and\s+hold)/i);
-  if (actionMatch) {
-    action = actionMatch[0];
-    action = action.charAt(0).toUpperCase() + action.slice(1);
-  } else {
-    const commaParts = line.split(',');
-    if (commaParts.length > 1) {
-      action = commaParts[commaParts.length - 1].replace(/^then\s+/i, '').trim();
-      action = action.charAt(0).toUpperCase() + action.slice(1);
+  let condStr = raw;
+
+  if (raw.includes(':')) {
+    const colonIdx = raw.lastIndexOf(':');
+    condStr = raw.substring(0, colonIdx).trim();
+    const actionPart = raw.substring(colonIdx + 1).trim();
+    if (actionPart) {
+      action = actionPart;
     }
+  } else if (lower.includes(', then ')) {
+    const parts = raw.split(/,\s*then\s+/i);
+    condStr = parts[0].trim();
+    action = parts[1].trim();
+  } else {
+    const actionMatch = raw.match(/(?:wait\s+\d+\s*(?:s|seconds?)|press\s+and\s+release|hold\s+(?:the\s+)?button|\b\d+s\b)/i);
+    if (actionMatch) {
+      action = actionMatch[0];
+      condStr = raw.replace(actionMatch[0], '').replace(/,\s*$/, '').trim();
+    }
+  }
+
+  if (/^\d+s$/i.test(action)) {
+    action = `Wait ${action}`;
+  }
+
+  if (/^otherwise\b/i.test(condStr) || condStr === '') {
+    return {
+      rawText: line,
+      isOtherwise: true,
+      action: action,
+      conditions: []
+    };
   }
 
   const conditions = [];
+  const cLower = condStr.toLowerCase();
 
-  // Check Color condition
-  const colorMatch = lower.match(/(?:button\s+is|is\s+a)\s+(blue|green|white|red|yellow)/);
-  if (colorMatch) {
-    conditions.push({ type: 'color', color: colorMatch[1] });
+  // 1. Color: button is (color) OR (color) button
+  const colMatch = cLower.match(/(?:button\s+is|is\s+a)\s+(green|red|white|yellow|blue)|(green|red|white|yellow|blue)\s+button/);
+  if (colMatch) {
+    conditions.push({ type: 'color', color: (colMatch[1] || colMatch[2]).toLowerCase() });
   }
 
-  // Check Label condition
-  const labelMatch = lower.match(/says\s+["']?([a-z0-9]+)["']?/i);
-  if (labelMatch) {
-    conditions.push({ type: 'label', label: labelMatch[1].toLowerCase() });
+  // 2. Label: label says (word) OR says (word) OR label is (word)
+  const lblMatch = cLower.match(/(?:label\s+says|label\s+is|says)\s+["']?([a-z0-9?]+)["']?/i);
+  if (lblMatch) {
+    conditions.push({ type: 'label', label: lblMatch[1].toLowerCase() });
   }
 
-  // Check Serial condition (odd / even)
-  if (lower.includes('serial') || lower.includes('last digit')) {
-    if (lower.includes('odd')) {
-      conditions.push({ type: 'serial', isOdd: true });
-    } else if (lower.includes('even')) {
-      conditions.push({ type: 'serial', isOdd: false });
+  // 3. Needy module count
+  if (cLower.includes('needy') && !cLower.includes('non-needy')) {
+    if (cLower.includes('no needy') || cLower.includes('0 needy')) {
+      conditions.push({ type: 'needyCount', exact: 0 });
+    } else {
+      const needyNum = cLower.match(/(?:exactly\s+)?(\d+)\s+needy/);
+      if (needyNum) {
+        conditions.push({ type: 'needyCount', exact: parseInt(needyNum[1], 10) });
+      }
     }
   }
 
-  // Check Module Count condition
-  if (lower.includes('more than one module') || lower.includes('more than 1 module') || lower.includes('> 1 module')) {
-    conditions.push({ type: 'moduleCount', min: 2 });
-  } else {
-    const modMatch = lower.includes('module') && lower.match(/(\d+)\s+modules?/);
-    if (modMatch) {
-      conditions.push({ type: 'moduleCount', exact: parseInt(modMatch[1], 10) });
+  // 4. Non-needy module count
+  if (cLower.includes('non-needy')) {
+    if (cLower.includes('odd')) {
+      conditions.push({ type: 'nonNeedyCount', parity: 'odd' });
+    } else if (cLower.includes('even')) {
+      conditions.push({ type: 'nonNeedyCount', parity: 'even' });
+    } else {
+      const nnNum = cLower.match(/(?:count\s+is\s+|is\s+)(\d+)/);
+      if (nnNum) {
+        conditions.push({ type: 'nonNeedyCount', exact: parseInt(nnNum[1], 10) });
+      }
     }
+  }
+
+  // 5. Disarmed / Solved modules count
+  if (cLower.includes('disarmed') || cLower.includes('solved') || cLower.includes('discorded')) {
+    if (cLower.includes('odd')) {
+      conditions.push({ type: 'disarmedCount', parity: 'odd' });
+    } else if (cLower.includes('even')) {
+      conditions.push({ type: 'disarmedCount', parity: 'even' });
+    } else if (cLower.includes('no modules') || cLower.includes('0 modules') || cLower.includes('empty')) {
+      conditions.push({ type: 'disarmedCount', exact: 0 });
+    } else {
+      const disNum = cLower.match(/(\d+)\s+modules?\s+(?:disarmed|solved)/);
+      if (disNum) {
+        conditions.push({ type: 'disarmedCount', exact: parseInt(disNum[1], 10) });
+      }
+    }
+  }
+
+  // 6. Serial number conditions
+  // a) rightmost / last digit
+  if (cLower.includes('rightmost serial') || cLower.includes('last digit') || (cLower.includes('serial') && cLower.includes('digit') && (cLower.includes('even') || cLower.includes('odd')))) {
+    if (cLower.includes('even')) {
+      conditions.push({ type: 'serialRightmost', isEven: true });
+    } else if (cLower.includes('odd')) {
+      conditions.push({ type: 'serialRightmost', isEven: false });
+    }
+  }
+
+  // b) serial digits vs letters
+  if (cLower.includes('serial') && cLower.includes('digits') && cLower.includes('letters')) {
+    if (cLower.includes('more digits than letters')) {
+      conditions.push({ type: 'serialDigitsVsLetters', moreDigits: true });
+    } else if (cLower.includes('fewer digits') || cLower.includes('more letters than digits')) {
+      conditions.push({ type: 'serialDigitsVsLetters', moreDigits: false });
+    }
+  }
+
+  // c) serial vowels
+  if (cLower.includes('serial') && (cLower.includes('vowel') || cLower.includes('vowels'))) {
+    const vowelMatch = cLower.match(/(?:fewer than|less than)\s+(\d+)\s+vowels?/);
+    const vowelMore = cLower.match(/(?:more than)\s+(\d+)\s+vowels?/);
+    const vowelAtLeast = cLower.match(/(?:at least)\s+(\d+)\s+vowels?/);
+    if (vowelMatch) {
+      conditions.push({ type: 'serialVowels', maxExclusive: parseInt(vowelMatch[1], 10) });
+    } else if (vowelMore) {
+      conditions.push({ type: 'serialVowels', minExclusive: parseInt(vowelMore[1], 10) });
+    } else if (vowelAtLeast) {
+      conditions.push({ type: 'serialVowels', minInclusive: parseInt(vowelAtLeast[1], 10) });
+    } else if (cLower.includes('has a vowel') || cLower.includes('contains a vowel')) {
+      conditions.push({ type: 'serialVowels', minInclusive: 1 });
+    }
+  }
+
+  // 7. Button index / position on bomb
+  const btnIdxMatch = cLower.match(/(?:this\s+is\s+button|is\s+button)\s+(\d+)/);
+  if (btnIdxMatch) {
+    conditions.push({ type: 'buttonIndex', index: parseInt(btnIdxMatch[1], 10) });
   }
 
   return {
     rawText: line,
+    isOtherwise: false,
     action: action,
     conditions: conditions
   };
 }
 
-// ── EVALUATOR ──────────────────────────────────────────────────
+// ── EVALUATION & MULTI-OPTION BRANCHING ENGINE ────────────────
+
+function evaluateConditionWithState(cond, state) {
+  if (cond.type === 'color') {
+    return state.color === cond.color;
+  }
+  if (cond.type === 'label') {
+    return state.label === cond.label;
+  }
+  if (cond.type === 'needyCount') {
+    if (state.needy === null || state.needy === undefined) return null;
+    return state.needy === cond.exact;
+  }
+  if (cond.type === 'nonNeedyCount') {
+    if (state.nonNeedy === null || state.nonNeedy === undefined) return null;
+    if (cond.parity) {
+      if (state.nonNeedy === 'odd') return cond.parity === 'odd';
+      if (state.nonNeedy === 'even') return cond.parity === 'even';
+      if (typeof state.nonNeedy === 'number') return (state.nonNeedy % 2 !== 0 ? 'odd' : 'even') === cond.parity;
+    }
+    if (cond.exact !== undefined) {
+      return state.nonNeedy === cond.exact;
+    }
+  }
+  if (cond.type === 'disarmedCount') {
+    if (state.disarmed === null || state.disarmed === undefined) return null;
+    if (cond.parity) {
+      if (state.disarmed === 'odd') return cond.parity === 'odd';
+      if (state.disarmed === 'even') return cond.parity === 'even';
+      if (typeof state.disarmed === 'number') return (state.disarmed % 2 !== 0 ? 'odd' : 'even') === cond.parity;
+    }
+    if (cond.exact !== undefined) {
+      return state.disarmed === cond.exact;
+    }
+  }
+  if (cond.type === 'serialRightmost') {
+    if (state.rightmostIsEven === null || state.rightmostIsEven === undefined) return null;
+    return state.rightmostIsEven === cond.isEven;
+  }
+  if (cond.type === 'serialDigitsVsLetters') {
+    if (!state.serial) return null;
+    const hasMore = state.digitsCount > state.lettersCount;
+    return hasMore === cond.moreDigits;
+  }
+  if (cond.type === 'serialVowels') {
+    if (!state.serial) return null;
+    if (cond.maxExclusive !== undefined) return state.vowelsCount < cond.maxExclusive;
+    if (cond.minExclusive !== undefined) return state.vowelsCount > cond.minExclusive;
+    if (cond.minInclusive !== undefined) return state.vowelsCount >= cond.minInclusive;
+  }
+  if (cond.type === 'buttonIndex') {
+    if (state.buttonIndex === null || state.buttonIndex === undefined) return null;
+    return state.buttonIndex === cond.index;
+  }
+  return true;
+}
 
 function evaluateButton() {
   const resultCard = document.getElementById('buttonResultCard');
   const actionEl = document.getElementById('buttonActionText');
   const ruleEl = document.getElementById('buttonMatchedRule');
+  const condContainer = document.getElementById('buttonConditionalContainer');
   const statusEl = document.getElementById('buttonStatus');
 
-  const currentColor = (buttonState.color || 'white').toLowerCase();
+  const currentColor = (buttonState.color || 'green').toLowerCase();
   const currentLabel = (buttonState.label || '').trim().toLowerCase();
-  const currentSerial = (buttonState.serial || '').trim();
-  const currentModuleCount = buttonState.moduleCount || 1;
+  const currentSerial = (buttonState.serial || '').trim().toUpperCase();
 
-  // Extract last digit of serial number
-  let lastDigit = null;
-  const digits = currentSerial.match(/\d/g);
-  if (digits && digits.length > 0) {
-    lastDigit = parseInt(digits[digits.length - 1], 10);
+  const digits = currentSerial.match(/\d/g) || [];
+  const letters = currentSerial.match(/[A-Z]/g) || [];
+  const vowels = currentSerial.match(/[AEIOU]/g) || [];
+  const lastDigit = digits.length > 0 ? parseInt(digits[digits.length - 1], 10) : null;
+  const rightmostIsEven = lastDigit !== null ? (lastDigit % 2 === 0) : null;
+
+  const baseState = {
+    color: currentColor,
+    label: currentLabel,
+    serial: currentSerial,
+    digitsCount: digits.length,
+    lettersCount: letters.length,
+    vowelsCount: vowels.length,
+    lastDigit: lastDigit,
+    rightmostIsEven: rightmostIsEven,
+    nonNeedy: buttonState.nonNeedyCount === 'unknown' ? null : buttonState.nonNeedyCount,
+    needy: buttonState.needyCount === 'unknown' ? null : parseInt(buttonState.needyCount, 10),
+    disarmed: buttonState.disarmedCount === 'unknown' ? null : (buttonState.disarmedCount === '0' ? 0 : buttonState.disarmedCount),
+    buttonIndex: buttonState.buttonIndex === 'unknown' ? null : parseInt(buttonState.buttonIndex, 10)
+  };
+
+  // Identify which unknown dimensions actually matter for the surviving rules
+  const candidateRules = buttonState.parsedRules.filter(r => {
+    if (r.isOtherwise) return true;
+    for (const c of r.conditions) {
+      if (c.type === 'color' && c.color !== currentColor) return false;
+      if (c.type === 'label' && c.label !== currentLabel) return false;
+    }
+    return true;
+  });
+
+  const needNonNeedy = baseState.nonNeedy === null && candidateRules.some(r => r.conditions.some(c => c.type === 'nonNeedyCount'));
+  const needNeedy = baseState.needy === null && candidateRules.some(r => r.conditions.some(c => c.type === 'needyCount'));
+  const needDisarmed = baseState.disarmed === null && candidateRules.some(r => r.conditions.some(c => c.type === 'disarmedCount'));
+  const needSerialRightmost = baseState.rightmostIsEven === null && candidateRules.some(r => r.conditions.some(c => c.type === 'serialRightmost'));
+  const needButtonIndex = baseState.buttonIndex === null && candidateRules.some(r => r.conditions.some(c => c.type === 'buttonIndex'));
+
+  // Build scenarios if any variables are ambiguous
+  const scenarios = [];
+
+  if (needNonNeedy) {
+    scenarios.push({ desc: 'Non-Needy module count is ODD', patch: { nonNeedy: 'odd' }, key: 'nonNeedy', val: 'odd' });
+    scenarios.push({ desc: 'Non-Needy module count is EVEN', patch: { nonNeedy: 'even' }, key: 'nonNeedy', val: 'even' });
+  } else if (needDisarmed) {
+    scenarios.push({ desc: 'Disarmed modules count is ODD', patch: { disarmed: 'odd' }, key: 'disarmed', val: 'odd' });
+    scenarios.push({ desc: 'Disarmed modules count is EVEN (or 0)', patch: { disarmed: 'even' }, key: 'disarmed', val: 'even' });
+  } else if (needNeedy) {
+    scenarios.push({ desc: 'There is exactly 1 Needy module', patch: { needy: 1 }, key: 'needy', val: '1' });
+    scenarios.push({ desc: 'There are 0 or 2+ Needy modules', patch: { needy: 0 }, key: 'needy', val: '0' });
+  } else if (needSerialRightmost) {
+    scenarios.push({ desc: 'Rightmost serial digit is EVEN', patch: { rightmostIsEven: true }, key: 'serial', val: 'even' });
+    scenarios.push({ desc: 'Rightmost serial digit is ODD', patch: { rightmostIsEven: false }, key: 'serial', val: 'odd' });
+  } else if (needButtonIndex) {
+    scenarios.push({ desc: 'This is Button 2 on the bomb', patch: { buttonIndex: 2 }, key: 'buttonIndex', val: '2' });
+    scenarios.push({ desc: 'This is Button 1 (or other)', patch: { buttonIndex: 1 }, key: 'buttonIndex', val: '1' });
   }
-  const isSerialOdd = (lastDigit !== null) ? (lastDigit % 2 !== 0) : false;
 
-  let matchedRule = null;
-
-  for (let i = 0; i < buttonState.parsedRules.length; i++) {
-    const rule = buttonState.parsedRules[i];
-    let allMet = true;
-
-    for (const cond of rule.conditions) {
-      if (cond.type === 'color' && cond.color !== currentColor) {
-        allMet = false; break;
+  function simulateRuleChain(st) {
+    for (const rule of buttonState.parsedRules) {
+      if (rule.isOtherwise) {
+        return { rule, action: rule.action };
       }
-      if (cond.type === 'label' && cond.label !== currentLabel) {
-        allMet = false; break;
-      }
-      if (cond.type === 'serial') {
-        if (lastDigit === null || isSerialOdd !== cond.isOdd) {
-          allMet = false; break;
+      let matches = true;
+      for (const cond of rule.conditions) {
+        const res = evaluateConditionWithState(cond, st);
+        if (res === false) {
+          matches = false;
+          break;
+        }
+        if (res === null) {
+          matches = false;
+          break;
         }
       }
-      if (cond.type === 'moduleCount') {
-        if (cond.min !== undefined && currentModuleCount < cond.min) {
-          allMet = false; break;
-        }
-        if (cond.exact !== undefined && currentModuleCount !== cond.exact) {
-          allMet = false; break;
-        }
+      if (matches) {
+        return { rule, action: rule.action };
+      }
+    }
+    return { rule: null, action: 'No rule matched' };
+  }
+
+  if (scenarios.length > 0) {
+    const outcomes = [];
+    const distinctActions = new Set();
+
+    for (const sc of scenarios) {
+      const testState = Object.assign({}, baseState, sc.patch);
+      const res = simulateRuleChain(testState);
+      outcomes.push({
+        desc: sc.desc,
+        key: sc.key,
+        val: sc.val,
+        action: res.action,
+        ruleText: res.rule ? res.rule.rawText : ''
+      });
+      distinctActions.add(res.action);
+    }
+
+    if (distinctActions.size === 1) {
+      // All scenarios yield the exact same action!
+      const act = [...distinctActions][0];
+      if (actionEl) actionEl.textContent = act;
+      if (ruleEl) ruleEl.textContent = `Matched for all conditions: "${outcomes[0].ruleText}"`;
+      if (condContainer) condContainer.style.display = 'none';
+    } else {
+      // Multiple distinct possibilities!
+      const summaryText = outcomes.map(o => `${o.action} (${o.desc.includes('ODD') ? 'Odd' : o.desc.includes('EVEN') ? 'Even' : o.desc.includes('1 Needy') ? '1 Needy' : 'Alt'})`).join('  |  ');
+      if (actionEl) actionEl.textContent = summaryText;
+      if (ruleEl) ruleEl.textContent = "⚠️ Result depends on bomb parameters (see conditional options below):";
+
+      if (condContainer) {
+        condContainer.style.display = 'block';
+        let html = `<div style="background:#1a1a36; padding:16px; border-radius:10px; border:1px solid #3d3d66;">
+          <div style="color:#f5c542; font-weight:700; font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            <span>⚡ CONDITIONAL SOLUTIONS (Auto-Evaluated):</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">`;
+
+        outcomes.forEach((o, idx) => {
+          const badgeColor = idx === 0 ? '#4caf50' : '#2196f3';
+          const bgRgba = idx === 0 ? 'rgba(76,175,80,0.14)' : 'rgba(33,150,243,0.14)';
+          html += `
+            <div style="padding:12px 14px; border-radius:8px; background:${bgRgba}; border:1px solid ${badgeColor}; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <div style="color:#fff; font-weight:600; font-size:14px;">👉 ${o.desc}:</div>
+                <div style="color:#aaa; font-size:12px; margin-top:2px; font-style:italic;">Rule: "${o.ruleText}"</div>
+              </div>
+              <div style="font-size:20px; font-weight:800; color:${badgeColor}; font-family:'Outfit', sans-serif;">
+                ${o.action}
+              </div>
+            </div>`;
+        });
+
+        html += `</div></div>`;
+        condContainer.innerHTML = html;
       }
     }
 
-    if (allMet) {
-      matchedRule = rule;
-      break;
+    if (resultCard) {
+      resultCard.style.borderColor = '#2196f3';
+      resultCard.style.background = 'rgba(33, 150, 243, 0.1)';
     }
+    if (statusEl) {
+      statusEl.textContent = `Evaluated: Color = ${currentColor.toUpperCase()}, Label = "${currentLabel.toUpperCase()}"`;
+      statusEl.style.color = '#aaa';
+    }
+    return;
   }
 
-  if (matchedRule) {
-    if (actionEl) actionEl.textContent = matchedRule.action;
-    if (ruleEl) ruleEl.textContent = `Matched Rule: "${matchedRule.rawText}"`;
+  // Single deterministic evaluation
+  const res = simulateRuleChain(baseState);
+  if (condContainer) condContainer.style.display = 'none';
+
+  if (res.rule) {
+    if (actionEl) actionEl.textContent = res.action;
+    if (ruleEl) ruleEl.textContent = `Matched Rule: "${res.rule.rawText}"`;
     if (resultCard) {
       resultCard.style.borderColor = '#4caf50';
       resultCard.style.background = 'rgba(76, 175, 80, 0.1)';

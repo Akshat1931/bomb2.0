@@ -1108,11 +1108,11 @@
 
       <!-- Collapsible Quick Guide -->
       <details style="background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; color:#bbb;">
-        <summary style="cursor:pointer; color:#f5c542; font-weight:600; font-size:13px; outline:none;">📖 Quick Guide: How to Defuse The Button</summary>
+        <summary style="cursor:pointer; color:#f5c542; font-weight:600; font-size:13px; outline:none;">📖 Quick Guide: How to Defuse The Button (Dynamic Countdown)</summary>
         <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
-          <p style="margin:0 0 6px;"><strong>1. Input Details:</strong> Select Button Color, Label, Serial Number, and Battery/Indicator count.</p>
-          <p style="margin:0 0 6px;"><strong>2. Press vs Hold:</strong> The solver checks rules in order and outputs either <strong>"PRESS AND IMMEDIATELY RELEASE"</strong> or <strong>"HOLD BUTTON"</strong>.</p>
-          <p style="margin:0;"><strong>3. Releasing a Held Button:</strong> When holding, the side strip lights up. Release when the countdown timer has: <strong>Blue Strip</strong> = 4 in any position, <strong>Yellow Strip</strong> = 5 in any position, <strong>Any Other Color Strip</strong> = 1 in any position.</p>
+          <p style="margin:0 0 6px;"><strong>1. Dynamic Countdown Timing:</strong> Solves target release timings (e.g. 5s, 7s, 10s, 11s, 12s) based on button color, label, needy count, non-needy count, disarmed modules, and serial number rules.</p>
+          <p style="margin:0 0 6px;"><strong>2. Auto-Branching (Show Both):</strong> If non-needy count or disarmed modules count is left on <em>Auto/Unknown</em>, the solver automatically evaluates and highlights both possibilities (e.g. <strong>5s if Odd</strong> vs <strong>7s if Even</strong>)!</p>
+          <p style="margin:0;"><strong>3. Serial Analysis:</strong> The serial input automatically calculates vowels, digits vs letters, and rightmost digit parity in real time.</p>
         </div>
       </details>
 
@@ -1131,53 +1131,110 @@
 
       <!-- Controls Grid -->
       <div
-        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
+        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+        <!-- 1. Button Color -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button
-            Color</label>
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button Color</label>
           <select id="buttonColorSelect"
             style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
-            <option value="blue">Blue</option>
             <option value="green" selected>Green</option>
-            <option value="white">White</option>
             <option value="red">Red</option>
+            <option value="white">White</option>
             <option value="yellow">Yellow</option>
+            <option value="blue">Blue</option>
           </select>
         </div>
 
+        <!-- 2. Button Label -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button
-            Label</label>
-          <input id="buttonLabelInput" type="text" value="HOLD" placeholder="e.g. HOLD, PRESS, PUNCH"
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button Label</label>
+          <input id="buttonLabelInput" type="text" value="Press" placeholder="e.g. Press, Blue, Detonate, Punch, Red"
             style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Press'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Press</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Blue'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Blue</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Detonate'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Detonate</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Punch'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Punch</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Red'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Red</button>
+          </div>
         </div>
 
+        <!-- 3. Serial Number -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial
-            Number</label>
-          <input id="buttonSerialInput" type="text" value="AB3" placeholder="e.g. AB3 (auto checks odd/even)"
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial Number</label>
+          <input id="buttonSerialInput" type="text" value="AB3" placeholder="e.g. AB3"
             style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div id="buttonSerialDetails" style="font-size:11px; color:#8888aa; margin-top:6px;">
+            Digits: 1 | Letters: 2 | Vowels: 1 (A) | Rightmost: 3 (Odd)
+          </div>
         </div>
 
+        <!-- 4. Non-Needy Modules -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Module
-            Count on Bomb</label>
-          <input id="buttonModuleCountInput" type="number" min="1" max="20" value="2"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Non-Needy Modules</label>
+          <select id="buttonNonNeedySelect"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
+            <option value="unknown" selected>Auto / Unknown (Show Both)</option>
+            <option value="odd">Odd count (1, 3, 5...)</option>
+            <option value="even">Even count (2, 4, 6...)</option>
+          </select>
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">If left Auto, evaluates both Odd & Even!</div>
+        </div>
+
+        <!-- 5. Needy Modules Count -->
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">5. Needy Modules Count</label>
+          <select id="buttonNeedySelect"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
+            <option value="unknown" selected>Auto / Unknown (Show Both)</option>
+            <option value="0">0 (No needy modules)</option>
+            <option value="1">Exactly 1 Needy</option>
+            <option value="2">2+ Needy Modules</option>
+          </select>
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">E.g. Vent Gas, Capacitor, Knobs</div>
+        </div>
+
+        <!-- 6. Modules Disarmed / Solved Count -->
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">6. Modules Disarmed / Solved</label>
+          <select id="buttonDisarmedSelect"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
+            <option value="unknown" selected>Auto / Unknown (Show Both)</option>
+            <option value="0">0 (Empty / None disarmed)</option>
+            <option value="odd">Odd count (1, 3, 5...)</option>
+            <option value="even">Even count (2, 4, 6...)</option>
+          </select>
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">Solved modules count on bomb</div>
+        </div>
+
+        <!-- 7. Button Number (Position on Bomb) -->
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">7. This Button Number</label>
+          <select id="buttonIndexSelect"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
+            <option value="1" selected>Button 1 (First Button)</option>
+            <option value="2">Button 2 (Second Button)</option>
+            <option value="3">Button 3</option>
+            <option value="unknown">Auto / Unknown (Show Both)</option>
+          </select>
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">If multiple buttons on bomb</div>
         </div>
       </div>
 
       <!-- Result Display Card -->
       <div id="buttonResultCard"
-        style="padding:20px; border-radius:12px; border:2px solid #4caf50; background:rgba(76, 175, 80, 0.1); text-align:center; margin-bottom:24px; transition:all 0.3s;">
+        style="padding:22px; border-radius:12px; border:2px solid #4caf50; background:rgba(76, 175, 80, 0.1); text-align:center; margin-bottom:24px; transition:all 0.3s;">
         <div
           style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">
           Required Action</div>
         <div id="buttonActionText"
           style="color:#fff; font-size:28px; font-weight:700; font-family:'Outfit', sans-serif; text-shadow:0 0 10px rgba(255,255,255,0.2);">
-          Wait 5 seconds</div>
+          Wait 5s</div>
         <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">Matched
-          Rule: "Otherwise, if there is more than one module on the bomb and the button is green, wait 5 seconds."</div>
+          Rule: "button is green and label says Press: 5s"</div>
+
+        <!-- Conditional Possibilities Container (Renders when input is empty/ambiguous) -->
+        <div id="buttonConditionalContainer" style="display:none; margin-top:16px; text-align:left;"></div>
       </div>
 
       <!-- Dynamic Guidebook Rules Textarea -->
@@ -1417,20 +1474,16 @@
         </div>
 
         <!-- 12. The Button -->
-        <div class="help-module-card" data-category="puzzles" data-keywords="the button hold press abort detonate car frk strip countdown timer"
+        <div class="help-module-card" data-category="puzzles" data-keywords="the button countdown seconds 5s 7s 10s 11s 12s needy non-needy disarmed odd even serial"
           style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔘 The Button</h3>
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔘 The Button (Dynamic Timing)</h3>
             <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
           </div>
           <div style="font-size:13px; color:#ccc; line-height:1.6;">
-            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A large colored button with a label. You either press and immediately release, or hold it down.</p>
-            <p style="margin:0 0 8px;"><strong style="color:#fff;">Input:</strong> Enter Button Color, Label, Serial Number, and Battery/Indicator counts.</p>
-            <p style="margin:0;"><strong style="color:#81c784;">Held Button Release Rule:</strong> When holding, the side strip lights up. Release when the countdown timer contains:<br>
-              • <strong style="color:#42a5f5;">Blue Strip</strong> = 4 in any position<br>
-              • <strong style="color:#fbc02d;">Yellow Strip</strong> = 5 in any position<br>
-              • <strong style="color:#fff;">Any Other Color</strong> = 1 in any position
-            </p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Solves countdown release timings (5s, 7s, 10s, 11s, 12s, etc.) across button color, label, needy count, non-needy count, disarmed modules, and serial number rules.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Dual-Option Highlighting:</strong> If you leave parameters like non-needy count or disarmed modules empty/unknown, the solver automatically evaluates both variations (e.g. <em>5s if Odd</em> vs <em>7s if Even</em>) and highlights both solutions side-by-side!</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Live Serial Stats:</strong> Automatically calculates vowels count, rightmost digit parity (even/odd), and digits vs letters balance in real time.</p>
           </div>
         </div>
 
