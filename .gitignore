@@ -1,6 +1,11 @@
 # dependencies
 node_modules/
 
+# environment secrets — NEVER commit these
+.env
+.env.example
+.env.local
+
 # build output (Vercel builds this from source)
 dist/
 
