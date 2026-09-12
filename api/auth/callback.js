@@ -9,8 +9,12 @@
 const { sign, secureCookieFlags } = require('../../lib/session');
 const { loginUser }               = require('../../lib/supabase');
 
+function clean(str) {
+  return (str || '').trim().replace(/^["']|["']$/g, '');
+}
+
 function getRedirectUri() {
-  let uri = (process.env.DISCORD_REDIRECT_URI || '').trim();
+  let uri = clean(process.env.DISCORD_REDIRECT_URI);
   if (!uri) uri = 'https://bomb2-0.vercel.app/api/auth/callback';
   if (!uri.includes('/api/auth/callback')) {
     uri = uri.replace(/\/+$/, '') + '/api/auth/callback';
@@ -25,6 +29,9 @@ module.exports = async function handler(req, res) {
 
   try {
     // 1. Exchange code → access token
+    const clientId = clean(process.env.DISCORD_CLIENT_ID);
+    const clientSecret = clean(process.env.DISCORD_CLIENT_SECRET);
+
     const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
       method:  'POST',
       headers: {
@@ -32,8 +39,8 @@ module.exports = async function handler(req, res) {
         'User-Agent':   'BombDefusalSolver (https://bomb2-0.vercel.app, 2.0.0)',
       },
       body:    new URLSearchParams({
-        client_id:     process.env.DISCORD_CLIENT_ID,
-        client_secret: process.env.DISCORD_CLIENT_SECRET,
+        client_id:     clientId,
+        client_secret: clientSecret,
         grant_type:    'authorization_code',
         code,
         redirect_uri:  getRedirectUri(),
@@ -43,7 +50,9 @@ module.exports = async function handler(req, res) {
 
     if (!tokenData.access_token) {
       console.error('Token exchange failed:', tokenData);
-      const detail = tokenData.error_description || tokenData.error || 'token_exchange_failed';
+      const detail = tokenData.error === 'invalid_client'
+        ? 'Discord Client Secret in Vercel does not match'
+        : (tokenData.error_description || tokenData.error || 'token_exchange_failed');
       return res.redirect(302, `/?auth_error=token&detail=${encodeURIComponent(detail)}`);
     }
 
