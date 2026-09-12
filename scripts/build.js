@@ -230,9 +230,12 @@ const TRIAL_SNIPPET = `
   function renderGuest() {
     HUD.classList.remove('is-visible');
     GATE.classList.remove('is-hidden');
-    var hasErr = window.location.search.indexOf('auth_error') !== -1;
+    var params = new URLSearchParams(window.location.search);
+    var err = params.get('auth_error');
+    var detail = params.get('detail');
+    var errMsg = err ? ('⚠️ Login issue: ' + (detail ? detail : err) + '. Please try again.') : '';
     CARD.innerHTML = [
-      hasErr ? '<div class="g-err">⚠️ Discord login failed or expired. Please try again.</div>' : '',
+      errMsg ? '<div class="g-err">' + errMsg + '</div>' : '',
       '<div class="g-logo">' + DISCORD_SVG + '</div>',
       '<h2 class="g-title">Authentication Required</h2>',
       '<p class="g-desc">Sign in with your Discord account to access the Bomb Defusal Solver. New accounts automatically receive a <strong>5-minute free trial</strong>.</p>',
