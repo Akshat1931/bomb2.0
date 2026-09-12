@@ -38,12 +38,37 @@ module.exports = async function handler(req, res) {
     const user = await getUser(session.discord_id);
     if (!user) return res.status(200).json({ status: 'guest' });
 
-    if (user.status === 'approved') {
+    if (user.status === 'approved' || (user.status && user.status.startsWith('approved_'))) {
+      let durationMs = Infinity;
+      if (user.status === 'approved_1d') durationMs = 1 * 24 * 60 * 60 * 1000;
+      else if (user.status === 'approved_3d') durationMs = 3 * 24 * 60 * 60 * 1000;
+      else if (user.status === 'approved_7d') durationMs = 7 * 24 * 60 * 60 * 1000;
+      else if (user.status === 'approved_14d') durationMs = 14 * 24 * 60 * 60 * 1000;
+      else if (user.status === 'approved_30d') durationMs = 30 * 24 * 60 * 60 * 1000;
+
+      if (durationMs !== Infinity && user.approved_at) {
+        const approvedAt = new Date(user.approved_at).getTime();
+        const expiresAt = approvedAt + durationMs;
+        if (Date.now() > expiresAt) {
+          // Time expired! Auto-expire user and force re-approval
+          const { updateUser } = require('../../lib/supabase');
+          await updateUser(user.discord_id, { status: 'expired' });
+          return res.status(200).json({
+            status:     'expired',
+            username:   user.username,
+            discord_id: user.discord_id,
+            avatar:     user.avatar,
+            reason:     'Access period expired',
+          });
+        }
+      }
+
       return res.status(200).json({
-        status: 'approved',
-        username: user.username,
+        status:     'approved',
+        username:   user.username,
         discord_id: user.discord_id,
-        avatar: user.avatar,
+        avatar:     user.avatar,
+        plan:       user.status,
       });
     }
 

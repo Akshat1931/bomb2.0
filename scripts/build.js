@@ -227,6 +227,29 @@ const TRIAL_SNIPPET = `
     return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="%235865F2"><circle cx="12" cy="12" r="12"/></svg>';
   }
 
+  function getContactHtml() {
+    return [
+      '<div style="background:rgba(88,101,242,0.12);border:1px solid rgba(88,101,242,0.35);border-radius:12px;padding:14px;margin-bottom:16px;">',
+        '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Contact on Discord to get access:</div>',
+        '<div style="display:flex;align-items:center;justify-content:center;gap:8px;">',
+          '<strong style="color:#ffffff;font-size:14px;font-family:monospace;background:#060714;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);">consolidating_myself</strong>',
+          '<button id="__bombCopyContactBtn" type="button" style="background:#5865F2;border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;">Copy</button>',
+        '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  function bindCopyContact() {
+    var copyBtn = document.getElementById('__bombCopyContactBtn');
+    if (copyBtn) {
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText('consolidating_myself');
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(function(){ copyBtn.textContent = 'Copy'; }, 2000);
+      };
+    }
+  }
+
   function renderGuest() {
     HUD.classList.remove('is-visible');
     GATE.classList.remove('is-hidden');
@@ -240,7 +263,7 @@ const TRIAL_SNIPPET = `
       '<h2 class="g-title">Authentication Required</h2>',
       '<p class="g-desc">Sign in with your Discord account to access the Bomb Defusal Solver. New accounts automatically receive a <strong>5-minute free trial</strong>.</p>',
       '<a href="/api/auth/discord" class="btn-discord">' + DISCORD_SVG + ' Continue with Discord</a>',
-      '<p class="g-note">🔒 Fast & secure OAuth2. We only read your public Discord ID & username.</p>'
+      '<p class="g-note">🔒 Fast & secure OAuth2. Questions? Contact <strong>consolidating_myself</strong> on Discord.</p>'
     ].join('');
   }
 
@@ -261,12 +284,14 @@ const TRIAL_SNIPPET = `
           '<span class="g-ustatus tag-pending">Pending Approval</span>',
         '</div>',
       '</div>',
+      getContactHtml(),
       '<div style="display:flex;flex-direction:column;gap:10px;">',
         '<button id="__bombRefreshBtn" class="btn-action" style="border-color:#7c4dff;color:#b388ff;">🔄 Check Approval Status</button>',
         '<a href="/api/auth/logout" class="btn-action">Sign out</a>',
-      '</div>',
-      '<p class="g-note">Contact the site admin to approve your account.</p>'
+      '</div>'
     ].join('');
+
+    bindCopyContact();
 
     var refreshBtn = document.getElementById('__bombRefreshBtn');
     if (refreshBtn) {
@@ -295,8 +320,11 @@ const TRIAL_SNIPPET = `
           '<span class="g-ustatus tag-denied">Denied</span>',
         '</div>',
       '</div>',
+      getContactHtml(),
       '<a href="/api/auth/logout" class="btn-action">Sign out</a>'
     ].join('');
+
+    bindCopyContact();
   }
 
   function renderApproved(data) {
