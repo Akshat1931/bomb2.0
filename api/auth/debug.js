@@ -25,10 +25,12 @@ module.exports = async function handler(req, res) {
     env: {
       SUPABASE_URL: !!process.env.SUPABASE_URL,
       SUPABASE_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_KEY,
+      SUPABASE_SERVICE_KEY_PREVIEW: (process.env.SUPABASE_SERVICE_KEY || '').slice(0, 9) + '...' + (process.env.SUPABASE_SERVICE_KEY || '').slice(-4),
       DISCORD_CLIENT_ID: !!process.env.DISCORD_CLIENT_ID,
       DISCORD_CLIENT_SECRET: !!process.env.DISCORD_CLIENT_SECRET,
       DISCORD_REDIRECT_URI: !!process.env.DISCORD_REDIRECT_URI,
       ADMIN_SECRET: !!process.env.ADMIN_SECRET,
+      ADMIN_SECRET_PREVIEW: (process.env.ADMIN_SECRET || '').slice(0, 3) + '...',
       SESSION_SECRET: !!process.env.SESSION_SECRET,
     },
     cookie: {
