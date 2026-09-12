@@ -35,6 +35,113 @@ window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
 <script defer src="/_vercel/insights/script.js"></script>
 <script defer src="/_vercel/speed-insights/script.js"></script>`.trim();
 
+// ── Trial / Access Gate (injected before </body>) ────────────────────────
+// ⚙ CONFIG — change these values:
+const TRIAL_MINUTES = 5;                           // trial duration
+const CONTACT_TEXT  = 'DM me on Discord or Reddit'; // shown to locked users
+const CONTACT_LINK  = 'https://discord.gg/';        // your Discord/link
+
+const TRIAL_SNIPPET = `
+<!-- TRIAL ACCESS GATE -->
+<style>
+#__bombGate{
+  position:fixed;inset:0;z-index:2147483647;
+  background:rgba(4,4,14,0.97);backdrop-filter:blur(14px);
+  display:none;align-items:center;justify-content:center;
+  font-family:'Inter',sans-serif;
+}
+#__bombGate .g-box{
+  text-align:center;padding:48px 40px;
+  background:#0d0d22;border:1px solid #1e1e40;
+  border-radius:20px;max-width:420px;width:90%;
+  box-shadow:0 0 60px rgba(124,77,255,0.15);
+}
+#__bombGate h2{color:#e8eaf6;font-size:26px;margin:0 0 10px;letter-spacing:-0.5px;}
+#__bombGate .sub{color:#78909c;font-size:14px;line-height:1.7;margin:0 0 28px;}
+#__bombGate .timer{font-size:13px;color:#546e7a;margin-bottom:24px;font-family:monospace;}
+#__bombGate a.g-btn{
+  display:inline-block;padding:14px 28px;
+  background:linear-gradient(135deg,#7c4dff,#651fff);
+  color:#fff;text-decoration:none;border-radius:10px;
+  font:700 14px 'Inter',sans-serif;letter-spacing:0.3px;
+  transition:opacity .2s;
+}
+#__bombGate a.g-btn:hover{opacity:0.85;}
+#__bombGate .trial-bar{
+  height:3px;background:#1e1e40;border-radius:3px;
+  margin-bottom:28px;overflow:hidden;
+}
+#__bombGate .trial-fill{
+  height:100%;background:linear-gradient(90deg,#7c4dff,#00e676);
+  border-radius:3px;transition:width 1s linear;
+}
+</style>
+
+<div id="__bombGate">
+  <div class="g-box">
+    <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+    <h2>Trial Ended</h2>
+    <p class="sub">
+      Your ${TRIAL_MINUTES}-minute free trial has expired.<br>
+      Request full access from the owner to keep using the solver.
+    </p>
+    <div class="trial-bar"><div class="trial-fill" id="__bombFill" style="width:0%"></div></div>
+    <a href="${CONTACT_LINK}" target="_blank" rel="noopener" class="g-btn">
+      📩 Request Access
+    </a>
+    <p class="timer" id="__bombTimer">Trial expired</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var TRIAL_MS=${TRIAL_MINUTES * 60 * 1000};
+  var KEY='__bomb_t0';
+  var GATE=document.getElementById('__bombGate');
+  var FILL=document.getElementById('__bombFill');
+  var TIMER=document.getElementById('__bombTimer');
+
+  // Check for access cookie (set by /api/grant)
+  function hasCookie(){
+    return document.cookie.split(';').some(function(c){return c.trim().startsWith('__bomb_access=');});
+  }
+  if(hasCookie()) return; // Granted user — no trial
+
+  // Init trial start
+  if(!localStorage.getItem(KEY)) localStorage.setItem(KEY, Date.now().toString());
+
+  function fmt(ms){
+    var s=Math.max(0,Math.ceil(ms/1000));
+    var m=Math.floor(s/60); s=s%60;
+    return m+'m '+String(s).padStart(2,'0')+'s';
+  }
+
+  function tick(){
+    if(hasCookie()){ GATE.style.display='none'; return; }
+    var start=parseInt(localStorage.getItem(KEY)||'0',10);
+    var elapsed=Date.now()-start;
+    var remaining=TRIAL_MS-elapsed;
+    var pct=Math.min(100,(elapsed/TRIAL_MS)*100);
+
+    if(remaining<=0){
+      // Locked
+      GATE.style.display='flex';
+      FILL.style.width='100%';
+      TIMER.textContent='Trial expired — contact owner for access';
+    } else if(remaining<60000){
+      // Last minute warning — show timer overlay-ish banner (not yet full lock)
+      TIMER.textContent='Trial ends in '+fmt(remaining);
+      FILL.style.width=pct+'%';
+    }
+  }
+
+  setInterval(tick,1000);
+  tick();
+})();
+<\/script>
+<!-- END TRIAL ACCESS GATE -->
+`.trim();
+
 // ── Terser options ────────────────────────────────────────────────────────
 const TERSER_OPTS = {
   compress: {
@@ -161,6 +268,9 @@ async function build() {
 
   // 4. Inject Vercel Analytics before </head>
   html = html.replace('</head>', `${ANALYTICS_SNIPPET}\n</head>`);
+
+  // 4.5. Inject Trial Access Gate before </body>
+  html = html.replace('</body>', `${TRIAL_SNIPPET}\n</body>`);
 
   // 5. Minify HTML (inline scripts/CSS included)
   let finalHtml;
