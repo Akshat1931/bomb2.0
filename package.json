@@ -1,0 +1,19 @@
+{
+  "name": "bomb-defusal-solver",
+  "version": "1.0.0",
+  "description": "KTaNE Bomb Defusal Helper — production build with Vercel Analytics and code protection",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "npx serve . -p 3000",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "terser": "^5.31.0",
+    "javascript-obfuscator": "^4.1.1",
+    "html-minifier-terser": "^7.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
