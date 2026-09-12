@@ -93,6 +93,7 @@ ninth black occurrence: cut if connected to A, B or C.`;
         colSel.addEventListener('change', () => {
           const sIdx = wireState.activeStage - 1;
           wireState.stages[sIdx][slot - 1].color = colSel.value;
+          syncQuickInputFromSlots();
           evaluateWireSequences();
         });
       }
@@ -100,10 +101,77 @@ ninth black occurrence: cut if connected to A, B or C.`;
         toSel.addEventListener('change', () => {
           const sIdx = wireState.activeStage - 1;
           wireState.stages[sIdx][slot - 1].to = toSel.value;
+          syncQuickInputFromSlots();
           evaluateWireSequences();
         });
       }
     }
+
+    // Bind Quick Text Input
+    const quickInput = document.getElementById('wireQuickInput');
+    const quickApplyBtn = document.getElementById('wireQuickApplyBtn');
+    const quickClearBtn = document.getElementById('wireQuickClearBtn');
+    const quickNextStageBtn = document.getElementById('wireQuickNextStageBtn');
+
+    if (quickApplyBtn) {
+      quickApplyBtn.addEventListener('click', () => {
+        if (quickInput) applyQuickWireInput(quickInput.value);
+      });
+    }
+
+    if (quickInput) {
+      quickInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (e.shiftKey || e.ctrlKey) {
+            // Shift+Enter or Ctrl+Enter: Apply and advance to next stage
+            applyQuickWireInput(quickInput.value);
+            if (wireState.activeStage < 5) {
+              setWireActiveStage(wireState.activeStage + 1);
+              setTimeout(() => quickInput.focus(), 50);
+            }
+          } else {
+            // Normal Enter: Apply and solve
+            applyQuickWireInput(quickInput.value);
+          }
+        }
+      });
+    }
+
+    if (quickClearBtn) {
+      quickClearBtn.addEventListener('click', () => {
+        const sIdx = wireState.activeStage - 1;
+        wireState.stages[sIdx] = [
+          { color: 'none', to: 'none' },
+          { color: 'none', to: 'none' },
+          { color: 'none', to: 'none' }
+        ];
+        if (quickInput) quickInput.value = '';
+        const feedbackEl = document.getElementById('wireQuickFeedback');
+        if (feedbackEl) {
+          feedbackEl.textContent = `✓ Cleared all wires for Stage ${wireState.activeStage}.`;
+          feedbackEl.style.color = '#81c784';
+        }
+        updateWireStageControlsUI();
+        evaluateWireSequences();
+      });
+    }
+
+    if (quickNextStageBtn) {
+      quickNextStageBtn.addEventListener('click', () => {
+        if (wireState.activeStage < 5) {
+          setWireActiveStage(wireState.activeStage + 1);
+        } else {
+          setWireActiveStage(1);
+        }
+        if (quickInput) setTimeout(() => quickInput.focus(), 50);
+      });
+    }
+
+    window.applyWireShortcut = function(text) {
+      if (quickInput) quickInput.value = text;
+      applyQuickWireInput(text);
+    };
 
     // Bind Rules Textarea
     const rulesArea = document.getElementById('wireRulesInput');
@@ -185,6 +253,22 @@ ninth black occurrence: cut if connected to A, B or C.`;
     evaluateWireSequences();
   }
 
+  function syncQuickInputFromSlots() {
+    const sIdx = wireState.activeStage - 1;
+    const currentSlotState = wireState.stages[sIdx];
+    const quickInput = document.getElementById('wireQuickInput');
+    if (quickInput && document.activeElement !== quickInput) {
+      const parts = [];
+      for (let s = 0; s < 3; s++) {
+        const w = currentSlotState[s];
+        if (w.color !== 'none' && w.to !== 'none') {
+          parts.push(`${s + 1}${w.color.toUpperCase()}${w.to}`);
+        }
+      }
+      quickInput.value = parts.join(' ');
+    }
+  }
+
   function updateWireStageControlsUI() {
     const sIdx = wireState.activeStage - 1;
     const currentSlotState = wireState.stages[sIdx];
@@ -195,6 +279,159 @@ ninth black occurrence: cut if connected to A, B or C.`;
       if (colSel) colSel.value = currentSlotState[slot - 1].color;
       if (toSel) toSel.value = currentSlotState[slot - 1].to;
     }
+
+    const quickInput = document.getElementById('wireQuickInput');
+    if (quickInput && document.activeElement !== quickInput) {
+      const parts = [];
+      for (let s = 0; s < 3; s++) {
+        const w = currentSlotState[s];
+        if (w.color !== 'none' && w.to !== 'none') {
+          parts.push(`${s + 1}${w.color.toUpperCase()}${w.to}`);
+        }
+      }
+      quickInput.value = parts.join(' ');
+    }
+  }
+
+  function parseWireQuickInput(inputStr) {
+    if (!inputStr || typeof inputStr !== 'string') {
+      return { success: false, message: 'Please enter wire details (e.g. 1REDA 2REDB 3BLUEC or 1BLACKC).' };
+    }
+
+    const trimmed = inputStr.trim();
+    if (!trimmed) {
+      return { success: false, message: 'Please enter wire details (e.g. 1REDA 2REDB 3BLUEC or 1BLACKC).' };
+    }
+
+    if (/^(CLEAR|RESET|NONE|EMPTY)$/i.test(trimmed)) {
+      return { success: true, isClearAll: true };
+    }
+
+    const tokens = trimmed.split(/[\s,;]+/).filter(Boolean);
+    if (tokens.length === 0) {
+      return { success: false, message: 'No wire tokens found.' };
+    }
+
+    const parsedWires = [];
+    let autoSlot = 1;
+
+    for (const rawToken of tokens) {
+      const token = rawToken.trim().toUpperCase();
+      if (!token) continue;
+
+      const clearSlotMatch = token.match(/^([123])[-:]?(NONE|CLEAR|EMPTY)$/i);
+      if (clearSlotMatch) {
+        parsedWires.push({
+          slot: parseInt(clearSlotMatch[1], 10),
+          color: 'none',
+          to: 'none'
+        });
+        continue;
+      }
+
+      let slot = null;
+      let remainder = token;
+      const slotPrefix = token.match(/^([123])[-:\/]*(.*)$/);
+      if (slotPrefix) {
+        slot = parseInt(slotPrefix[1], 10);
+        remainder = slotPrefix[2];
+      }
+
+      remainder = remainder.replace(/^[^A-Z0-9]+/, '');
+
+      const targetMatch = remainder.match(/^(.*?)[-:\sTO]*([ABC])$/i);
+      if (!targetMatch) {
+        continue;
+      }
+
+      const rawCol = targetMatch[1].replace(/[^A-Z]/g, '');
+      const target = targetMatch[2].toUpperCase();
+
+      let color = null;
+      if (rawCol === 'RED' || rawCol === 'R') {
+        color = 'red';
+      } else if (rawCol === 'BLACK' || rawCol === 'BK' || rawCol === 'BLK' || rawCol === 'K') {
+        color = 'black';
+      } else if (rawCol === 'BLUE' || rawCol === 'BL' || rawCol === 'BLU' || rawCol === 'U' || rawCol === 'B') {
+        color = 'blue';
+      }
+
+      if (!color) {
+        continue;
+      }
+
+      if (slot === null) {
+        slot = autoSlot++;
+      }
+
+      if (slot >= 1 && slot <= 3) {
+        parsedWires.push({ slot, color, to: target });
+      }
+    }
+
+    if (parsedWires.length === 0) {
+      return {
+        success: false,
+        message: 'Could not parse wires. Formats: 1REDA 2REDB 3BLUEC | 1RA 2RB 3BC | 1BLACKC'
+      };
+    }
+
+    return { success: true, wires: parsedWires };
+  }
+
+  function applyQuickWireInput(text) {
+    const sIdx = wireState.activeStage - 1;
+    const feedbackEl = document.getElementById('wireQuickFeedback');
+    const parsed = parseWireQuickInput(text);
+
+    if (!parsed.success) {
+      if (feedbackEl) {
+        feedbackEl.textContent = '⚠️ ' + parsed.message;
+        feedbackEl.style.color = '#ff9800';
+      }
+      return false;
+    }
+
+    if (parsed.isClearAll) {
+      wireState.stages[sIdx] = [
+        { color: 'none', to: 'none' },
+        { color: 'none', to: 'none' },
+        { color: 'none', to: 'none' }
+      ];
+      updateWireStageControlsUI();
+      evaluateWireSequences();
+      if (feedbackEl) {
+        feedbackEl.textContent = `✓ Cleared all wires for Stage ${wireState.activeStage}.`;
+        feedbackEl.style.color = '#81c784';
+      }
+      return true;
+    }
+
+    // Reset current stage slots before applying new configuration
+    wireState.stages[sIdx] = [
+      { color: 'none', to: 'none' },
+      { color: 'none', to: 'none' },
+      { color: 'none', to: 'none' }
+    ];
+
+    const appliedDesc = [];
+    for (const w of parsed.wires) {
+      if (w.slot >= 1 && w.slot <= 3) {
+        wireState.stages[sIdx][w.slot - 1] = { color: w.color, to: w.to };
+        if (w.color !== 'none') {
+          appliedDesc.push(`Slot ${w.slot}: ${w.color.toUpperCase()} ➔ ${w.to}`);
+        }
+      }
+    }
+
+    updateWireStageControlsUI();
+    evaluateWireSequences();
+
+    if (feedbackEl) {
+      feedbackEl.textContent = `✓ Stage ${wireState.activeStage} updated: ` + (appliedDesc.length > 0 ? appliedDesc.join(' | ') : 'No wires');
+      feedbackEl.style.color = '#81c784';
+    }
+    return true;
   }
 
   function handleWirePaste(e) {

@@ -537,6 +537,15 @@
 
       <div id="status">Upload both images to get the answer.</div>
 
+      <details style="font-size:13px; color:#bbb; width: 100%; max-width: 620px; background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:16px;">
+        <summary style="color:#f5c542; font-weight:600; font-size:13px; cursor:pointer; outline:none;">📖 Quick Guide: How to Solve Mazes</summary>
+        <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
+          <p style="margin:0 0 6px;"><strong>1. Dots Image (Slot 1):</strong> Click Slot 1, then upload or press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Ctrl+V</kbd> to paste the image with the Red start dot and Yellow goal.</p>
+          <p style="margin:0 0 6px;"><strong>2. Maze Image (Slot 2):</strong> Click Slot 2, then upload or paste the maze walls screenshot.</p>
+          <p style="margin:0;"><strong>3. Solution:</strong> The solver computes the shortest path, draws the bright green route, and outputs directional steps (e.g. <code>UP 2, RIGHT 3</code>).</p>
+        </div>
+      </details>
+
       <details style="font-size:13px; color:#555; cursor:pointer; width: 100%; max-width: 620px;">
         <summary style="color: var(--text-muted); font-size: 12px; letter-spacing: 0.3px;">⚙ Advanced Settings</summary>
         <div class="debug-controls" style="margin-top:8px;">
@@ -566,7 +575,16 @@
 
   <section id="vennSection" class="page-section">
     <div class="venn-shell">
-      <h2 style="color:#f5c542; text-align:center; margin-bottom:16px;">Venn Diagram</h2>
+      <h2 style="color:#f5c542; text-align:center; margin-bottom:16px;">Venn Diagram (Complicated Wires)</h2>
+
+      <details style="font-size:13px; color:#bbb; max-width: 760px; margin: 0 auto 16px; background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px;">
+        <summary style="color:#f5c542; font-weight:600; font-size:13px; cursor:pointer; outline:none;">📖 Quick Guide: How to Defuse Complicated Wires (Venn)</summary>
+        <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
+          <p style="margin:0 0 6px;"><strong>1. Screenshot:</strong> Press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Ctrl+V</kbd> anywhere on this tab to auto-scan the Venn diagram from screenshot.</p>
+          <p style="margin:0 0 6px;"><strong>2. Manual Venn:</strong> Or click regions directly on the interactive canvas below to toggle shaded/unshaded regions.</p>
+          <p style="margin:0;"><strong>3. Wire Rules:</strong> <code>C</code> = Cut, <code>D</code> = Do not cut, <code>S</code> = Cut if serial number last digit is even, <code>P</code> = Cut if parallel port present, <code>B</code> = Cut if 2+ batteries.</p>
+        </div>
+      </details>
 
       <div class="venn-tools" style="justify-content:center; margin-bottom:16px;">
         <label style="color:#ddd; font-size:13px; gap:8px; display:inline-flex; align-items:center;">
@@ -1088,6 +1106,16 @@
         style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:20px; font-family:'Outfit', sans-serif; font-size:26px;">
         The Button Solver</h2>
 
+      <!-- Collapsible Quick Guide -->
+      <details style="background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; color:#bbb;">
+        <summary style="cursor:pointer; color:#f5c542; font-weight:600; font-size:13px; outline:none;">📖 Quick Guide: How to Defuse The Button</summary>
+        <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
+          <p style="margin:0 0 6px;"><strong>1. Input Details:</strong> Select Button Color, Label, Serial Number, and Battery/Indicator count.</p>
+          <p style="margin:0 0 6px;"><strong>2. Press vs Hold:</strong> The solver checks rules in order and outputs either <strong>"PRESS AND IMMEDIATELY RELEASE"</strong> or <strong>"HOLD BUTTON"</strong>.</p>
+          <p style="margin:0;"><strong>3. Releasing a Held Button:</strong> When holding, the side strip lights up. Release when the countdown timer has: <strong>Blue Strip</strong> = 4 in any position, <strong>Yellow Strip</strong> = 5 in any position, <strong>Any Other Color Strip</strong> = 1 in any position.</p>
+        </div>
+      </details>
+
       <!-- Dropzone & Preview -->
       <div style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:24px;">
         <div id="buttonDropzone" class="morse-dropzone" onclick="document.getElementById('buttonFileInput').click()"
@@ -1172,18 +1200,277 @@
 
   <section id="helpSection" class="page-section">
     <div
-      style="max-width:700px; margin:auto; color:#ddd; line-height:1.7; font-size:14px; padding:12px; background:#101025; border:1px solid #222; border-radius:12px;">
-      <h2 style="color:#f5c542;">How to use</h2>
-      <ul style="padding-left:18px;">
-        <li>Click a slot to select where pasted image will go.</li>
-        <li>Use the Upload button to choose files normally.</li>
-        <li>Paste an image with Ctrl+V after selecting the slot.</li>
-        <li>The solver uses the fixed 43px grid size for the maze.</li>
-        <li>For Venn Diagram, open that tab, paste the diagram, and copy the generated notation.</li>
-      </ul>
-      <p>Want more modules? Add new sections and menu buttons, then show them with
-        <code>showSection('sectionId')</code>.
-      </p>
+      style="max-width:1100px; margin:auto; background:#0e0e1e; padding:28px 24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      
+      <!-- Header -->
+      <div style="text-align:center; margin-bottom:28px;">
+        <h2 style="color:#f5c542; margin:0 0 8px; font-family:'Outfit', sans-serif; font-size:28px; font-weight:700;">
+          📘 KTaNE Defusal Operations Manual
+        </h2>
+        <p style="color:#8a8ea3; font-size:14px; margin:0 auto; max-width:650px; line-height:1.6;">
+          Complete guide for all 14 modules. Includes fast keyboard shortcuts, screenshot-to-solve tips, occurrence rules, and edge-case reminders.
+        </p>
+      </div>
+
+      <!-- Search & Category Filters -->
+      <div style="background:#131328; padding:16px 20px; border-radius:12px; border:1px solid #222244; margin-bottom:24px;">
+        <div style="display:flex; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+          <input type="text" id="helpFilterInput" oninput="filterHelpCards(this.value)"
+            placeholder="🔍 Search guide by module name, shortcut, or rules (e.g. wire, who, 1ra, morse, button, memory)..."
+            style="flex:1; min-width:240px; padding:12px 16px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; outline:none;">
+          <button type="button" class="upload-btn" style="margin-top:0; padding:10px 18px; font-size:13px;" onclick="document.getElementById('helpFilterInput').value=''; filterHelpCards('');">Clear</button>
+        </div>
+        
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <span style="color:#888; font-size:12px; font-weight:600; text-transform:uppercase; margin-right:4px;">Filter:</span>
+          <button type="button" class="help-cat-btn active" onclick="filterHelpCategory('all', this)"
+            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #f5c542; background:#f5c542; color:#0e0e1e; font-weight:700; cursor:pointer;">All (14)</button>
+          <button type="button" class="help-cat-btn" onclick="filterHelpCategory('wires', this)"
+            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #2d2d54; background:#1a1a36; color:#aaa; cursor:pointer;">Wires & Circuits</button>
+          <button type="button" class="help-cat-btn" onclick="filterHelpCategory('words', this)"
+            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #2d2d54; background:#1a1a36; color:#aaa; cursor:pointer;">Words & Memory</button>
+          <button type="button" class="help-cat-btn" onclick="filterHelpCategory('signals', this)"
+            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #2d2d54; background:#1a1a36; color:#aaa; cursor:pointer;">Signals & Decoders</button>
+          <button type="button" class="help-cat-btn" onclick="filterHelpCategory('puzzles', this)"
+            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #2d2d54; background:#1a1a36; color:#aaa; cursor:pointer;">Puzzles & Maze</button>
+        </div>
+      </div>
+
+      <!-- Universal Quick-Defusal Card -->
+      <div style="background:linear-gradient(135deg, rgba(245,197,66,0.12) 0%, rgba(20,20,45,0.9) 100%); border:1px solid rgba(245,197,66,0.3); border-radius:12px; padding:18px 22px; margin-bottom:24px;">
+        <h3 style="color:#f5c542; margin-top:0; margin-bottom:10px; font-size:16px; display:flex; align-items:center; gap:8px;">
+          <span>⚡ Universal Speed-Defusal Tips</span>
+        </h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; color:#ddd; font-size:13px; line-height:1.6;">
+          <div>
+            <strong style="color:#fff;">📋 Instant Screenshot Pasting (Ctrl+V):</strong><br>
+            Hit <kbd style="background:#1a1a36; border:1px solid #333366; padding:2px 6px; border-radius:4px;">Win+Shift+S</kbd> or <kbd style="background:#1a1a36; border:1px solid #333366; padding:2px 6px; border-radius:4px;">PrtScn</kbd> in-game, click on any module tab, and press <kbd style="background:#1a1a36; border:1px solid #333366; padding:2px 6px; border-radius:4px;">Ctrl+V</kbd>. The solver processes OCR and image recognition automatically!
+          </div>
+          <div>
+            <strong style="color:#fff;">⌨️ Fast Wire Sequences Keyboard Input:</strong><br>
+            On the Wire Sequences tab, type shorthand like <code style="color:#f5c542;">1RA 2RB 3BC</code> or <code style="color:#f5c542;">1BLACKC</code> and press <kbd style="background:#1a1a36; border:1px solid #333366; padding:2px 6px; border-radius:4px;">Enter</kbd>. Hit <kbd style="background:#1a1a36; border:1px solid #333366; padding:2px 6px; border-radius:4px;">Shift+Enter</kbd> to jump straight to the next stage!
+          </div>
+          <div>
+            <strong style="color:#fff;">📝 Dynamic Rules Seed Support:</strong><br>
+            Playing a custom rule seed? Modules featuring game manual variations have editable rule textareas that parse changes on the fly.
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid of 14 Module Guide Cards -->
+      <div id="helpCardsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px;">
+
+        <!-- 1. Wire Sequences -->
+        <div class="help-module-card" data-category="wires" data-keywords="wire sequences wires sequence red blue black 1ra 2rb 3bc 1blackc stage panel occurrence"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🧵 Wire Sequences</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Wires</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> 5 consecutive panels with up to 3 wires each. Occurrence counts (1st Red, 2nd Red, etc.) accumulate across <em>all 5 panels</em>.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Fast Input:</strong> Type in the quick input box: <code style="color:#f5c542;">1RA 2RB 3BC</code> (Wire 1 Red->A, Wire 2 Red->B, Wire 3 Blue->C) or single wires like <code style="color:#f5c542;">1BLACKC</code> and hit <kbd style="background:#222; padding:2px 4px; border-radius:3px;">Enter</kbd>.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Controls:</strong> Click <strong>Next Stage ➔</strong> (or press <kbd style="background:#222; padding:2px 4px; border-radius:3px;">Shift+Enter</kbd>) to advance. Clear Stage clears current panel wires.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Screenshot:</strong> Paste panel screenshot (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) for automatic wire detection.</p>
+          </div>
+        </div>
+
+        <!-- 2. Maze Solver -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="maze solver dots walls grid path shortest route navigation"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔴🟡 Maze Solver</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Finds the shortest path from start dot (Red) to target dot (Yellow) through circular/grid mazes.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Slot 1 (Dots):</strong> Click Slot 1, paste or upload screenshot with the dots visible.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Slot 2 (Maze):</strong> Click Slot 2, paste or upload screenshot of the maze walls.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Result:</strong> Solves automatically in milliseconds, rendering the bright green path and printing exact directional steps (e.g. <code>UP 2, RIGHT 3</code>).</p>
+          </div>
+        </div>
+
+        <!-- 3. Venn Diagram / Complicated Wires -->
+        <div class="help-module-card" data-category="wires" data-keywords="venn diagram complicated wires star led red blue cut"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">⭕ Venn / Complicated Wires</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Wires</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Decides whether to cut each wire based on colors (Red/Blue/White), Star symbol (★), and LED light.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste the Venn diagram screenshot (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) or click regions on the canvas to toggle shaded/unshaded.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Cut Letters:</strong> <code>C</code> = Cut, <code>D</code> = Do Not Cut, <code>S</code> = Cut if serial even, <code>P</code> = Cut if parallel port, <code>B</code> = Cut if 2+ batteries.</p>
+          </div>
+        </div>
+
+        <!-- 4. Logic Solver -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="logic solver propositional alpha beta gamma delta truth values variables"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">⚡ Logic Solver</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Evaluates boolean propositional logic equations for 4 sequential stages (α, β, γ, δ).</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Variables:</strong> Paste variable assignments (e.g. <code style="color:#f5c542;">P = T, Q = T, R = F</code>) in the sidebar or add individual custom variables.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Stages:</strong> Enter expression (or paste screenshot directly into the input). Live preview validates syntax and computes the output immediately.</p>
+          </div>
+        </div>
+
+        <!-- 5. Morse Code -->
+        <div class="help-module-card" data-category="signals" data-keywords="morse code radio frequency light blink mhz tuner shell halls slick"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">📻 Morse Code</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Signals</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> An orange light blinks a repeating word in Morse code. Find the word and tune to its frequency.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Input:</strong> Watch the light and tap dots (.) and dashes (-) or enter letters. Solver narrows down the 16 possible words.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Transmission:</strong> Tune the radio dial to the matching frequency (between 3.505 MHz and 3.600 MHz) and press TX.</p>
+          </div>
+        </div>
+
+        <!-- 6. Switches Module -->
+        <div class="help-module-card" data-category="wires" data-keywords="switches solver toggle 5 switches led state flip sequence path safe"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🎚️ Switches Module</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Wires</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> 5 toggle switches with 5 LEDs above them. Flip switches to reach the target LED state without short-circuiting.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Input:</strong> Toggle switch handles to match current bomb state, and click target LEDs to match goal pattern.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Solution:</strong> Solver outputs the safe step-by-step flip order with Prev/Next step-by-step navigation.</p>
+          </div>
+        </div>
+
+        <!-- 7. Search Solver -->
+        <div class="help-module-card" data-category="words" data-keywords="search solver words password dictionary letter filter pattern"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔍 Search / Word Finder</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Words</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Ultra-fast dictionary and pattern solver for 5-letter password puzzles and letter grids.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Pattern Search:</strong> Use dots for unknown letters (e.g. <code style="color:#f5c542;">..A.T</code>) to find matches like <code>PLANT</code>, <code>SMART</code>.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Entering just 2 or 3 known letters usually isolates the solution word immediately.</p>
+          </div>
+        </div>
+
+        <!-- 8. Knobs Solver -->
+        <div class="help-module-card" data-category="signals" data-keywords="knobs solver leds 12 up down left right orientation rotary switch"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🎛️ Knobs Solver</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Signals</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> 12 LEDs arranged in two 3x2 grids (left and right). The lit LED pattern dictates the rotary knob direction.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Click the LEDs on the screen to match the lit lights on the bomb.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Result:</strong> Highlights the exact direction: <strong style="color:#f5c542;">UP</strong>, <strong style="color:#f5c542;">DOWN</strong>, <strong style="color:#f5c542;">LEFT</strong>, or <strong style="color:#f5c542;">RIGHT</strong>.</p>
+          </div>
+        </div>
+
+        <!-- 9. Memory Module -->
+        <div class="help-module-card" data-category="words" data-keywords="memory solver 5 stages display position label history recall"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🧠 Memory Module</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Words</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> 5 stages. You must remember earlier button positions and button labels across each stage.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Rule Note:</strong> <em style="color:#f5c542;">Position</em> = 1st, 2nd, 3rd, or 4th button from left. <em style="color:#f5c542;">Label</em> = number printed on the button face.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Automation:</strong> Enter the display number and 4 button labels. The solver highlights which button to press and auto-stores your history!</p>
+          </div>
+        </div>
+
+        <!-- 10. Password Solver -->
+        <div class="help-module-card" data-category="words" data-keywords="password solver 5 letters wheels dials rotary wordlist"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔑 Password Solver</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Words</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> 5 letter dials. Find the single word from the official 35-word dictionary that can be formed.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Fast Defusal:</strong> Check column 1 and column 2 letters first. Enter them in the solver to eliminate nearly all invalid candidates.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Result:</strong> Instantly displays the solution word. Set each dial to that word and click Submit.</p>
+          </div>
+        </div>
+
+        <!-- 11. Piano Keys -->
+        <div class="help-module-card" data-category="signals" data-keywords="piano solver keys musical notes sheet clef treble bass chord progression"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🎹 Piano Keys</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Signals</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A musical staff shows 3 notes with either a Treble Clef (🎼) or Bass Clef (𝄢).</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Input:</strong> Paste screenshot (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) or pick clef and note positions manually.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Playback:</strong> Identifies the chord sequence and highlights the exact piano keys to play in sequence.</p>
+          </div>
+        </div>
+
+        <!-- 12. The Button -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="the button hold press abort detonate car frk strip countdown timer"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔘 The Button</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A large colored button with a label. You either press and immediately release, or hold it down.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Input:</strong> Enter Button Color, Label, Serial Number, and Battery/Indicator counts.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Held Button Release Rule:</strong> When holding, the side strip lights up. Release when the countdown timer contains:<br>
+              • <strong style="color:#42a5f5;">Blue Strip</strong> = 4 in any position<br>
+              • <strong style="color:#fbc02d;">Yellow Strip</strong> = 5 in any position<br>
+              • <strong style="color:#fff;">Any Other Color</strong> = 1 in any position
+            </p>
+          </div>
+        </div>
+
+        <!-- 13. Who's on First -->
+        <div class="help-module-card" data-category="words" data-keywords="whos on first who display step 1 step 2 buttons ready first blank nothing"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">❓ Who's on First</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Words</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Classic two-step word puzzle. Display word references a button position; button word references a priority list.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Step 1:</strong> Display word tells you which button position to read (e.g. <code>BLANK</code> = Top-Left, <code>FIRST</code> = Bottom-Right).</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Step 2:</strong> Read that button's word and press the <em>first word</em> in its priority list that appears on any of the 6 buttons.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Auto-OCR:</strong> Paste module screenshot (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) for instant OCR reading and green button highlight!</p>
+          </div>
+        </div>
+
+        <!-- 14. Circuit Solver -->
+        <div class="help-module-card" data-category="wires" data-keywords="circuit solver wiring paths connections terminals pins"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔌 Circuit Solver</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Wires</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Traces interconnected circuit networks and determines terminal current flow.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Map input sockets and component bridges to determine safe conduction paths.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Check active switches and relay states before committing connection pins.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- No Results Message -->
+      <div id="helpNoResults" style="display:none; text-align:center; padding:32px; color:#888;">
+        <span style="font-size:32px; display:block; margin-bottom:8px;">🔍</span>
+        No modules match your search. Try searching for "wire", "who", "button", "morse", or click "All (14)".
+      </div>
+
     </div>
   </section>
 
@@ -1229,6 +1516,49 @@
       <div style="background:#131328; padding:20px; border-radius:12px; border:1px solid #222244; margin-bottom:24px;">
         <h3 id="wireCurrentStageTitle" style="color:#f5c542; margin-top:0; margin-bottom:16px; font-size:16px;">Stage 1
           / 5 Inputs</h3>
+
+        <!-- Collapsible Quick Guide -->
+        <details style="background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:#bbb;">
+          <summary style="cursor:pointer; color:#f5c542; font-weight:600; font-size:13px; outline:none;">📖 Quick Guide: How to Defuse Wire Sequences</summary>
+          <div style="margin-top:10px; line-height:1.6; color:#ccc;">
+            <p style="margin:0 0 8px;"><strong>1. 5 Panels:</strong> 5 sequential stages, up to 3 wires per panel. Occurrence counts (1st Red, 2nd Red, etc.) accumulate across <em>all 5 panels</em>.</p>
+            <p style="margin:0 0 8px;"><strong>2. Fast Text Input:</strong> Type <code>1REDA 2REDB 3BLUEC</code> (or shorthand <code>1RA 2RB 3BC</code>, or single wire <code>1BLACKC</code>) and press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Enter</kbd> to get instant CUT / LEAVE instructions.</p>
+            <p style="margin:0 0 8px;"><strong>3. Manual Dropdowns:</strong> Or choose wire colors and connected socket letters (A, B, C) using the dropdown menus below.</p>
+            <p style="margin:0 0 8px;"><strong>4. Next Panel:</strong> Click <strong>Next Stage ➔</strong> (or press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Shift+Enter</kbd>) to advance to the next panel with zero delay.</p>
+            <p style="margin:0;"><strong>5. Screenshots:</strong> Or simply press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Ctrl+V</kbd> with a screenshot of the panel to trace wires automatically!</p>
+          </div>
+        </details>
+
+        <!-- Quick Keyboard Text Input Bar -->
+        <div style="background:#1a1a36; padding:16px; border-radius:12px; border:1px solid #333366; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.25);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+            <label for="wireQuickInput" style="color:#f5c542; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px;">
+              <span>⚡ Fast Text Input:</span>
+              <span style="color:#aaa; font-weight:normal; font-size:12px;">(e.g. <code>1REDA 2REDB 3BLUEC</code> or <code>1RA 2RB 3BC</code> or <code>1BLACKC</code>)</span>
+            </label>
+            <div style="display:flex; gap:8px;">
+              <button id="wireQuickClearBtn" type="button" class="upload-btn" style="padding:4px 12px; font-size:12px; margin-top:0; background:#33334d; border-color:#555577;">Clear Stage</button>
+              <button id="wireQuickNextStageBtn" type="button" class="upload-btn" style="padding:4px 12px; font-size:12px; margin-top:0; background:#2e7d32; border-color:#4caf50;">Next Stage ➔</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input id="wireQuickInput" type="text" placeholder="Type wires (e.g. 1REDA 2REDB 3BLUEC or 1RA 2RB 3BC or 1BLACKC) and press Enter..."
+              style="flex:1; padding:10px 14px; background:#0a0a16; border:1px solid #444477; color:#fff; border-radius:8px; font-family:monospace; font-size:14px; outline:none;"
+              autocomplete="off" spellcheck="false">
+            <button id="wireQuickApplyBtn" type="button" class="upload-btn"
+              style="padding:8px 18px; font-size:13px; margin-top:0; white-space:nowrap; background:#f5c542; color:#0e0e1e; font-weight:700; border-color:#f5c542;">Apply & Solve</button>
+          </div>
+          <div id="wireQuickFeedback" style="font-size:12px; color:#81c784; margin-top:6px; min-height:16px;"></div>
+          <div style="font-size:11px; color:#8888aa; margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <span>💡 Quick Examples:</span>
+            <button type="button" class="wire-shortcut-chip" style="cursor:pointer; background:#222244; border:1px solid #3d3d66; padding:2px 8px; border-radius:4px; color:#ddd; font-family:monospace; font-size:11px;" onclick="window.applyWireShortcut && window.applyWireShortcut('1RA 2RB 3BC')">1RA 2RB 3BC</button>
+            <button type="button" class="wire-shortcut-chip" style="cursor:pointer; background:#222244; border:1px solid #3d3d66; padding:2px 8px; border-radius:4px; color:#ddd; font-family:monospace; font-size:11px;" onclick="window.applyWireShortcut && window.applyWireShortcut('1BLACKC')">1BLACKC</button>
+            <button type="button" class="wire-shortcut-chip" style="cursor:pointer; background:#222244; border:1px solid #3d3d66; padding:2px 8px; border-radius:4px; color:#ddd; font-family:monospace; font-size:11px;" onclick="window.applyWireShortcut && window.applyWireShortcut('1REDA')">1REDA</button>
+            <button type="button" class="wire-shortcut-chip" style="cursor:pointer; background:#222244; border:1px solid #3d3d66; padding:2px 8px; border-radius:4px; color:#ddd; font-family:monospace; font-size:11px;" onclick="window.applyWireShortcut && window.applyWireShortcut('2BLUEB')">2BLUEB</button>
+            <button type="button" class="wire-shortcut-chip" style="cursor:pointer; background:#222244; border:1px solid #3d3d66; padding:2px 8px; border-radius:4px; color:#ddd; font-family:monospace; font-size:11px;" onclick="window.applyWireShortcut && window.applyWireShortcut('1REDA 2REDB 3BLUEC')">1REDA 2REDB 3BLUEC</button>
+            <span style="color:#666;">• Press <strong>Enter</strong> to solve!</span>
+          </div>
+        </div>
 
         <!-- 3 Wire Slots -->
         <div style="display:flex; flex-direction:column; gap:14px;">
@@ -1534,6 +1864,54 @@
         }
         window.circuitLoaded = true;
       }
+    }
+
+    // ── Help Manual Filters ──────────────────────────────────────
+    let currentHelpCategory = 'all';
+
+    function filterHelpCategory(category, btnEl) {
+      currentHelpCategory = category;
+      const catBtns = document.querySelectorAll('.help-cat-btn');
+      catBtns.forEach(b => {
+        const isActive = (b === btnEl);
+        b.classList.toggle('active', isActive);
+        if (isActive) {
+          b.style.background = '#f5c542';
+          b.style.color = '#0e0e1e';
+          b.style.borderColor = '#f5c542';
+          b.style.fontWeight = '700';
+        } else {
+          b.style.background = '#1a1a36';
+          b.style.color = '#aaa';
+          b.style.borderColor = '#2d2d54';
+          b.style.fontWeight = 'normal';
+        }
+      });
+      const query = document.getElementById('helpFilterInput')?.value || '';
+      filterHelpCards(query);
+    }
+
+    function filterHelpCards(query) {
+      const q = (query || '').toLowerCase().trim();
+      const cards = document.querySelectorAll('.help-module-card');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        const keywords = (card.getAttribute('data-keywords') || '') + ' ' + card.textContent;
+        const catMatch = (currentHelpCategory === 'all' || cat === currentHelpCategory);
+        const textMatch = (!q || keywords.toLowerCase().includes(q));
+
+        if (catMatch && textMatch) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      const noRes = document.getElementById('helpNoResults');
+      if (noRes) noRes.style.display = (visibleCount === 0) ? 'block' : 'none';
     }
 
     function selectSlot(slot) {
