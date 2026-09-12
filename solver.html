@@ -14,7 +14,9 @@
   <!-- Premium Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg: #07070f;
@@ -54,7 +56,12 @@
       line-height: 1.5;
     }
 
-    h1, h2, h3, h4, h5, h6 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       font-family: 'Outfit', sans-serif;
       font-weight: 700;
     }
@@ -112,7 +119,7 @@
 
     .nav-link:hover {
       color: var(--text);
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .nav-link.active {
@@ -282,7 +289,8 @@
       height: 620px;
     }
 
-    #cOver, #cPath {
+    #cOver,
+    #cPath {
       position: absolute;
       top: 0;
       left: 0;
@@ -312,7 +320,9 @@
       gap: 6px;
     }
 
-    .debug-controls input[type="checkbox"] { cursor: pointer; }
+    .debug-controls input[type="checkbox"] {
+      cursor: pointer;
+    }
 
     .debug-controls input[type="range"] {
       width: 80px;
@@ -473,18 +483,30 @@
       onclick="showSection('solverSection')">Maze Solver</button>
     <button class="nav-link" type="button" data-target="vennSection" onclick="showSection('vennSection')">Venn
       Diagram</button>
-    <button class="nav-link" type="button" data-target="logicSection" onclick="showSection('logicSection')">Logic Solver</button>
-    <button class="nav-link" type="button" data-target="morseSection" onclick="showSection('morseSection')">Morse Solver</button>
-    <button class="nav-link" type="button" data-target="switchesSection" onclick="showSection('switchesSection')">Switches Solver</button>
-    <button class="nav-link" type="button" data-target="searchSection" onclick="showSection('searchSection')">Search Solver</button>
-    <button class="nav-link" type="button" data-target="knobsSection" onclick="showSection('knobsSection')">Knobs Solver</button>
-    <button class="nav-link" type="button" data-target="memorySection" onclick="showSection('memorySection')">Memory Solver</button>
-    <button class="nav-link" type="button" data-target="passwordSection" onclick="showSection('passwordSection')">Password Solver</button>
-    <button class="nav-link" type="button" data-target="pianoSection" onclick="showSection('pianoSection')">Piano Solver</button>
-    <button class="nav-link" type="button" data-target="buttonSection" onclick="showSection('buttonSection')">The Button</button>
-    <button class="nav-link" type="button" data-target="whosSection" onclick="showSection('whosSection')">Who's on First</button>
-    <button class="nav-link" type="button" data-target="wiresSection" onclick="showSection('wiresSection')">Wire Sequences</button>
-    <button class="nav-link" type="button" data-target="circuitSection" onclick="showSection('circuitSection')">Circuit Solver</button>
+    <button class="nav-link" type="button" data-target="logicSection" onclick="showSection('logicSection')">Logic
+      Solver</button>
+    <button class="nav-link" type="button" data-target="morseSection" onclick="showSection('morseSection')">Morse
+      Solver</button>
+    <button class="nav-link" type="button" data-target="switchesSection"
+      onclick="showSection('switchesSection')">Switches Solver</button>
+    <button class="nav-link" type="button" data-target="searchSection" onclick="showSection('searchSection')">Search
+      Solver</button>
+    <button class="nav-link" type="button" data-target="knobsSection" onclick="showSection('knobsSection')">Knobs
+      Solver</button>
+    <button class="nav-link" type="button" data-target="memorySection" onclick="showSection('memorySection')">Memory
+      Solver</button>
+    <button class="nav-link" type="button" data-target="passwordSection"
+      onclick="showSection('passwordSection')">Password Solver</button>
+    <button class="nav-link" type="button" data-target="pianoSection" onclick="showSection('pianoSection')">Piano
+      Solver</button>
+    <button class="nav-link" type="button" data-target="buttonSection" onclick="showSection('buttonSection')">The
+      Button</button>
+    <button class="nav-link" type="button" data-target="whosSection" onclick="showSection('whosSection')">Who's on
+      First</button>
+    <button class="nav-link" type="button" data-target="wiresSection" onclick="showSection('wiresSection')">Wire
+      Sequences</button>
+    <button class="nav-link" type="button" data-target="circuitSection" onclick="showSection('circuitSection')">Circuit
+      Solver</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -517,21 +539,21 @@
 
       <details style="font-size:13px; color:#555; cursor:pointer; width: 100%; max-width: 620px;">
         <summary style="color: var(--text-muted); font-size: 12px; letter-spacing: 0.3px;">⚙ Advanced Settings</summary>
-      <div class="debug-controls" style="margin-top:8px;">
-        <label><input type="checkbox" id="showDebug" onchange="if(lastSolveData) redraw()"> Show debug grid</label>
-        <label>DX: <input type="range" id="nudgeDX" min="-15" max="15" value="0"
-            onchange="document.getElementById('dxVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
-            id="dxVal">0</span></label>
-        <label>DY: <input type="range" id="nudgeDY" min="-15" max="15" value="0"
-            onchange="document.getElementById('dyVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
-            id="dyVal">0</span></label>
-        <label>Wall sensitivity: <input type="range" id="wallSens" min="20" max="80" value="47"
-            onchange="document.getElementById('wsVal').textContent=this.value+'%'; if(lastSolveData) resolveWithCurrentSettings()"><span
-            id="wsVal">47%</span></label>
-      </div>
-      <div id="calibInfo" style="margin-top:4px;"></div>
-      <div id="boxSizeInfo" style="margin-top:4px; color:#aaa; font-size:12px;"></div>
-    </details>
+        <div class="debug-controls" style="margin-top:8px;">
+          <label><input type="checkbox" id="showDebug" onchange="if(lastSolveData) redraw()"> Show debug grid</label>
+          <label>DX: <input type="range" id="nudgeDX" min="-15" max="15" value="0"
+              onchange="document.getElementById('dxVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
+              id="dxVal">0</span></label>
+          <label>DY: <input type="range" id="nudgeDY" min="-15" max="15" value="0"
+              onchange="document.getElementById('dyVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
+              id="dyVal">0</span></label>
+          <label>Wall sensitivity: <input type="range" id="wallSens" min="20" max="80" value="47"
+              onchange="document.getElementById('wsVal').textContent=this.value+'%'; if(lastSolveData) resolveWithCurrentSettings()"><span
+              id="wsVal">47%</span></label>
+        </div>
+        <div id="calibInfo" style="margin-top:4px;"></div>
+        <div id="boxSizeInfo" style="margin-top:4px; color:#aaa; font-size:12px;"></div>
+      </details>
       <div id="ans"></div>
 
       <div class="canvas-area" id="canvasArea">
@@ -612,11 +634,14 @@
 
   <section id="logicSection" class="page-section">
     <div class="logic-shell">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
         <h2 style="color:#f5c542; margin:0;">Logic Solver</h2>
         <div style="display:flex; gap:10px;">
-          <button id="logicLoadDemoBtn" class="upload-btn" type="button" style="margin-top:0;" onclick="loadLogicDemoScenario()">Load Demo</button>
-          <button id="logicResetSolverBtn" class="upload-btn" type="button" style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetLogicSolver()">Reset</button>
+          <button id="logicLoadDemoBtn" class="upload-btn" type="button" style="margin-top:0;"
+            onclick="loadLogicDemoScenario()">Load Demo</button>
+          <button id="logicResetSolverBtn" class="upload-btn" type="button"
+            style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetLogicSolver()">Reset</button>
         </div>
       </div>
 
@@ -626,14 +651,21 @@
           <!-- Variable Assignments -->
           <div class="logic-card">
             <div class="logic-card-title">Variables assignments</div>
-            <textarea id="logicRawVarsInput" class="logic-var-textarea" placeholder="Paste variables here...&#10;e.g. P = T, Q = T, R = F" rows="3" oninput="handleLogicVarsTextAreaChange()"></textarea>
+            <textarea id="logicRawVarsInput" class="logic-var-textarea"
+              placeholder="Paste variables here...&#10;e.g. P = T, Q = T, R = F" rows="3"
+              oninput="handleLogicVarsTextAreaChange()"></textarea>
             <div id="logicVariablesPillContainer" class="logic-var-pills">
               <div class="empty-placeholder" style="font-size:12px; color:#666;">No variables parsed yet.</div>
             </div>
-            
-            <form id="logicAddVarForm" style="display:flex; gap:6px; margin-top:12px; border-top:1px solid #25253f; padding-top:10px;" onsubmit="handleLogicCustomVarAdd(event)">
-              <input type="text" id="logicNewVarName" placeholder="Name" required style="padding:6px; background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; font-size:12px; flex:1;" maxlength="8">
-              <select id="logicNewVarVal" style="background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; padding:0 6px; font-size:12px;">
+
+            <form id="logicAddVarForm"
+              style="display:flex; gap:6px; margin-top:12px; border-top:1px solid #25253f; padding-top:10px;"
+              onsubmit="handleLogicCustomVarAdd(event)">
+              <input type="text" id="logicNewVarName" placeholder="Name" required
+                style="padding:6px; background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; font-size:12px; flex:1;"
+                maxlength="8">
+              <select id="logicNewVarVal"
+                style="background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; padding:0 6px; font-size:12px;">
                 <option value="true">T</option>
                 <option value="false">F</option>
               </select>
@@ -665,7 +697,8 @@
           <!-- Notepad -->
           <div class="logic-card">
             <div class="logic-card-title">Scratchpad (Auto-save)</div>
-            <textarea id="logicNotepad" class="logic-notepad" placeholder="Write notes here..." oninput="saveLogicNotes()"></textarea>
+            <textarea id="logicNotepad" class="logic-notepad" placeholder="Write notes here..."
+              oninput="saveLogicNotes()"></textarea>
             <div>
               <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('α')">α</button>
               <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('β')">β</button>
@@ -675,7 +708,8 @@
               <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('∧')">∧</button>
               <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('∨')">∨</button>
               <button type="button" class="logic-notepad-btn" onclick="insertInLogicNotepad('⇒')">⇒</button>
-              <button type="button" class="logic-notepad-btn" onclick="clearLogicNotepad()" style="border-color:rgba(244,67,54,0.3); color:#f44336;">Clear</button>
+              <button type="button" class="logic-notepad-btn" onclick="clearLogicNotepad()"
+                style="border-color:rgba(244,67,54,0.3); color:#f44336;">Clear</button>
             </div>
           </div>
         </div>
@@ -689,10 +723,13 @@
                 <div class="logic-stage-led"></div>
                 <div class="logic-stage-title">Stage 1</div>
                 <div class="logic-stage-vars-context" id="logicStageVars-1"></div>
-                <span id="logicOcrStatus-1" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+                <span id="logicOcrStatus-1"
+                  style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
               </div>
               <div class="logic-stage-input-row">
-                <input type="text" id="logicStageInput-1" class="logic-stage-input" data-stage="1" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 1)">
+                <input type="text" id="logicStageInput-1" class="logic-stage-input" data-stage="1"
+                  placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)"
+                  onpaste="handleLogicImagePaste(event, 1)">
               </div>
               <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-1"></div>
               <div class="logic-live-preview" id="logicPreview-1">
@@ -713,10 +750,13 @@
                 <div class="logic-stage-led"></div>
                 <div class="logic-stage-title">Stage 2</div>
                 <div class="logic-stage-vars-context" id="logicStageVars-2"></div>
-                <span id="logicOcrStatus-2" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+                <span id="logicOcrStatus-2"
+                  style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
               </div>
               <div class="logic-stage-input-row">
-                <input type="text" id="logicStageInput-2" class="logic-stage-input" data-stage="2" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 2)">
+                <input type="text" id="logicStageInput-2" class="logic-stage-input" data-stage="2"
+                  placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)"
+                  onpaste="handleLogicImagePaste(event, 2)">
               </div>
               <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-2"></div>
               <div class="logic-live-preview" id="logicPreview-2">
@@ -737,10 +777,13 @@
                 <div class="logic-stage-led"></div>
                 <div class="logic-stage-title">Stage 3</div>
                 <div class="logic-stage-vars-context" id="logicStageVars-3"></div>
-                <span id="logicOcrStatus-3" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+                <span id="logicOcrStatus-3"
+                  style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
               </div>
               <div class="logic-stage-input-row">
-                <input type="text" id="logicStageInput-3" class="logic-stage-input" data-stage="3" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 3)">
+                <input type="text" id="logicStageInput-3" class="logic-stage-input" data-stage="3"
+                  placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)"
+                  onpaste="handleLogicImagePaste(event, 3)">
               </div>
               <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-3"></div>
               <div class="logic-live-preview" id="logicPreview-3">
@@ -761,10 +804,13 @@
                 <div class="logic-stage-led"></div>
                 <div class="logic-stage-title">Stage 4</div>
                 <div class="logic-stage-vars-context" id="logicStageVars-4"></div>
-                <span id="logicOcrStatus-4" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+                <span id="logicOcrStatus-4"
+                  style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
               </div>
               <div class="logic-stage-input-row">
-                <input type="text" id="logicStageInput-4" class="logic-stage-input" data-stage="4" placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 4)">
+                <input type="text" id="logicStageInput-4" class="logic-stage-input" data-stage="4"
+                  placeholder="Enter expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)"
+                  onpaste="handleLogicImagePaste(event, 4)">
               </div>
               <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-4"></div>
               <div class="logic-live-preview" id="logicPreview-4">
@@ -785,10 +831,13 @@
                 <div class="logic-stage-led"></div>
                 <div class="logic-stage-title">Stage 5</div>
                 <div class="logic-stage-vars-context" id="logicStageVars-5"></div>
-                <span id="logicOcrStatus-5" style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
+                <span id="logicOcrStatus-5"
+                  style="font-size: 11px; margin-left: auto; font-weight: bold; font-family: monospace;"></span>
               </div>
               <div class="logic-stage-input-row">
-                <input type="text" id="logicStageInput-5" class="logic-stage-input" data-stage="5" placeholder="Enter final expression... (or paste screenshot here)" oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 5)">
+                <input type="text" id="logicStageInput-5" class="logic-stage-input" data-stage="5"
+                  placeholder="Enter final expression... (or paste screenshot here)"
+                  oninput="handleLogicStageInput(event)" onpaste="handleLogicImagePaste(event, 5)">
               </div>
               <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;" id="logicHelpers-5"></div>
               <div class="logic-live-preview" id="logicPreview-5">
@@ -808,7 +857,8 @@
 
   <section id="morseSection" class="page-section">
     <div class="morse-shell">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
         <h2 style="color:#f5c542; margin:0;">Morse Code Solver</h2>
       </div>
 
@@ -818,22 +868,27 @@
           <div id="morseDropzone" class="morse-dropzone" onclick="openMorseFileDialog()">
             <span style="font-size:32px;">📁</span>
             <p style="font-size:13px; color:#aaa; margin-top:8px;">Drag & Drop Video / GIF here, or click to Upload</p>
-            <input id="morseFileInput" type="file" accept="image/gif,video/*" style="display:none;" onchange="handleMorseFileSelect(this)">
+            <input id="morseFileInput" type="file" accept="image/gif,video/*" style="display:none;"
+              onchange="handleMorseFileSelect(this)">
           </div>
 
           <div style="position:relative; text-align:center;">
-            <canvas id="morseCanvas" width="480" height="360" style="width:100%; max-width:480px; height:auto; border:1px solid #333; border-radius:10px; background:#181826; cursor:crosshair;"></canvas>
+            <canvas id="morseCanvas" width="480" height="360"
+              style="width:100%; max-width:480px; height:auto; border:1px solid #333; border-radius:10px; background:#181826; cursor:crosshair;"></canvas>
           </div>
 
           <div id="morseTrackStatus" style="font-size:12px; color:#aaa; margin-top:8px; text-align:center;">
             No file loaded. Drag & drop a blinking GIF or Video.
           </div>
-          
+
           <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="upload-btn" type="button" style="flex: 1; margin-top: 0; padding: 10px;" onclick="toggleMorseAutoTrack()">
+            <button class="upload-btn" type="button" style="flex: 1; margin-top: 0; padding: 10px;"
+              onclick="toggleMorseAutoTrack()">
               🔍 Auto-Track
             </button>
-            <button class="upload-btn" type="button" style="flex: 1; margin-top: 0; padding: 10px; border-color: #f44336; color: #f44336;" onclick="resetMorseSolver()">
+            <button class="upload-btn" type="button"
+              style="flex: 1; margin-top: 0; padding: 10px; border-color: #f44336; color: #f44336;"
+              onclick="resetMorseSolver()">
               🔄 Restart & Reset
             </button>
           </div>
@@ -844,24 +899,31 @@
           <!-- Live waveform canvas -->
           <div class="logic-card" style="margin-bottom:12px;">
             <div class="logic-card-title">Live Blinker Waveform</div>
-            <canvas id="morseGraphCanvas" width="440" height="120" style="width:100%; height:120px; border:1px solid #222; border-radius:6px; background:#070712; display:block;"></canvas>
+            <canvas id="morseGraphCanvas" width="440" height="120"
+              style="width:100%; height:120px; border:1px solid #222; border-radius:6px; background:#070712; display:block;"></canvas>
           </div>
 
           <!-- Decoded Text Display -->
           <div class="logic-card" style="margin-bottom:12px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div>
               <div class="logic-card-title" style="margin-bottom:6px;">Decoded Symbols</div>
-              <div id="morseDecodedString" style="font-family:monospace; font-weight:bold; color:#f5c542; font-size:18px; min-height:27px; word-break:break-all;">---</div>
+              <div id="morseDecodedString"
+                style="font-family:monospace; font-weight:bold; color:#f5c542; font-size:18px; min-height:27px; word-break:break-all;">
+                ---</div>
             </div>
             <div>
               <div class="logic-card-title" style="margin-bottom:6px;">Reconstructed Loop</div>
-              <div id="morseReconstructedWord" style="font-family:monospace; font-weight:bold; color:#00d2ff; font-size:18px; min-height:27px; word-break:break-all;">---</div>
+              <div id="morseReconstructedWord"
+                style="font-family:monospace; font-weight:bold; color:#00d2ff; font-size:18px; min-height:27px; word-break:break-all;">
+                ---</div>
             </div>
           </div>
 
           <!-- Matching Frequency Output -->
-          <div style="background:#0a0a1a; border:1px solid #222; border-radius:10px; padding:16px; text-align:center; margin-bottom:16px;">
-            <div style="font-size:11px; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:4px;">Defuser Frequency</div>
+          <div
+            style="background:#0a0a1a; border:1px solid #222; border-radius:10px; padding:16px; text-align:center; margin-bottom:16px;">
+            <div style="font-size:11px; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:4px;">
+              Defuser Frequency</div>
             <div id="morseFrequencyOutput" style="font-size:36px; font-weight:bold; color:#444;">---</div>
           </div>
 
@@ -877,20 +939,29 @@
 
   <section id="switchesSection" class="page-section">
     <div class="switches-shell">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
         <h2 style="color:#f5c542; margin:0;">Switches Solver</h2>
-        <button id="switchesResetBtn" class="upload-btn" type="button" style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetSwitchesSolver()">Reset Solver</button>
+        <button id="switchesResetBtn" class="upload-btn" type="button"
+          style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetSwitchesSolver()">Reset
+          Solver</button>
       </div>
 
       <!-- Instructions & Copy Paste area -->
       <div class="logic-card" style="margin-bottom:20px;">
         <div class="logic-card-title">1. Forbidden States Manager</div>
-        <form id="switchesAddForm" style="display:flex; gap:10px; margin-bottom:12px;" onsubmit="handleSwitchesAddState(event)">
-          <input type="text" id="switchesForbiddenInput" placeholder="Paste manual rules or type a state (e.g. UDDUD) here..." style="padding:10px; background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; font-size:14px; flex:1;">
+        <form id="switchesAddForm" style="display:flex; gap:10px; margin-bottom:12px;"
+          onsubmit="handleSwitchesAddState(event)">
+          <input type="text" id="switchesForbiddenInput"
+            placeholder="Paste manual rules or type a state (e.g. UDDUD) here..."
+            style="padding:10px; background:#0a0a1a; border:1px solid #333; color:#eee; border-radius:6px; font-size:14px; flex:1;">
           <button type="submit" class="upload-btn" style="margin-top:0; padding:10px 18px;">Add State(s)</button>
-          <button type="button" class="upload-btn" style="margin-top:0; padding:10px 18px; border-color:#f44336; color:#f44336;" onclick="clearAllForbiddenStates()">Clear All</button>
+          <button type="button" class="upload-btn"
+            style="margin-top:0; padding:10px 18px; border-color:#f44336; color:#f44336;"
+            onclick="clearAllForbiddenStates()">Clear All</button>
         </form>
-        <div style="font-size:12px; color:#aaa; margin-bottom:6px; font-weight:bold;">Active Forbidden States (click &times; to remove):</div>
+        <div style="font-size:12px; color:#aaa; margin-bottom:6px; font-weight:bold;">Active Forbidden States (click
+          &times; to remove):</div>
         <div id="switchesForbiddenChips" class="forbidden-chips-container"></div>
       </div>
 
@@ -899,8 +970,10 @@
         <div class="switches-panel-card">
           <div class="switches-panel-title">Switches Panel</div>
           <div style="font-size:12px; color:#888; margin-bottom:12px;">
-            Click handle to toggle switch state (Current: <span id="switchesCurrentStateStr" style="font-family:monospace; color:#ffd875; font-weight:bold;"></span>)<br>
-            Click green light positions to set Target (Target: <span id="switchesTargetStateStr" style="font-family:monospace; color:#00ff66; font-weight:bold;"></span>)
+            Click handle to toggle switch state (Current: <span id="switchesCurrentStateStr"
+              style="font-family:monospace; color:#ffd875; font-weight:bold;"></span>)<br>
+            Click green light positions to set Target (Target: <span id="switchesTargetStateStr"
+              style="font-family:monospace; color:#00ff66; font-weight:bold;"></span>)
           </div>
 
           <div class="switches-row">
@@ -963,12 +1036,17 @@
 
         <!-- Right Column: Pathfinding Solution -->
         <div class="switches-instructions">
-          <div class="logic-card-title" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+          <div class="logic-card-title"
+            style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
             <span>Safe Path Solution</span>
             <div id="switchesPlayerControls" style="display:none; gap:6px; align-items:center;">
-              <button class="upload-btn" type="button" style="margin-top:0; padding:2px 8px; font-size:12px;" onclick="switchesPrevStep()">&#9664; Prev</button>
-              <span id="switchesStepStatusText" style="font-size:12px; color:#aaa; font-family:monospace; min-width:80px; text-align:center;">Step 1 of 5</span>
-              <button class="upload-btn" type="button" style="margin-top:0; padding:2px 8px; font-size:12px;" onclick="switchesNextStep()">Next &#9654;</button>
+              <button class="upload-btn" type="button" style="margin-top:0; padding:2px 8px; font-size:12px;"
+                onclick="switchesPrevStep()">&#9664; Prev</button>
+              <span id="switchesStepStatusText"
+                style="font-size:12px; color:#aaa; font-family:monospace; min-width:80px; text-align:center;">Step 1 of
+                5</span>
+              <button class="upload-btn" type="button" style="margin-top:0; padding:2px 8px; font-size:12px;"
+                onclick="switchesNextStep()">Next &#9654;</button>
             </div>
           </div>
           <div id="switchesSolutionContainer" style="overflow-y:auto; flex:1; max-height:300px; padding-right:4px;">
@@ -1004,24 +1082,33 @@
   </section>
 
   <section id="buttonSection" class="page-section">
-    <div style="max-width:900px; margin:auto; background:#0e0e1e; padding:24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-      <h2 style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:20px; font-family:'Outfit', sans-serif; font-size:26px;">The Button Solver</h2>
+    <div
+      style="max-width:900px; margin:auto; background:#0e0e1e; padding:24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <h2
+        style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:20px; font-family:'Outfit', sans-serif; font-size:26px;">
+        The Button Solver</h2>
 
       <!-- Dropzone & Preview -->
       <div style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:24px;">
-        <div id="buttonDropzone" class="morse-dropzone" onclick="document.getElementById('buttonFileInput').click()" style="width:100%; max-width:500px; padding:18px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
+        <div id="buttonDropzone" class="morse-dropzone" onclick="document.getElementById('buttonFileInput').click()"
+          style="width:100%; max-width:500px; padding:18px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
           <span style="font-size:32px;">🔘</span>
-          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop Button image, click to Upload, or press <strong>Ctrl+V</strong> to paste</p>
+          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop Button image, click to
+            Upload, or press <strong>Ctrl+V</strong> to paste</p>
         </div>
         <input id="buttonFileInput" type="file" accept="image/*" hidden>
-        <canvas id="buttonCanvas" width="400" height="240" style="width:100%; max-width:400px; height:auto; border:1px solid #282845; border-radius:10px; background:#0a0a16;"></canvas>
+        <canvas id="buttonCanvas" width="400" height="240"
+          style="width:100%; max-width:400px; height:auto; border:1px solid #282845; border-radius:10px; background:#0a0a16;"></canvas>
       </div>
 
       <!-- Controls Grid -->
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
+      <div
+        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button Color</label>
-          <select id="buttonColorSelect" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button
+            Color</label>
+          <select id="buttonColorSelect"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
             <option value="blue">Blue</option>
             <option value="green" selected>Green</option>
             <option value="white">White</option>
@@ -1031,36 +1118,52 @@
         </div>
 
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button Label</label>
-          <input id="buttonLabelInput" type="text" value="HOLD" placeholder="e.g. HOLD, PRESS, PUNCH" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button
+            Label</label>
+          <input id="buttonLabelInput" type="text" value="HOLD" placeholder="e.g. HOLD, PRESS, PUNCH"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
         </div>
 
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial Number</label>
-          <input id="buttonSerialInput" type="text" value="AB3" placeholder="e.g. AB3 (auto checks odd/even)" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial
+            Number</label>
+          <input id="buttonSerialInput" type="text" value="AB3" placeholder="e.g. AB3 (auto checks odd/even)"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
         </div>
 
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Module Count on Bomb</label>
-          <input id="buttonModuleCountInput" type="number" min="1" max="20" value="2" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Module
+            Count on Bomb</label>
+          <input id="buttonModuleCountInput" type="number" min="1" max="20" value="2"
+            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
         </div>
       </div>
 
       <!-- Result Display Card -->
-      <div id="buttonResultCard" style="padding:20px; border-radius:12px; border:2px solid #4caf50; background:rgba(76, 175, 80, 0.1); text-align:center; margin-bottom:24px; transition:all 0.3s;">
-        <div style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Required Action</div>
-        <div id="buttonActionText" style="color:#fff; font-size:28px; font-weight:700; font-family:'Outfit', sans-serif; text-shadow:0 0 10px rgba(255,255,255,0.2);">Wait 5 seconds</div>
-        <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">Matched Rule: "Otherwise, if there is more than one module on the bomb and the button is green, wait 5 seconds."</div>
+      <div id="buttonResultCard"
+        style="padding:20px; border-radius:12px; border:2px solid #4caf50; background:rgba(76, 175, 80, 0.1); text-align:center; margin-bottom:24px; transition:all 0.3s;">
+        <div
+          style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">
+          Required Action</div>
+        <div id="buttonActionText"
+          style="color:#fff; font-size:28px; font-weight:700; font-family:'Outfit', sans-serif; text-shadow:0 0 10px rgba(255,255,255,0.2);">
+          Wait 5 seconds</div>
+        <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">Matched
+          Rule: "Otherwise, if there is more than one module on the bomb and the button is green, wait 5 seconds."</div>
       </div>
 
       <!-- Dynamic Guidebook Rules Textarea -->
       <div style="background:#131328; padding:18px; border-radius:12px; border:1px solid #222244;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <label for="buttonRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules (Editable)</label>
-          <button id="buttonResetRulesBtn" type="button" class="upload-btn" style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
+          <label for="buttonRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules
+            (Editable)</label>
+          <button id="buttonResetRulesBtn" type="button" class="upload-btn"
+            style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
         </div>
-        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules, paste the new instruction lines below. The solver will automatically parse and apply them in order.</p>
-        <textarea id="buttonRulesInput" rows="8" style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
+        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules,
+          paste the new instruction lines below. The solver will automatically parse and apply them in order.</p>
+        <textarea id="buttonRulesInput" rows="8"
+          style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
       </div>
 
       <div id="buttonStatus" style="margin-top:16px; font-size:13px; color:#aaa; text-align:center;"></div>
@@ -1079,46 +1182,64 @@
         <li>For Venn Diagram, open that tab, paste the diagram, and copy the generated notation.</li>
       </ul>
       <p>Want more modules? Add new sections and menu buttons, then show them with
-        <code>showSection('sectionId')</code>.</p>
+        <code>showSection('sectionId')</code>.
+      </p>
     </div>
   </section>
 
   <section id="wiresSection" class="page-section">
-    <div style="max-width:920px; margin:auto; background:#0e0e1e; padding:24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-      <h2 style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:16px; font-family:'Outfit', sans-serif; font-size:26px;">Wire Sequences Solver</h2>
+    <div
+      style="max-width:920px; margin:auto; background:#0e0e1e; padding:24px; border-radius:16px; border:1px solid #1a1a36; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <h2
+        style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:16px; font-family:'Outfit', sans-serif; font-size:26px;">
+        Wire Sequences Solver</h2>
 
       <!-- Stage Selector Tabs -->
-      <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-        <button id="wireStageBtn-1" type="button" class="upload-btn active" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 1</button>
-        <button id="wireStageBtn-2" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 2</button>
-        <button id="wireStageBtn-3" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 3</button>
-        <button id="wireStageBtn-4" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 4</button>
-        <button id="wireStageBtn-5" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 5</button>
-        <button id="wireResetAllBtn" type="button" class="upload-btn" style="padding:8px 16px; font-size:14px; margin-top:0; background:#f44336; border-color:#d32f2f;">Reset All Panels</button>
+      <div
+        style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+        <button id="wireStageBtn-1" type="button" class="upload-btn active"
+          style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 1</button>
+        <button id="wireStageBtn-2" type="button" class="upload-btn"
+          style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 2</button>
+        <button id="wireStageBtn-3" type="button" class="upload-btn"
+          style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 3</button>
+        <button id="wireStageBtn-4" type="button" class="upload-btn"
+          style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 4</button>
+        <button id="wireStageBtn-5" type="button" class="upload-btn"
+          style="padding:8px 16px; font-size:14px; margin-top:0;">Stage 5</button>
+        <button id="wireResetAllBtn" type="button" class="upload-btn"
+          style="padding:8px 16px; font-size:14px; margin-top:0; background:#f44336; border-color:#d32f2f;">Reset All
+          Panels</button>
       </div>
 
       <!-- Dropzone & Preview -->
       <div style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:24px;">
-        <div id="wireDropzone" class="morse-dropzone" onclick="document.getElementById('wireFileInput').click()" style="width:100%; max-width:500px; padding:16px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
+        <div id="wireDropzone" class="morse-dropzone" onclick="document.getElementById('wireFileInput').click()"
+          style="width:100%; max-width:500px; padding:16px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
           <span style="font-size:32px;">🧵</span>
-          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop Stage image, click to Upload, or press <strong>Ctrl+V</strong> to paste stage screenshot</p>
+          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop Stage image, click to
+            Upload, or press <strong>Ctrl+V</strong> to paste stage screenshot</p>
         </div>
         <input id="wireFileInput" type="file" accept="image/*" hidden>
-        <canvas id="wireCanvas" width="400" height="240" style="width:100%; max-width:400px; height:auto; border:1px solid #282845; border-radius:10px; background:#0a0a16;"></canvas>
+        <canvas id="wireCanvas" width="400" height="240"
+          style="width:100%; max-width:400px; height:auto; border:1px solid #282845; border-radius:10px; background:#0a0a16;"></canvas>
       </div>
 
       <!-- Active Stage Manual Controls Card -->
       <div style="background:#131328; padding:20px; border-radius:12px; border:1px solid #222244; margin-bottom:24px;">
-        <h3 id="wireCurrentStageTitle" style="color:#f5c542; margin-top:0; margin-bottom:16px; font-size:16px;">Stage 1 / 5 Inputs</h3>
+        <h3 id="wireCurrentStageTitle" style="color:#f5c542; margin-top:0; margin-bottom:16px; font-size:16px;">Stage 1
+          / 5 Inputs</h3>
 
         <!-- 3 Wire Slots -->
         <div style="display:flex; flex-direction:column; gap:14px;">
           <!-- Wire Slot 1 -->
-          <div style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
+          <div
+            style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
             <div style="color:#fff; font-weight:600; min-width:80px;">Wire 1 (Top)</div>
             <div style="display:flex; align-items:center; gap:12px;">
               <label style="color:#aaa; font-size:13px;">Color:</label>
-              <select id="wireColorSelect-1" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+              <select id="wireColorSelect-1"
+                style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
                 <option value="none">None (Empty)</option>
                 <option value="red">Red</option>
                 <option value="blue">Blue</option>
@@ -1127,7 +1248,8 @@
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
               <label style="color:#aaa; font-size:13px;">Connected To:</label>
-              <select id="wireToSelect-1" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+              <select id="wireToSelect-1"
+                style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
                 <option value="none">None</option>
                 <option value="A">A</option>
                 <option value="B">B</option>
@@ -1137,11 +1259,13 @@
           </div>
 
           <!-- Wire Slot 2 -->
-          <div style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
+          <div
+            style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
             <div style="color:#fff; font-weight:600; min-width:80px;">Wire 2 (Mid)</div>
             <div style="display:flex; align-items:center; gap:12px;">
               <label style="color:#aaa; font-size:13px;">Color:</label>
-              <select id="wireColorSelect-2" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+              <select id="wireColorSelect-2"
+                style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
                 <option value="none">None (Empty)</option>
                 <option value="red">Red</option>
                 <option value="blue">Blue</option>
@@ -1150,7 +1274,8 @@
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
               <label style="color:#aaa; font-size:13px;">Connected To:</label>
-              <select id="wireToSelect-2" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+              <select id="wireToSelect-2"
+                style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
                 <option value="none">None</option>
                 <option value="A">A</option>
                 <option value="B">B</option>
@@ -1160,11 +1285,13 @@
           </div>
 
           <!-- Wire Slot 3 -->
-          <div style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
+          <div
+            style="display:flex; align-items:center; justify-content:space-between; background:#1a1a36; padding:12px 16px; border-radius:10px; border:1px solid #2d2d54; flex-wrap:wrap; gap:10px;">
             <div style="color:#fff; font-weight:600; min-width:80px;">Wire 3 (Bot)</div>
             <div style="display:flex; align-items:center; gap:12px;">
               <label style="color:#aaa; font-size:13px;">Color:</label>
-              <select id="wireColorSelect-3" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+              <select id="wireColorSelect-3"
+                style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
                 <option value="none">None (Empty)</option>
                 <option value="red">Red</option>
                 <option value="blue">Blue</option>
@@ -1173,7 +1300,8 @@
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
               <label style="color:#aaa; font-size:13px;">Connected To:</label>
-              <select id="wireToSelect-3" style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
+              <select id="wireToSelect-3"
+                style="padding:8px 12px; background:#0a0a16; border:1px solid #333366; color:#fff; border-radius:6px; font-size:13px;">
                 <option value="none">None</option>
                 <option value="A">A</option>
                 <option value="B">B</option>
@@ -1185,20 +1313,29 @@
       </div>
 
       <!-- Result Display Card -->
-      <div id="wireResultCard" style="padding:20px; border-radius:12px; border:2px solid #333366; background:#101025; margin-bottom:24px; transition:all 0.3s;">
-        <div style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Active Stage Instructions</div>
-        <div id="wireActionText" style="color:#fff; font-size:22px; font-weight:700; font-family:'Outfit', sans-serif; margin-bottom:12px;">No wires connected on this stage</div>
+      <div id="wireResultCard"
+        style="padding:20px; border-radius:12px; border:2px solid #333366; background:#101025; margin-bottom:24px; transition:all 0.3s;">
+        <div
+          style="color:#aaa; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">
+          Active Stage Instructions</div>
+        <div id="wireActionText"
+          style="color:#fff; font-size:22px; font-weight:700; font-family:'Outfit', sans-serif; margin-bottom:12px;">No
+          wires connected on this stage</div>
         <div id="wireSummaryList"></div>
       </div>
 
       <!-- Dynamic Guidebook Rules Textarea -->
       <div style="background:#131328; padding:18px; border-radius:12px; border:1px solid #222244;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <label for="wireRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules (Editable)</label>
-          <button id="wireResetRulesBtn" type="button" class="upload-btn" style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
+          <label for="wireRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules
+            (Editable)</label>
+          <button id="wireResetRulesBtn" type="button" class="upload-btn"
+            style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
         </div>
-        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules, paste the new occurrence rules below. Occurrence counts auto-accumulate across all 5 panels.</p>
-        <textarea id="wireRulesInput" rows="10" style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
+        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules,
+          paste the new occurrence rules below. Occurrence counts auto-accumulate across all 5 panels.</p>
+        <textarea id="wireRulesInput" rows="10"
+          style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
       </div>
 
       <div id="wireStatus" style="margin-top:16px; font-size:13px; color:#aaa; text-align:center;"></div>
