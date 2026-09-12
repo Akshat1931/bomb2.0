@@ -9,6 +9,15 @@
 const { sign, secureCookieFlags } = require('../../lib/session');
 const { loginUser }               = require('../../lib/supabase');
 
+function getRedirectUri() {
+  let uri = (process.env.DISCORD_REDIRECT_URI || '').trim();
+  if (!uri) uri = 'https://bomb2-0.vercel.app/api/auth/callback';
+  if (!uri.includes('/api/auth/callback')) {
+    uri = uri.replace(/\/+$/, '') + '/api/auth/callback';
+  }
+  return uri;
+}
+
 module.exports = async function handler(req, res) {
   const { code } = req.query;
 
@@ -24,7 +33,7 @@ module.exports = async function handler(req, res) {
         client_secret: process.env.DISCORD_CLIENT_SECRET,
         grant_type:    'authorization_code',
         code,
-        redirect_uri:  process.env.DISCORD_REDIRECT_URI,
+        redirect_uri:  getRedirectUri(),
       }),
     });
     const tokenData = await tokenRes.json();
