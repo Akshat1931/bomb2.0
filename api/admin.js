@@ -16,9 +16,13 @@ const STATUS_BADGE = {
   expired:  { color: '#fb8c00', bg: 'rgba(251,140,0,0.12)',  label: '🔒 Expired'  },
 };
 
+function clean(str) {
+  return (str || '').trim().replace(/^["']|["']$/g, '');
+}
+
 function authGuard(req, res) {
   const key = req.query.key;
-  if (!key || key !== process.env.ADMIN_SECRET) {
+  if (!key || key !== clean(process.env.ADMIN_SECRET)) {
     res.status(403).send(`<!DOCTYPE html>
 <html><head><title>Access Denied</title>
 <style>body{background:#06060e;color:#ef9a9a;font-family:sans-serif;display:flex;
@@ -99,7 +103,7 @@ module.exports = async function handler(req, res) {
     const action = params.get('action');
     const id     = params.get('id');
 
-    if (!key || key !== process.env.ADMIN_SECRET) {
+    if (!key || key !== clean(process.env.ADMIN_SECRET)) {
       return res.status(403).send('Forbidden');
     }
 
