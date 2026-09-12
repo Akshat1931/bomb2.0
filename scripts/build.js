@@ -41,47 +41,105 @@ const TRIAL_SNIPPET = `
 <style>
 #__bombGate {
   position: fixed; inset: 0; z-index: 2147483647;
-  background: rgba(4, 5, 14, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(3, 4, 14, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   display: flex; align-items: center; justify-content: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #e2e8f0;
   padding: 16px;
   box-sizing: border-box;
+  animation: __bombFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes __bombFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 #__bombGate.is-hidden { display: none !important; }
+
 #__bombGate .g-card {
   position: relative;
-  background: linear-gradient(180deg, #0d0e24 0%, #080918 100%);
-  border: 1px solid rgba(124, 77, 255, 0.25);
-  border-radius: 20px;
-  width: 100%; max-width: 440px;
-  padding: 40px 32px;
+  background: linear-gradient(175deg, rgba(16, 18, 44, 0.96) 0%, rgba(8, 9, 22, 0.98) 100%);
+  border: 1px solid rgba(88, 101, 242, 0.35);
+  border-radius: 22px;
+  width: 100%; max-width: 480px;
+  padding: 36px 30px 30px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(124, 77, 255, 0.12);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 50px rgba(88, 101, 242, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
 }
+
+#__bombGate .g-close-btn {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8; font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s ease;
+}
+#__bombGate .g-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+#__bombGate .g-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 999px; padding: 4px 12px; margin-bottom: 16px;
+}
+
 #__bombGate .g-logo {
-  width: 64px; height: 64px;
-  margin: 0 auto 20px;
+  width: 62px; height: 62px;
+  margin: 0 auto 16px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 18px;
-  background: rgba(88, 101, 242, 0.12);
-  border: 1px solid rgba(88, 101, 242, 0.35);
-  box-shadow: 0 0 25px rgba(88, 101, 242, 0.25);
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.25) 0%, rgba(124, 77, 255, 0.15) 100%);
+  border: 1px solid rgba(88, 101, 242, 0.45);
+  color: #5865F2;
+  box-shadow: 0 0 30px rgba(88, 101, 242, 0.35);
 }
+
 #__bombGate .g-title {
   font-size: 24px; font-weight: 800;
   margin: 0 0 8px;
   letter-spacing: -0.5px;
   color: #ffffff;
 }
+
 #__bombGate .g-desc {
-  font-size: 14px; line-height: 1.6;
+  font-size: 13.5px; line-height: 1.55;
   color: #94a3b8;
-  margin: 0 0 24px;
+  margin: 0 0 18px;
 }
+
+#__bombGate .g-interact-notice {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(245, 197, 66, 0.12);
+  border: 1px solid rgba(245, 197, 66, 0.35);
+  border-radius: 10px; padding: 9px 12px; margin-bottom: 16px;
+  font-size: 12.5px; line-height: 1.4; color: #ffd875; text-align: left;
+}
+
+#__bombGate .g-feature-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 20px; text-align: left;
+}
+#__bombGate .g-feature-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px; padding: 9px 11px;
+}
+#__bombGate .g-feature-title {
+  font-size: 12px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 5px;
+}
+#__bombGate .g-feature-desc {
+  font-size: 10.5px; color: #64748b; margin-top: 2px;
+}
+
 #__bombGate .g-user {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   background: rgba(255, 255, 255, 0.04);
@@ -110,19 +168,20 @@ const TRIAL_SNIPPET = `
 
 #__bombGate .btn-discord {
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  width: 100%; padding: 14px 20px;
-  background: #5865F2; color: #fff;
-  border: none; border-radius: 12px;
-  font-size: 15px; font-weight: 700;
+  width: 100%; padding: 15px 22px;
+  background: linear-gradient(135deg, #5865F2 0%, #4752c4 100%);
+  color: #fff;
+  border: none; border-radius: 14px;
+  font-size: 15.5px; font-weight: 700;
   text-decoration: none; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
+  box-shadow: 0 4px 22px rgba(88, 101, 242, 0.45);
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 #__bombGate .btn-discord:hover {
-  background: #4752c4;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(88, 101, 242, 0.5);
+  background: linear-gradient(135deg, #6875f5 0%, #515cd8 100%);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 28px rgba(88, 101, 242, 0.6);
 }
 #__bombGate .btn-action {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -140,26 +199,27 @@ const TRIAL_SNIPPET = `
   color: #fff;
 }
 #__bombGate .g-note {
-  font-size: 12px; color: #64748b; margin-top: 18px; line-height: 1.5;
+  font-size: 12px; color: #64748b; margin-top: 16px; line-height: 1.5;
 }
 #__bombGate .g-err {
   background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444;
   color: #fca5a5; font-size: 12px; border-radius: 8px;
-  padding: 8px 12px; margin-bottom: 16px;
+  padding: 9px 12px; margin-bottom: 16px; text-align: left;
 }
 
 /* Floating Status HUD */
 #__bombHud {
   position: fixed; top: 16px; right: 16px; z-index: 9999999;
   display: none; align-items: center; gap: 10px;
-  background: rgba(13, 14, 34, 0.85);
+  background: rgba(13, 14, 34, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 40px; padding: 6px 14px 6px 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #e2e8f0; font-size: 12px; font-weight: 600;
+  transition: all 0.2s ease;
 }
 #__bombHud.is-visible { display: flex !important; }
 #__bombHud .hud-avatar {
@@ -178,6 +238,16 @@ const TRIAL_SNIPPET = `
   padding: 3px 8px; border-radius: 6px;
   border: 1px solid rgba(0, 230, 118, 0.25);
 }
+#__bombHud .hud-guest-btn {
+  background: #5865F2; border: none; color: #fff;
+  border-radius: 20px; padding: 5px 12px; font-size: 11.5px; font-weight: 700;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: background 0.15s, transform 0.15s;
+}
+#__bombHud .hud-guest-btn:hover {
+  background: #4752c4;
+  transform: translateY(-1px);
+}
 #__bombHud .hud-logout {
   color: #64748b; text-decoration: none; font-size: 11px; margin-left: 4px;
   transition: color 0.15s;
@@ -195,7 +265,7 @@ const TRIAL_SNIPPET = `
   <img id="__hudAvatar" class="hud-avatar" src="" alt="Avatar" />
   <span id="__hudName"></span>
   <span id="__hudBadge"></span>
-  <a href="/api/auth/logout" class="hud-logout" title="Log out">Sign out</a>
+  <a href="/api/auth/logout" id="__hudLogout" class="hud-logout" title="Log out">Sign out</a>
 </div>
 
 <script>
@@ -206,10 +276,12 @@ const TRIAL_SNIPPET = `
   var HUD_AVATAR = document.getElementById('__hudAvatar');
   var HUD_NAME   = document.getElementById('__hudName');
   var HUD_BADGE  = document.getElementById('__hudBadge');
+  var HUD_LOGOUT = document.getElementById('__hudLogout');
 
   var currentStatus = null;
   var timerInterval = null;
   var trialEndEpoch = null;
+  var isGuest = false;
 
   var DISCORD_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>';
 
@@ -229,10 +301,10 @@ const TRIAL_SNIPPET = `
 
   function getContactHtml() {
     return [
-      '<div style="background:rgba(88,101,242,0.12);border:1px solid rgba(88,101,242,0.35);border-radius:12px;padding:14px;margin-bottom:16px;">',
-        '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Contact on Discord to get access:</div>',
+      '<div style="background:rgba(88,101,242,0.12);border:1px solid rgba(88,101,242,0.35);border-radius:12px;padding:12px 14px;margin-bottom:16px;">',
+        '<div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">Contact on Discord for permanent access:</div>',
         '<div style="display:flex;align-items:center;justify-content:center;gap:8px;">',
-          '<strong style="color:#ffffff;font-size:14px;font-family:monospace;background:#060714;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);">consolidating_myself</strong>',
+          '<strong style="color:#ffffff;font-size:13.5px;font-family:monospace;background:#060714;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);">consolidating_myself</strong>',
           '<button id="__bombCopyContactBtn" type="button" style="background:#5865F2;border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;">Copy</button>',
         '</div>',
       '</div>'
@@ -250,24 +322,169 @@ const TRIAL_SNIPPET = `
     }
   }
 
-  function renderGuest() {
-    HUD.classList.remove('is-visible');
-    GATE.classList.remove('is-hidden');
+  function openLoginModal(reason) {
     var params = new URLSearchParams(window.location.search);
     var err = params.get('auth_error');
     var detail = params.get('detail');
     var errMsg = err ? ('⚠️ Login issue: ' + (detail ? detail : err) + '. Please try again.') : '';
+
+    var noticeHtml = '';
+    if (reason === 'interaction') {
+      noticeHtml = [
+        '<div class="g-interact-notice">',
+          '<span style="font-size:16px;">⚡</span>',
+          '<div><strong>Action Required:</strong> Sign in with Discord to use interactive solver controls. Your 5-minute free trial starts immediately!</div>',
+        '</div>'
+      ].join('');
+    }
+
     CARD.innerHTML = [
+      '<button type="button" class="g-close-btn" id="__bombGateCloseBtn" title="Close and continue previewing">✕</button>',
       errMsg ? '<div class="g-err">' + errMsg + '</div>' : '',
+      '<div class="g-badge">⚡ Tactical Defusal Suite</div>',
       '<div class="g-logo">' + DISCORD_SVG + '</div>',
-      '<h2 class="g-title">Authentication Required</h2>',
-      '<p class="g-desc">Sign in with your Discord account to access the Bomb Defusal Solver. New accounts automatically receive a <strong>5-minute free trial</strong>.</p>',
+      '<h2 class="g-title">Connect with Discord</h2>',
+      '<p class="g-desc">Sign in with Discord to activate your <strong>5-minute complimentary trial</strong> and unlock real-time solvers, OCR vision, and interactive timing.</p>',
+      noticeHtml,
+      '<div class="g-feature-grid">',
+        '<div class="g-feature-item">',
+          '<div class="g-feature-title">⚡ 5m Free Trial</div>',
+          '<div class="g-feature-desc">Instant activation upon sign-in</div>',
+        '</div>',
+        '<div class="g-feature-item">',
+          '<div class="g-feature-title">🎯 14 Modules</div>',
+          '<div class="g-feature-desc">Wires, Button, Mazes & more</div>',
+        '</div>',
+        '<div class="g-feature-item">',
+          '<div class="g-feature-title">📸 Vision OCR</div>',
+          '<div class="g-feature-desc">Paste screenshots to auto-solve</div>',
+        '</div>',
+        '<div class="g-feature-item">',
+          '<div class="g-feature-title">🛡️ Whitelist Access</div>',
+          '<div class="g-feature-desc">Permanent admin approval</div>',
+        '</div>',
+      '</div>',
       '<a href="/api/auth/discord" class="btn-discord">' + DISCORD_SVG + ' Continue with Discord</a>',
-      '<p class="g-note">🔒 Fast & secure OAuth2. Questions? Contact <strong>consolidating_myself</strong> on Discord.</p>'
+      '<div style="margin-top:16px;">',
+        getContactHtml(),
+      '</div>',
+      '<p class="g-note">🔒 Fast & secure OAuth2. No bot invites or permissions required.</p>'
     ].join('');
+
+    bindCopyContact();
+
+    var closeBtn = document.getElementById('__bombGateCloseBtn');
+    if (closeBtn) {
+      closeBtn.onclick = function() {
+        closeLoginModal();
+      };
+    }
+
+    GATE.classList.remove('is-hidden');
   }
 
+  function closeLoginModal() {
+    if (isGuest) {
+      GATE.classList.add('is-hidden');
+    }
+  }
+
+  // Backdrop click to close (in guest mode)
+  GATE.addEventListener('click', function(e) {
+    if (isGuest && e.target === GATE) {
+      closeLoginModal();
+    }
+  });
+
+  function renderGuest() {
+    isGuest = true;
+    // Don't directly block visitor on initial load: allow preview & guide reading!
+    GATE.classList.add('is-hidden');
+
+    // Show stylish HUD in top-right with Preview Mode badge and Connect button
+    HUD.classList.add('is-visible');
+    HUD_AVATAR.style.display = 'none';
+    HUD_NAME.innerHTML = '<span style="color:#ffd875;display:inline-flex;align-items:center;gap:4px;"><span>⚡</span> Preview Mode</span>';
+    HUD_BADGE.className = '';
+    HUD_BADGE.innerHTML = '<button id="__hudConnectBtn" type="button" class="hud-guest-btn">' + DISCORD_SVG + ' Connect Discord (5m Trial)</button>';
+    HUD_LOGOUT.style.display = 'none';
+
+    var connectBtn = document.getElementById('__hudConnectBtn');
+    if (connectBtn) {
+      connectBtn.onclick = function() {
+        openLoginModal('button');
+      };
+    }
+
+    // If redirected with auth error, show modal immediately to display error message
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('auth_error')) {
+      openLoginModal('error');
+    }
+  }
+
+  // Intercept any interaction attempt from unauthenticated guests
+  function isInteractiveElement(target) {
+    if (!target) return false;
+    // Allow actions inside the login gate itself
+    if (GATE.contains(target)) return false;
+    // Allow clicking the HUD
+    if (HUD.contains(target)) return false;
+    // Allow switching navigation tabs
+    if (target.closest('.topnav') || target.closest('.nav-link') || target.classList.contains('nav-link')) return false;
+    // Allow theme toggle
+    if (target.closest('#themeToggle') || target.id === 'themeToggle') return false;
+    // Allow expanding and reading module guides
+    if (target.closest('summary') || target.tagName === 'SUMMARY' || target.tagName === 'DETAILS') return false;
+    // Allow navigation anchor links
+    if (target.tagName === 'A' && target.getAttribute('href') && target.getAttribute('href').startsWith('#')) return false;
+
+    // Solver interactive elements:
+    if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') return true;
+    if (target.tagName === 'BUTTON') return true;
+    if (target.tagName === 'CANVAS') return true;
+    if (target.classList && (target.classList.contains('upload-btn') || target.classList.contains('dropzone') || target.classList.contains('venn-cell') || target.classList.contains('venn-region'))) return true;
+    if (target.closest('.upload-btn') || target.closest('#dropArea')) return true;
+
+    return false;
+  }
+
+  // Intercept clicks on interactive elements
+  window.addEventListener('click', function(e) {
+    if (!isGuest) return;
+    if (isInteractiveElement(e.target)) {
+      e.preventDefault();
+      e.stopPropagation();
+      openLoginModal('interaction');
+    }
+  }, true);
+
+  // Intercept keyboard typing into inputs or hotkeys
+  window.addEventListener('keydown', function(e) {
+    if (!isGuest) return;
+    if (e.key === 'Escape') {
+      closeLoginModal();
+      return;
+    }
+    if (GATE.contains(e.target)) return;
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+      e.preventDefault();
+      e.stopPropagation();
+      openLoginModal('interaction');
+    }
+  }, true);
+
+  // Intercept screenshot pasting
+  window.addEventListener('paste', function(e) {
+    if (!isGuest) return;
+    if (GATE.contains(e.target)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openLoginModal('interaction');
+  }, true);
+
   function renderExpired(data) {
+    isGuest = false;
     clearInterval(timerInterval);
     HUD.classList.remove('is-visible');
     GATE.classList.remove('is-hidden');
@@ -304,6 +521,7 @@ const TRIAL_SNIPPET = `
   }
 
   function renderDenied(data) {
+    isGuest = false;
     clearInterval(timerInterval);
     HUD.classList.remove('is-visible');
     GATE.classList.remove('is-hidden');
@@ -328,21 +546,27 @@ const TRIAL_SNIPPET = `
   }
 
   function renderApproved(data) {
+    isGuest = false;
     clearInterval(timerInterval);
     GATE.classList.add('is-hidden');
     HUD.classList.add('is-visible');
+    HUD_AVATAR.style.display = 'inline-block';
     HUD_AVATAR.src = getAvatarUrl(data);
     HUD_NAME.textContent = data.username || 'Approved';
     HUD_BADGE.className = 'hud-approved';
     HUD_BADGE.textContent = 'PRO ACCESS';
+    HUD_LOGOUT.style.display = 'inline';
   }
 
   function renderTrial(data) {
+    isGuest = false;
     GATE.classList.add('is-hidden');
     HUD.classList.add('is-visible');
+    HUD_AVATAR.style.display = 'inline-block';
     HUD_AVATAR.src = getAvatarUrl(data);
     HUD_NAME.textContent = data.username || 'Trial';
     HUD_BADGE.className = 'hud-timer';
+    HUD_LOGOUT.style.display = 'inline';
 
     trialEndEpoch = Date.now() + data.remaining_ms;
 
