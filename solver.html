@@ -1663,9 +1663,9 @@
           Required Action</div>
         <div id="buttonActionText"
           style="color:#fff; font-size:28px; font-weight:700; font-family:'Outfit', sans-serif; text-shadow:0 0 10px rgba(255,255,255,0.2);">
-          Wait 5s</div>
-        <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">Matched
-          Rule: "button is green and label says Press: 5s"</div>
+          --</div>
+        <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">
+          Configure button parameters or guide rules above</div>
 
         <!-- Conditional Possibilities Container (Renders when input is empty/ambiguous) -->
         <div id="buttonConditionalContainer" style="display:none; margin-top:16px; text-align:left;"></div>
@@ -2635,11 +2635,10 @@
         }
         window.pianoLoaded = true;
       }
-      if (id === 'buttonSection' && !window.buttonLoaded) {
+      if (id === 'buttonSection') {
         if (typeof window.initButtonModule === 'function') {
           window.initButtonModule();
         }
-        window.buttonLoaded = true;
       }
       if (id === 'whosSection' && !window.whosLoaded) {
         if (typeof window.initWhosModule === 'function') {

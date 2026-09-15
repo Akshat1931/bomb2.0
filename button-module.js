@@ -31,9 +31,6 @@ const buttonState = {
 };
 
 function initButtonModule() {
-  if (buttonState.initialized) return;
-  buttonState.initialized = true;
-
   const colorSelect = document.getElementById('buttonColorSelect');
   const labelInput = document.getElementById('buttonLabelInput');
   const serialInput = document.getElementById('buttonSerialInput');
@@ -47,103 +44,132 @@ function initButtonModule() {
   const fileInput = document.getElementById('buttonFileInput');
 
   if (colorSelect) {
-    colorSelect.value = buttonState.color;
-    colorSelect.addEventListener('change', () => {
+    if (colorSelect.value) buttonState.color = colorSelect.value;
+    else colorSelect.value = buttonState.color;
+
+    colorSelect.onchange = () => {
       buttonState.color = colorSelect.value;
       evaluateButton();
-    });
+    };
   }
 
   if (labelInput) {
-    labelInput.value = buttonState.label;
-    labelInput.addEventListener('input', () => {
+    if (labelInput.value !== undefined && labelInput.value.trim().length > 0) {
+      buttonState.label = labelInput.value.trim();
+    } else {
+      labelInput.value = buttonState.label;
+    }
+
+    labelInput.oninput = () => {
       buttonState.label = labelInput.value.trim();
       evaluateButton();
-    });
+    };
+    labelInput.onchange = labelInput.oninput;
   }
 
   if (serialInput) {
-    serialInput.value = buttonState.serial;
-    serialInput.addEventListener('input', () => {
+    if (serialInput.value !== undefined && serialInput.value.trim().length > 0) {
+      buttonState.serial = serialInput.value.trim();
+    } else {
+      serialInput.value = buttonState.serial;
+    }
+
+    serialInput.oninput = () => {
       buttonState.serial = serialInput.value.trim();
       updateSerialDetailsUI(buttonState.serial);
       evaluateButton();
-    });
+    };
+    serialInput.onchange = serialInput.oninput;
   }
 
   if (nonNeedySelect) {
-    nonNeedySelect.value = buttonState.nonNeedyCount;
-    nonNeedySelect.addEventListener('change', () => {
+    if (nonNeedySelect.value) buttonState.nonNeedyCount = nonNeedySelect.value;
+    else nonNeedySelect.value = buttonState.nonNeedyCount;
+
+    nonNeedySelect.onchange = () => {
       buttonState.nonNeedyCount = nonNeedySelect.value;
       evaluateButton();
-    });
+    };
   }
 
   if (needySelect) {
-    needySelect.value = buttonState.needyCount;
-    needySelect.addEventListener('change', () => {
+    if (needySelect.value) buttonState.needyCount = needySelect.value;
+    else needySelect.value = buttonState.needyCount;
+
+    needySelect.onchange = () => {
       buttonState.needyCount = needySelect.value;
       evaluateButton();
-    });
+    };
   }
 
   if (disarmedSelect) {
-    disarmedSelect.value = buttonState.disarmedCount;
-    disarmedSelect.addEventListener('change', () => {
+    if (disarmedSelect.value) buttonState.disarmedCount = disarmedSelect.value;
+    else disarmedSelect.value = buttonState.disarmedCount;
+
+    disarmedSelect.onchange = () => {
       buttonState.disarmedCount = disarmedSelect.value;
       evaluateButton();
-    });
+    };
   }
 
   if (buttonIndexSelect) {
-    buttonIndexSelect.value = buttonState.buttonIndex;
-    buttonIndexSelect.addEventListener('change', () => {
+    if (buttonIndexSelect.value) buttonState.buttonIndex = buttonIndexSelect.value;
+    else buttonIndexSelect.value = buttonState.buttonIndex;
+
+    buttonIndexSelect.onchange = () => {
       buttonState.buttonIndex = buttonIndexSelect.value;
       evaluateButton();
-    });
+    };
   }
 
   if (rulesArea) {
-    rulesArea.value = buttonState.rulesText;
-    rulesArea.addEventListener('input', () => {
+    if (rulesArea.value && rulesArea.value.trim().length > 0) {
+      buttonState.rulesText = rulesArea.value;
+    } else {
+      rulesArea.value = buttonState.rulesText;
+    }
+
+    rulesArea.oninput = () => {
       buttonState.rulesText = rulesArea.value;
       buttonState.parsedRules = parseButtonRulesText(buttonState.rulesText);
       evaluateButton();
-    });
+    };
+    rulesArea.onchange = rulesArea.oninput;
   }
 
   if (resetRulesBtn) {
-    resetRulesBtn.addEventListener('click', () => {
+    resetRulesBtn.onclick = () => {
       buttonState.rulesText = DEFAULT_BUTTON_RULES;
       if (rulesArea) rulesArea.value = DEFAULT_BUTTON_RULES;
       buttonState.parsedRules = parseButtonRulesText(DEFAULT_BUTTON_RULES);
       evaluateButton();
-    });
+    };
   }
 
   if (fileInput) {
-    fileInput.addEventListener('change', (e) => {
+    fileInput.onchange = (e) => {
       const file = e.target.files && e.target.files[0];
       if (file) processButtonImage(file);
       e.target.value = '';
-    });
+    };
   }
 
   if (dropzone) {
-    dropzone.addEventListener('dragover', (e) => {
+    dropzone.ondragover = (e) => {
       e.preventDefault();
       dropzone.classList.add('active');
-    });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
-    dropzone.addEventListener('drop', (e) => {
+    };
+    dropzone.ondragleave = () => dropzone.classList.remove('active');
+    dropzone.ondrop = (e) => {
       e.preventDefault();
       dropzone.classList.remove('active');
       const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
       if (file) processButtonImage(file);
-    });
+    };
   }
 
-  document.addEventListener('paste', handleButtonPaste);
+  if (typeof document.removeEventListener === 'function') document.removeEventListener('paste', handleButtonPaste);
+  if (typeof document.addEventListener === 'function') document.addEventListener('paste', handleButtonPaste);
 
   updateSerialDetailsUI(buttonState.serial);
   buttonState.parsedRules = parseButtonRulesText(buttonState.rulesText);
@@ -251,7 +277,7 @@ function parseSingleRuleLine(line) {
 
   // 3. Needy module count
   if (cLower.includes('needy') && !cLower.includes('non-needy')) {
-    if (cLower.includes('no needy') || cLower.includes('0 needy')) {
+    if (cLower.includes('no needy') || cLower.includes('0 needy') || cLower.includes('there are no needy')) {
       conditions.push({ type: 'needyCount', exact: 0 });
     } else {
       const needyNum = cLower.match(/(?:exactly\s+)?(\d+)\s+needy/);
@@ -307,23 +333,36 @@ function parseSingleRuleLine(line) {
       conditions.push({ type: 'serialDigitsVsLetters', moreDigits: true });
     } else if (cLower.includes('fewer digits') || cLower.includes('more letters than digits')) {
       conditions.push({ type: 'serialDigitsVsLetters', moreDigits: false });
+    } else if (cLower.includes('at least as many letters as digits')) {
+      conditions.push({ type: 'serialLettersVsDigits', comparator: '>=' });
+    } else if (cLower.includes('at least as many digits as letters')) {
+      conditions.push({ type: 'serialLettersVsDigits', comparator: '<=' });
     }
   }
 
   // c) serial vowels
   if (cLower.includes('serial') && (cLower.includes('vowel') || cLower.includes('vowels'))) {
-    const vowelMatch = cLower.match(/(?:fewer than|less than)\s+(\d+)\s+vowels?/);
-    const vowelMore = cLower.match(/(?:more than)\s+(\d+)\s+vowels?/);
-    const vowelAtLeast = cLower.match(/(?:at least)\s+(\d+)\s+vowels?/);
-    if (vowelMatch) {
-      conditions.push({ type: 'serialVowels', maxExclusive: parseInt(vowelMatch[1], 10) });
-    } else if (vowelMore) {
-      conditions.push({ type: 'serialVowels', minExclusive: parseInt(vowelMore[1], 10) });
-    } else if (vowelAtLeast) {
-      conditions.push({ type: 'serialVowels', minInclusive: parseInt(vowelAtLeast[1], 10) });
-    } else if (cLower.includes('has a vowel') || cLower.includes('contains a vowel')) {
-      conditions.push({ type: 'serialVowels', minInclusive: 1 });
+    if (cLower.includes('no vowels') || cLower.includes('0 vowels') || cLower.includes('without vowels')) {
+      conditions.push({ type: 'serialVowels', exact: 0 });
+    } else {
+      const vowelMatch = cLower.match(/(?:fewer than|less than)\s+(\d+)\s+vowels?/);
+      const vowelMore = cLower.match(/(?:more than)\s+(\d+)\s+vowels?/);
+      const vowelAtLeast = cLower.match(/(?:at least)\s+(\d+)\s+vowels?/);
+      if (vowelMatch) {
+        conditions.push({ type: 'serialVowels', maxExclusive: parseInt(vowelMatch[1], 10) });
+      } else if (vowelMore) {
+        conditions.push({ type: 'serialVowels', minExclusive: parseInt(vowelMore[1], 10) });
+      } else if (vowelAtLeast) {
+        conditions.push({ type: 'serialVowels', minInclusive: parseInt(vowelAtLeast[1], 10) });
+      } else if (cLower.includes('has a vowel') || cLower.includes('contains a vowel')) {
+        conditions.push({ type: 'serialVowels', minInclusive: 1 });
+      }
     }
+  }
+
+  // d) serial duplicate / repeats
+  if (cLower.includes('serial') && (cLower.includes('repeat') || cLower.includes('duplicate'))) {
+    conditions.push({ type: 'serialRepeats', repeats: true });
   }
 
   // 7. Button index / position on bomb
@@ -384,11 +423,21 @@ function evaluateConditionWithState(cond, state) {
     const hasMore = state.digitsCount > state.lettersCount;
     return hasMore === cond.moreDigits;
   }
+  if (cond.type === 'serialLettersVsDigits') {
+    if (!state.serial) return null;
+    if (cond.comparator === '>=') return state.lettersCount >= state.digitsCount;
+    if (cond.comparator === '<=') return state.lettersCount <= state.digitsCount;
+  }
   if (cond.type === 'serialVowels') {
     if (!state.serial) return null;
+    if (cond.exact !== undefined) return state.vowelsCount === cond.exact;
     if (cond.maxExclusive !== undefined) return state.vowelsCount < cond.maxExclusive;
     if (cond.minExclusive !== undefined) return state.vowelsCount > cond.minExclusive;
     if (cond.minInclusive !== undefined) return state.vowelsCount >= cond.minInclusive;
+  }
+  if (cond.type === 'serialRepeats') {
+    if (!state.serial) return null;
+    return state.hasDuplicateChar === cond.repeats;
   }
   if (cond.type === 'buttonIndex') {
     if (state.buttonIndex === null || state.buttonIndex === undefined) return null;
@@ -413,6 +462,7 @@ function evaluateButton() {
   const vowels = currentSerial.match(/[AEIOU]/g) || [];
   const lastDigit = digits.length > 0 ? parseInt(digits[digits.length - 1], 10) : null;
   const rightmostIsEven = lastDigit !== null ? (lastDigit % 2 === 0) : null;
+  const hasDuplicateChar = new Set(currentSerial.split('')).size < currentSerial.length;
 
   const baseState = {
     color: currentColor,
@@ -423,6 +473,7 @@ function evaluateButton() {
     vowelsCount: vowels.length,
     lastDigit: lastDigit,
     rightmostIsEven: rightmostIsEven,
+    hasDuplicateChar: hasDuplicateChar,
     nonNeedy: buttonState.nonNeedyCount === 'unknown' ? null : buttonState.nonNeedyCount,
     needy: buttonState.needyCount === 'unknown' ? null : parseInt(buttonState.needyCount, 10),
     disarmed: buttonState.disarmedCount === 'unknown' ? null : (buttonState.disarmedCount === '0' ? 0 : buttonState.disarmedCount),
@@ -844,4 +895,10 @@ function setButtonStatus(msg, color) {
 }
 
 window.initButtonModule = initButtonModule;
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  initButtonModule();
+} else {
+  document.addEventListener('DOMContentLoaded', initButtonModule);
+}
 })();
