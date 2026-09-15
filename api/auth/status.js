@@ -11,7 +11,7 @@
 const { verify, parseCookies } = require('../../lib/session');
 const { getUser }              = require('../../lib/supabase');
 
-const TRIAL_MS = 5 * 60 * 1000; // 5 minutes — change here to adjust trial length
+const TRIAL_MS = 30 * 60 * 1000; // 30 minutes — complimentary trial length
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');

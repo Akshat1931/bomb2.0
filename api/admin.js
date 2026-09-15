@@ -84,9 +84,9 @@ function getExpiryInfo(u) {
 
   if (s === 'trial') {
     const trialStart = u.trial_start ? new Date(u.trial_start).getTime() : Date.now();
-    const remaining = Math.max(0, (5 * 60 * 1000) - (Date.now() - trialStart));
+    const remaining = Math.max(0, (30 * 60 * 1000) - (Date.now() - trialStart));
     if (remaining <= 0) {
-      return `<span style="color:#fb8c00;font-weight:600;">🔒 5m Trial Finished</span>`;
+      return `<span style="color:#fb8c00;font-weight:600;">🔒 30m Trial Finished</span>`;
     }
     const mins = Math.floor(remaining / 60000);
     const secs = Math.floor((remaining % 60000) / 1000);
@@ -152,7 +152,7 @@ function userRow(u) {
           <option value="approve_30d">Approve (30 Days)</option>
           <option value="approve_1d">Approve (1 Day / 24h)</option>
           <option value="signout">🔒 Force Sign Out (Expire)</option>
-          <option value="reset">🔄 Reset Trial (5 Mins)</option>
+          <option value="reset">🔄 Reset Trial (30 Mins)</option>
           <option value="deny">❌ Deny User</option>
         </select>
         <button type="submit" class="btn btn-apply">Apply</button>
@@ -285,7 +285,7 @@ align-items:center;justify-content:center;min-height:100vh;margin:0;}
   <div class="stats">
     <div class="stat"><div class="stat-n">${totalUsers}</div><div class="stat-l">Total Users</div></div>
     <div class="stat"><div class="stat-n" style="color:#00e676">${approved}</div><div class="stat-l">Approved / Active</div></div>
-    <div class="stat"><div class="stat-n" style="color:#ffd875">${onTrial}</div><div class="stat-l">On 5m Trial</div></div>
+    <div class="stat"><div class="stat-n" style="color:#ffd875">${onTrial}</div><div class="stat-l">On 30m Trial</div></div>
     <div class="stat"><div class="stat-n" style="color:#b388ff">${pending}</div><div class="stat-l">Pending Approval</div></div>
     <div class="stat"><div class="stat-n" style="color:#fb8c00">${expired}</div><div class="stat-l">Expired / Timed Out</div></div>
     <div class="stat"><div class="stat-n" style="color:#ef5350">${denied}</div><div class="stat-l">Denied</div></div>
