@@ -468,6 +468,150 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── N-Queens Solver Module Styles ────────────────────── */
+    #nqueenSection .nq-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    #nqueenSection .nq-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    #nqueenSection .nq-seg { display: inline-flex; background: #070714; border: 1px solid var(--border); border-radius: 11px; padding: 3px; gap: 2px; }
+    #nqueenSection .nq-seg button {
+      border: 0; background: transparent; color: var(--text-dim); font: 600 12.5px/1 system-ui, sans-serif;
+      padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.12s;
+    }
+    #nqueenSection .nq-seg button.on { background: #1a1a36; color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.3); font-weight: 700; }
+    #nqueenSection .nq-lab { font: 600 11px/1 system-ui; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin: 2px 0 8px; }
+    #nqueenSection .nq-swatches { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    #nqueenSection .nq-sw { width: 28px; height: 28px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; position: relative; transition: 0.1s; }
+    #nqueenSection .nq-sw.on { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 8px rgba(255,255,255,0.4); }
+    #nqueenSection .nq-mini {
+      border: 1px solid var(--border); background: #0b0b18; border-radius: 8px; padding: 7px 10px;
+      font: 600 12.5px system-ui; color: var(--text); cursor: pointer;
+    }
+    #nqueenSection .nq-mini:hover { border-color: var(--border-hover); }
+    #nqueenSection #nqPencilBtn.on, #nqueenSection #nqStarsBtn.on { background: var(--accent); color: #08080f; font-weight: 700; }
+
+    /* Board & Cells */
+    #nqueenSection .nq-board-shell { margin: 16px 0 4px; display: flex; justify-content: center; }
+    #nqueenSection #nqBoard {
+      display: grid; gap: 5px; background: #070714; padding: 9px; border-radius: 14px;
+      border: 1px solid var(--border); touch-action: none; width: 100%; max-width: 480px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+    #nqueenSection .nq-cell {
+      aspect-ratio: 1/1; border-radius: min(9px, 24%); background: #16162a; position: relative;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: box-shadow 0.12s, transform 0.12s; user-select: none;
+      min-width: 0; container-type: size;
+    }
+    #nqueenSection .nq-cell .nq-glyph { font-size: min(5.2vw, 26px); line-height: 1; pointer-events: none; }
+    @supports (font-size: 1cqw) { #nqueenSection .nq-cell .nq-glyph { font-size: min(78cqw, 26px); } }
+    #nqueenSection .nq-cell.x .nq-glyph::before { content: "✕"; color: rgba(255,255,255,0.92); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+    #nqueenSection .nq-cell.cat .nq-glyph::before { content: "👑"; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+    #nqueenSection #nqBoard.queen .nq-cell.cat .nq-glyph::before { content: "👑"; }
+    #nqueenSection #nqBoard.cat .nq-cell.cat .nq-glyph::before { content: "🐱"; }
+    #nqueenSection #nqBoard.duck .nq-cell.cat .nq-glyph::before { content: "🦆"; }
+    #nqueenSection .nq-cell.sol .nq-glyph::before { content: "👑"; filter: drop-shadow(0 0 6px rgba(255,216,117,0.9)); }
+    #nqueenSection .nq-cell.hyp { box-shadow: 0 0 0 3px #1f5fb0, 0 0 0 6px rgba(31,95,176,0.3); z-index: 3; }
+    #nqueenSection .nq-cell.hyp .nq-glyph::before { content: "?"; color: #fff; font-weight: 800; font-size: min(5vw, 22px); text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    #nqueenSection .nq-cell.step { box-shadow: 0 0 0 3px #7c4dff; z-index: 2; }
+    #nqueenSection .nq-cell.step .nq-glyph::before { content: "👑"; opacity: 0.85; }
+    #nqueenSection .nq-cell.doom { box-shadow: 0 0 0 3px #ff5f57; z-index: 1; animation: nqPulse 1.3s ease-in-out infinite; }
+    #nqueenSection .nq-cell.review { box-shadow: 0 0 0 3px #ffd875, 0 0 0 6px rgba(255,216,117,0.25); z-index: 2; }
+    #nqueenSection .nq-cell.ring { box-shadow: 0 0 0 3px #7c4dff; z-index: 2; }
+    #nqueenSection .nq-cell.pinch { box-shadow: 0 0 0 3px #159e8c; z-index: 2; }
+    #nqueenSection .nq-cell.xprev .nq-glyph::before { content: "\2715"; color: rgba(255,255,255,0.95); font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    #nqueenSection .nq-cell.tx .nq-glyph::before { content: "\2715"; color: transparent; -webkit-text-stroke: 1.6px rgba(255,255,255,0.95); font-weight: 700; }
+    #nqueenSection .nq-cell.tcat .nq-glyph::before { content: "👑"; filter: grayscale(1); opacity: 0.8; }
+    #nqueenSection .nq-cell.tx, #nqueenSection .nq-cell.tcat { outline: 2px dashed rgba(255,255,255,0.9); outline-offset: -3px; }
+    #nqueenSection .nq-cell.tcat::after { content: "?"; position: absolute; top: 1px; right: 4px; font: 800 12px system-ui; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+
+    /* Animations */
+    #nqueenSection .nq-cell.reject { z-index: 4; animation: nqRejRing 0.62s ease-out, nqRejShake 0.42s ease-in-out; }
+    #nqueenSection .nq-cell.reject::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #7d160c; animation: nqRejWash 0.62s ease-out forwards; pointer-events: none; }
+    #nqueenSection .nq-cell.reject .nq-glyph { position: relative; z-index: 1; animation: nqRejPop 0.52s cubic-bezier(0.22, 1.5, 0.4, 1); }
+    @keyframes nqRejWash { 0% { opacity: 0.82; } 55% { opacity: 0.42; } 100% { opacity: 0; } }
+    @keyframes nqRejPop { 0% { transform: scale(2.6); opacity: 0.1; } 30% { transform: scale(1.85); opacity: 1; } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+    @keyframes nqRejRing { 0% { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ff5f57; } 60% { box-shadow: 0 0 0 2px #fff, 0 0 0 8px rgba(255,95,87,0.5); } 100% { box-shadow: 0 0 0 2px transparent, 0 0 0 11px transparent; } }
+    @keyframes nqRejShake { 0%, 100% { transform: translateX(0); } 18% { transform: translateX(-9%); } 42% { transform: translateX(7%); } 68% { transform: translateX(-4%); } }
+
+    #nqueenSection .nq-cell.land, #nqueenSection .nq-cell.lift { z-index: 4; animation: nqLandRing 0.5s ease-out; }
+    #nqueenSection .nq-cell.land .nq-glyph { position: relative; z-index: 1; filter: drop-shadow(0 3px 7px rgba(0,0,0,0.6)); animation: nqLandPop 0.52s cubic-bezier(0.22, 1.35, 0.4, 1); }
+    @keyframes nqLandPop { 0% { transform: scale(4.2); opacity: 0.1; } 22% { transform: scale(3.5); opacity: 1; } 62% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    @keyframes nqLandRing { 0% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--accent); } 100% { box-shadow: 0 0 0 2px transparent, 0 0 0 12px transparent; } }
+
+    #nqueenSection #nqBoard.solved { border-color: var(--green); box-shadow: 0 0 0 3px var(--green), 0 0 28px rgba(61,220,132,0.4); }
+    #nqueenSection #nqBoard.solved .nq-cell.cat { box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--green); z-index: 2; }
+    #nqueenSection #nqBoard.celebrate .nq-cell.cat { animation: nqCatPop 0.5s cubic-bezier(0.2, 1.5, 0.35, 1) both; animation-delay: var(--d, 0ms); }
+    @keyframes nqCatPop { 0% { transform: scale(1); } 45% { transform: scale(1.3); } 100% { transform: scale(1); } }
+    @keyframes nqPulse { 0%, 100% { box-shadow: 0 0 0 3px #ff5f57; } 50% { box-shadow: 0 0 0 3px rgba(255,95,87,0.35); } }
+
+    #nqueenSection #nqBoard.editing { outline: 2px dashed var(--accent); outline-offset: 2px; }
+    #nqueenSection .nq-editbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; background: #151528; border: 1.5px dashed var(--accent); border-radius: 11px; padding: 9px 12px; }
+    #nqueenSection .nq-editbar .note { flex: 1; min-width: 130px; font: 600 12.5px/1.35 system-ui; color: var(--accent); }
+    #nqueenSection .nq-editbar .btn { padding: 8px 14px; font-size: 13px; }
+    #nqueenSection .nq-editbar .emsg { flex-basis: 100%; display: none; font: 600 12.5px/1.45 system-ui; border-radius: 8px; padding: 8px 10px; margin-top: 6px; }
+    #nqueenSection .nq-editbar .emsg.show { display: block; }
+    #nqueenSection .nq-editbar .emsg.ok { background: rgba(61,220,132,0.15); color: var(--green); border: 1px solid rgba(61,220,132,0.3); }
+    #nqueenSection .nq-editbar .emsg.warn { background: rgba(255,216,117,0.15); color: var(--accent); border: 1px solid rgba(255,216,117,0.3); }
+    #nqueenSection .nq-editbar .emsg.err { background: rgba(255,95,87,0.15); color: var(--red); border: 1px solid rgba(255,95,87,0.3); }
+
+    /* Action buttons & Hints */
+    #nqueenSection .nq-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 6px; }
+    #nqueenSection .btn { border: 0; border-radius: 10px; padding: 12px; font: 700 13.5px system-ui; cursor: pointer; transition: 0.12s; text-align: center; }
+    #nqueenSection .btn.primary { background: var(--accent); color: #08080f; }
+    #nqueenSection .btn.primary:hover { filter: brightness(1.08); }
+    #nqueenSection .btn.ghost { background: #121224; border: 1px solid var(--border); color: var(--text); }
+    #nqueenSection .btn.ghost:hover { background: #1a1a34; border-color: var(--border-hover); }
+    #nqueenSection .btn.wide { grid-column: 1 / -1; }
+    #nqueenSection .btn:disabled { opacity: 0.45; cursor: default; }
+
+    #nqueenSection .nq-out { margin-top: 12px; }
+    #nqueenSection .nq-status { font: 600 13px system-ui; padding: 10px 12px; border-radius: 10px; display: none; line-height: 1.45; }
+    #nqueenSection .nq-status.show { display: block; }
+    #nqueenSection .nq-status.ok { background: rgba(61,220,132,0.15); color: var(--green); border: 1px solid rgba(61,220,132,0.3); }
+    #nqueenSection .nq-status.warn { background: rgba(255,216,117,0.15); color: var(--accent); border: 1px solid rgba(255,216,117,0.3); }
+    #nqueenSection .nq-status.err { background: rgba(255,95,87,0.15); color: var(--red); border: 1px solid rgba(255,95,87,0.3); }
+
+    #nqueenSection .nq-hint { display: none; margin-top: 10px; background: #0c0c1a; border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    #nqueenSection .nq-hint.show { display: block; }
+    #nqueenSection .nq-hint h3 { margin: 0 0 4px; font: 700 11.5px/1 system-ui; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+    #nqueenSection .nq-hint .head { font: 700 15px 'Outfit', system-ui, sans-serif; margin: 2px 0 10px; color: #fff; }
+    #nqueenSection .nq-chain { list-style: none; margin: 0; padding: 0; }
+    #nqueenSection .nq-chain li { position: relative; padding: 6px 0 6px 20px; border-left: 2px solid var(--border); margin-left: 6px; font-size: 13px; line-height: 1.5; color: var(--text-dim); }
+    #nqueenSection .nq-chain li::before { content: ""; position: absolute; left: -5.5px; top: 11px; width: 9px; height: 9px; border-radius: 50%; background: var(--border-hover); }
+    #nqueenSection .nq-chain li.k-hyp::before { background: #1f5fb0; }
+    #nqueenSection .nq-chain li.k-step::before { background: #7c4dff; }
+    #nqueenSection .nq-chain li.k-doom::before { background: var(--red); }
+    #nqueenSection .nq-chain li.k-end { border-left-color: transparent; }
+    #nqueenSection .nq-chain li.k-end::before { background: var(--accent); }
+    #nqueenSection .nq-chain b { color: #fff; }
+    #nqueenSection .nq-coord { font: 600 12px monospace; background: #191932; padding: 2px 6px; border-radius: 5px; color: var(--accent); }
+    #nqueenSection .nq-applybar { display: flex; gap: 8px; margin-top: 12px; }
+    #nqueenSection .nq-applybar .btn { flex: 1; padding: 10px; }
+    #nqueenSection .nq-trap { margin-top: 12px; background: rgba(255,216,117,0.1); border: 1px solid rgba(255,216,117,0.3); border-radius: 10px; padding: 12px; font: 600 12.5px/1.45 system-ui; color: var(--accent); }
+    #nqueenSection .nq-trap .trap-title { font: 700 11px/1 system-ui; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+
+    /* Importer Modal Overlay */
+    .nq-overlay { position: fixed; inset: 0; background: rgba(4,5,15,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: none; z-index: 100000; align-items: flex-start; justify-content: center; padding: 20px; overflow: auto; }
+    .nq-overlay.show { display: flex; }
+    .nq-imp { background: #0e0e20; border-radius: 18px; max-width: 520px; width: 100%; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 1px solid #2d2d50; }
+    .nq-local-badge { background: rgba(61,220,132,0.14); color: var(--green); border: 1px solid rgba(61,220,132,0.3); border-radius: 8px; padding: 6px 10px; font: 600 12px system-ui; margin: 0 0 10px; }
+    .nq-drop { border: 2px dashed #3a3a60; border-radius: 12px; padding: 26px 14px; text-align: center; color: var(--text-dim); font: 600 13.5px system-ui; cursor: pointer; background: #070714; transition: 0.15s; }
+    .nq-drop:hover, .nq-drop.over { border-color: var(--accent); background: #121226; color: var(--accent); }
+    .nq-stage { position: relative; margin-top: 12px; display: none; touch-action: none; line-height: 0; }
+    .nq-stage.show { display: block; }
+    .nq-stage img { width: 100%; border-radius: 10px; display: block; user-select: none; }
+    .nq-crop { position: absolute; border: 2px solid var(--accent); box-shadow: 0 0 0 9999px rgba(0,0,0,0.6); cursor: move; touch-action: none; }
+    .nq-crop .h { position: absolute; width: 22px; height: 22px; right: -11px; bottom: -11px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; cursor: nwse-resize; touch-action: none; }
+    .nq-crop .hint-txt { position: absolute; left: 0; top: -22px; font: 600 11px system-ui; color: #08080f; background: var(--accent); padding: 2px 6px; border-radius: 5px; white-space: nowrap; }
+    .nq-row2 { display: flex; gap: 9px; align-items: center; margin-top: 14px; }
+    .nq-imp-status { margin-top: 10px; font: 600 12.5px/1.45 system-ui; color: var(--accent); background: rgba(255,216,117,0.12); border-radius: 8px; padding: 8px 11px; }
+    #nqueenSection .hidden, .nq-overlay .hidden { display: none !important; }
   </style>
 </head>
 
@@ -507,6 +651,7 @@
       Sequences</button>
     <button class="nav-link" type="button" data-target="circuitSection" onclick="showSection('circuitSection')">Circuit
       Solver</button>
+    <button class="nav-link" type="button" data-target="nqueenSection" onclick="showSection('nqueenSection')">N Queen</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1728,6 +1873,187 @@
   <section id="circuitSection" class="page-section">
   </section>
 
+  <section id="nqueenSection" class="page-section">
+    <div class="nq-card" style="max-width: 680px; margin: auto;">
+      <!-- Title & Action Buttons -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h2 style="color:var(--accent); font-family:'Outfit', sans-serif; font-size:22px; font-weight:700; margin-bottom:4px;">N-Queen &amp; Star Battle Solver</h2>
+          <p style="color:var(--text-dim); font-size:13px; margin:0;">1 Queen per row, column &amp; color region · No adjacent/diagonal touch</p>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button id="nqFastImportBtn" class="nq-mini" type="button" title="Fast Paste &amp; OCR screenshot from clipboard">📋 Paste &amp; OCR</button>
+          <button id="nqImportBtn" class="nq-mini" type="button" title="Upload or paste screenshot">📷 Import OCR</button>
+          <button id="nqDataLink" class="nq-mini" type="button" title="Export / Import board snapshot as text">💾 Snapshot</button>
+        </div>
+      </div>
+
+      <!-- Quick Guide accordion -->
+      <details style="font-size:13px; color:#bbb; background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:14px;">
+        <summary style="color:#f5c542; font-weight:600; font-size:13px; cursor:pointer; outline:none;">📖 Quick Guide: How to use N-Queen</summary>
+        <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
+          <p style="margin:0 0 6px;"><strong>1. Screenshot OCR:</strong> Click <strong>📷 Import OCR</strong> or press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Ctrl+V</kbd> anywhere on this tab to paste a puzzle screenshot (LinkedIn Queens, Star Battle, Meowdoku). The engine auto-crops and detects regions &amp; existing marks.</p>
+          <p style="margin:0 0 6px;"><strong>2. Board Controls:</strong> Click a cell to mark <strong>✕</strong>. Double-tap or press-and-hold to place a <strong>👑 Queen</strong>. Switch to <strong>🎨 Paint</strong> to draw color regions manually.</p>
+          <p style="margin:0 0 6px;"><strong>3. Deductive Hints:</strong> Click <strong>Next Hint</strong> for human-deducible step-by-step logic (locked sets, color squeeze, diagonal traps, etc.). Click <strong>Apply Hint</strong> to commit the move.</p>
+          <p style="margin:0;"><strong>4. Pencil / Testing Mode:</strong> Toggle <strong>✏️ Test</strong> to test hypothetical queens without making permanent mistakes. Tap <strong>Verify</strong> to check if your marks fit the solution.</p>
+        </div>
+      </details>
+
+      <!-- Controls row: Size, Stars, Piece Icon, Undo, Pencil -->
+      <div class="nq-row" style="justify-content:space-between; margin-bottom:12px;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label style="font-size:12.5px; font-weight:600; color:var(--text-dim); display:flex; align-items:center; gap:6px;">
+            Size:
+            <select id="nqSize" style="background:#0b0b18; border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:8px; font-size:13px; font-weight:600;">
+              <option value="5">5 × 5</option>
+              <option value="6">6 × 6</option>
+              <option value="7">7 × 7</option>
+              <option value="8">8 × 8</option>
+              <option value="9">9 × 9</option>
+              <option value="10" selected>10 × 10</option>
+              <option value="11">11 × 11</option>
+              <option value="12">12 × 12</option>
+            </select>
+          </label>
+          <button id="nqStarsBtn" class="nq-mini" type="button" title="Toggle 1 Queen or 2 Queens (Star Battle) per row/col/color">×1</button>
+          <button id="nqIconBtn" class="nq-mini" type="button" title="Cycle piece icon (Queen / Cat / Duck)">👑</button>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="nqUndoBtn" class="nq-mini" type="button" title="Undo last action">↩ Undo</button>
+          <button id="nqPencilBtn" class="nq-mini" type="button" title="Pencil / Testing mode">✏️ Test</button>
+        </div>
+      </div>
+
+      <!-- Tools row: Mark X, Place Queen, Paint Region, Pick Color, Erase -->
+      <div style="margin-bottom:12px;">
+        <div id="nqTools" class="nq-seg">
+          <button type="button" data-tool="x" class="on" title="Mark ✕">✕ Mark</button>
+          <button type="button" data-tool="cat" title="Place Queen">👑 Queen</button>
+          <button type="button" data-tool="paint" title="Paint region color">🎨 Paint</button>
+          <button type="button" data-tool="pick" title="Pick color from board">👁 Pick</button>
+          <button type="button" data-tool="erase" title="Erase cell/mark">🧹 Erase</button>
+        </div>
+      </div>
+
+      <!-- Color Palette (visible when Paint tool active) -->
+      <div id="nqPaletteWrap" class="hidden" style="margin-bottom:12px; background:#0c0c1b; border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
+        <div class="nq-lab">Region Palette (Click a color to paint):</div>
+        <div id="nqPalette" class="nq-swatches"></div>
+      </div>
+
+      <!-- Testing Mode Action Bar (hidden by default) -->
+      <div id="nqEditBar" class="nq-editbar hidden">
+        <div class="note">✏️ <strong>Testing Mode</strong>: <span id="nqEditCount">no marks yet</span></div>
+        <button id="nqVerifyBtn" class="btn ghost" type="button">Verify</button>
+        <button id="nqApplyEditBtn" class="btn primary" type="button">Apply Marks</button>
+        <div id="nqEditMsg" class="emsg"></div>
+      </div>
+
+      <!-- Interactive Grid Board -->
+      <div class="nq-board-shell">
+        <div id="nqBoard" class="queen"></div>
+      </div>
+
+      <!-- Primary Action Buttons -->
+      <div class="nq-actions">
+        <button id="nqHintBtn" class="btn primary" type="button">Next Hint</button>
+        <button id="nqSolveBtn" class="btn ghost" type="button">Solve Puzzle</button>
+        <button id="nqClearMarks" class="btn ghost" type="button">Clear Marks</button>
+        <button id="nqReset" class="btn ghost" type="button">Reset All</button>
+      </div>
+
+      <!-- Status & Step-by-Step Deductive Hints Container -->
+      <div class="nq-out">
+        <div id="nqStatus" class="nq-status"></div>
+        <div id="nqHint" class="nq-hint">
+          <h3 id="nqHintKind">HINT</h3>
+          <div id="nqHintHead" class="head"></div>
+          <ul id="nqHintChain" class="nq-chain"></ul>
+          <div id="nqHintTrap" class="nq-trap hidden">
+            <div class="trap-title">Deep Lookahead Stretch</div>
+            <div id="nqTrapMsg"></div>
+            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+              <button id="nqTrapCat" class="btn ghost hidden" type="button">Place guaranteed queen 👑</button>
+              <button id="nqTrapShow" class="btn ghost hidden" type="button">Show lookahead stretch 👀</button>
+            </div>
+          </div>
+          <div class="nq-applybar">
+            <button id="nqApplyHint" class="btn primary" type="button">Apply Hint</button>
+            <button id="nqClearHint" class="btn ghost" type="button">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshot OCR Importer Overlay Modal -->
+  <div id="nqImpOverlay" class="nq-overlay">
+    <div class="nq-imp">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; font-family:'Outfit',sans-serif; color:#fff; font-size:18px;">📷 Screenshot OCR Importer</h3>
+        <button id="nqImpCancel" class="btn ghost" type="button" style="padding:4px 10px; font-size:12px;">✕ Close</button>
+      </div>
+      <div class="nq-local-badge">🔒 100% Private — Client-Side CV. No images leave your browser.</div>
+      <div id="nqDropZone" class="nq-drop">
+        Drag &amp; drop puzzle screenshot here, or click to upload<br>
+        <span style="font-size:12px; color:var(--text-muted);">(or press Ctrl+V to paste anywhere)</span>
+      </div>
+      <input id="nqFileInput" type="file" accept="image/*" style="display:none;">
+      <div style="display:flex; justify-content:center; margin-top:8px;">
+        <button id="nqPasteBtn" class="btn ghost" type="button" style="padding:8px 16px; font-size:13px;">📋 Paste Image from Clipboard</button>
+      </div>
+
+      <!-- Preview & Interactive Crop Box -->
+      <div id="nqStage" class="nq-stage">
+        <img id="nqStageImg" alt="Screenshot preview">
+        <div id="nqCropBox" class="nq-crop">
+          <span class="hint-txt">Drag to reposition / resize corner handle</span>
+          <div class="h br"></div>
+        </div>
+      </div>
+
+      <!-- Importer Controls -->
+      <div class="nq-row2">
+        <label style="font-size:13px; font-weight:600; color:var(--text-dim); display:flex; align-items:center; gap:6px;">
+          Grid Size:
+          <select id="nqImpSize" style="background:#070714; border:1px solid var(--border); color:#fff; padding:6px 10px; border-radius:8px; font-size:13px;">
+            <option value="5">5 × 5</option>
+            <option value="6">6 × 6</option>
+            <option value="7">7 × 7</option>
+            <option value="8">8 × 8</option>
+            <option value="9">9 × 9</option>
+            <option value="10" selected>10 × 10</option>
+            <option value="11">11 × 11</option>
+            <option value="12">12 × 12</option>
+          </select>
+        </label>
+        <button id="nqReadBtn" class="btn primary" type="button" style="flex:1;">Read &amp; Import Board</button>
+        <button id="nqImpAnother" class="btn ghost" type="button" style="display:none; padding:8px 12px; font-size:12px;">Reset</button>
+      </div>
+      <div id="nqImpStatus" class="nq-imp-status" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Board Text Snapshot Modal -->
+  <div id="nqDataOverlay" class="nq-overlay">
+    <div class="nq-imp">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; font-family:'Outfit',sans-serif; color:#fff; font-size:18px;">💾 Board Text Snapshot</h3>
+        <button id="nqDataClose" class="btn ghost" type="button" style="padding:4px 10px; font-size:12px;">✕ Close</button>
+      </div>
+      <p style="color:var(--text-dim); font-size:12.5px; margin:0 0 10px; line-height:1.45;">
+        Export your board to share, or paste a board text snapshot below to import regions and marks instantly.
+      </p>
+      <textarea id="nqDataText" rows="10" style="width:100%; padding:10px; background:#070714; border:1px solid var(--border); border-radius:8px; color:var(--accent); font-family:monospace; font-size:12.5px; resize:vertical; box-sizing:border-box;"></textarea>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button id="nqDataCopy" class="btn ghost" type="button" style="flex:1;">📋 Copy Text</button>
+        <button id="nqDataLoad" class="btn primary" type="button" style="flex:1;">📥 Load from Text</button>
+      </div>
+      <div id="nqDataStatus" class="nq-imp-status" style="display:none;"></div>
+    </div>
+  </div>
+
   <section id="aboutSection" class="page-section">
     <div
       style="max-width:700px; margin:auto; color:#ddd; line-height:1.7; font-size:14px; padding:12px; background:#101025; border:1px solid #222; border-radius:12px;">
@@ -1753,6 +2079,7 @@
   <script src="./whos-module.js"></script>
   <script src="./wires-module.js"></script>
   <script src="./circuit-module.js"></script>
+  <script src="./nqueen-module.js"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -1769,7 +2096,7 @@
 
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active')) return;
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
       for (const item of items) {
@@ -1916,6 +2243,12 @@
           window.initCircuitModule();
         }
         window.circuitLoaded = true;
+      }
+      if (id === 'nqueenSection' && !window.nqueenLoaded) {
+        if (typeof window.initNQueenModule === 'function') {
+          window.initNQueenModule();
+        }
+        window.nqueenLoaded = true;
       }
     }
 
