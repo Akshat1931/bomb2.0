@@ -254,6 +254,109 @@
         }
       }
       if (done) showStatus('ok', SOLVED_MSG);
+      updateCoordsCard();
+    }
+
+    // ── Queen Coordinates Formatting & Copy ─────────────────────────
+    let coordFormat = 'colLetter'; // 'colLetter' = H1 E2 G3 (Col Letter + Row Num); 'rowLetter' = A5 B8 C6 (Row Letter + Col Num)
+
+    function formatCoords(cellsList) {
+      if (!cellsList || !cellsList.length) return '';
+      if (coordFormat === 'colLetter') {
+        // Sorted by row: Col Letter + Row Number (e.g. H1 E2 G3...)
+        const sorted = cellsList.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        return sorted.map(([r, c]) => `${String.fromCharCode(65 + c)}${r + 1}`).join(' ');
+      } else {
+        // Sorted by row: Row Letter + Col Number (e.g. A5 B8 C6...)
+        const sorted = cellsList.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        return sorted.map(([r, c]) => `${String.fromCharCode(65 + r)}${c + 1}`).join(' ');
+      }
+    }
+
+    function getActiveQueens() {
+      if (solutionCells && solutionCells.length) return solutionCells;
+      const cats = [];
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (mark[r][c] === 'cat') cats.push([r, c]);
+        }
+      }
+      if (cats.length === N * starsPer) return cats;
+      if (!unpainted() && regionCount() === N) {
+        const pure = pureSolutions();
+        if (pure && pure.length === 1) return pure[0];
+      }
+      return cats.length ? cats : null;
+    }
+
+    function updateCoordsCard() {
+      const card = document.getElementById('nqCoordsCard');
+      const textEl = document.getElementById('nqCoordsText');
+      const subEl = document.getElementById('nqCoordsSubtext');
+      const togBtn = document.getElementById('nqToggleCoordFormat');
+      if (!card || !textEl) return;
+
+      const queens = getActiveQueens();
+      if (queens && queens.length) {
+        textEl.textContent = formatCoords(queens);
+        if (subEl) {
+          subEl.textContent = coordFormat === 'colLetter'
+            ? 'Format: Col Letter + Row Number (e.g. H1 = Column H, Row 1)'
+            : 'Format: Row Letter + Col Number (e.g. A8 = Row A, Column 8)';
+        }
+        if (togBtn) {
+          togBtn.textContent = coordFormat === 'colLetter'
+            ? 'Switch format (Row Letter A-H)'
+            : 'Switch format (Col Letter A-H)';
+        }
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    }
+
+    const copyCoordsBtn = document.getElementById('nqCopyCoordsBtn');
+    const coordsTextEl = document.getElementById('nqCoordsText');
+    const togCoordBtn = document.getElementById('nqToggleCoordFormat');
+
+    function doCopyCoords() {
+      if (!coordsTextEl || !coordsTextEl.textContent.trim()) return;
+      const val = coordsTextEl.textContent.trim();
+      const onCopied = () => {
+        if (copyCoordsBtn) {
+          const old = copyCoordsBtn.textContent;
+          copyCoordsBtn.textContent = '✓ Copied!';
+          setTimeout(() => { copyCoordsBtn.textContent = old; }, 1500);
+        }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(val).then(onCopied).catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = val;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          onCopied();
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = val;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        onCopied();
+      }
+    }
+
+    if (copyCoordsBtn) copyCoordsBtn.onclick = doCopyCoords;
+    if (coordsTextEl) coordsTextEl.onclick = doCopyCoords;
+    if (togCoordBtn) {
+      togCoordBtn.onclick = () => {
+        coordFormat = (coordFormat === 'colLetter') ? 'rowLetter' : 'colLetter';
+        updateCoordsCard();
+      };
     }
 
     // ── Gesture & Editing ───────────────────────────────────────────
