@@ -1802,6 +1802,19 @@
       }
     });
 
+    // Enter & Escape keyboard shortcuts for OCR importer modal
+    window.addEventListener('keydown', e => {
+      if (overlay && overlay.classList.contains('show')) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (readBtn) readBtn.click();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          overlay.classList.remove('show');
+        }
+      }
+    });
+
     const pasteBtn = document.getElementById('nqPasteBtn');
     if (pasteBtn) {
       pasteBtn.onclick = async () => {
@@ -1865,7 +1878,7 @@
       reader.onload = () => {
         stageImg.onload = () => {
           natImg = stageImg; dataCache = null;
-          showStage(true); impMsg('');
+          showStage(true); impMsg('Board detected! Click "⚡ Read & Import Board" or press Enter ↵ to solve.');
           if (fastImportMode && overlay) overlay.classList.add('show');
           requestAnimationFrame(() => {
             const cw = stageImg.clientWidth || stageImg.naturalWidth || 1;
