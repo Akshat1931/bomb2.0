@@ -337,73 +337,114 @@
     if (evalText) evalText.textContent = '';
     if (statusText) statusText.textContent = 'Engine analyzing position...';
 
+    let moveInfo = null;
+
+    // 1. Primary: Direct high-speed chess-api.com (Supports CORS with Access-Control-Allow-Origin: *)
     try {
-      const url = `https://stockfish.online/api/s/v2.php?fen=${encodeURIComponent(fen)}&depth=13`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data && data.success && data.bestmove) {
-        // Format: "bestmove d4g7 ponder g8g7"
-        const parts = data.bestmove.split(' ');
-        const uciMove = parts[1]; // e.g. "d4g7"
-        if (uciMove && uciMove.length >= 4) {
-          const from = uciMove.substring(0, 2);
-          const to = uciMove.substring(2, 4);
-          const promo = uciMove.length > 4 ? uciMove[4].toUpperCase() : '';
-
-          // Determine moving piece name
-          const fromIdx = SQR_NAMES.indexOf(from);
-          const movingPieceCode = fromIdx !== -1 ? chessState.mergedTiles[fromIdx] : '';
-          const pieceName = PIECE_NAMES[movingPieceCode] || 'White Piece';
-
-          const targetIdx = SQR_NAMES.indexOf(to);
-          const targetPieceCode = targetIdx !== -1 ? chessState.mergedTiles[targetIdx] : '';
-          const isCapture = targetPieceCode && targetPieceCode !== 's';
-
-          chessState.bestMove = {
-            from: from,
-            to: to,
-            uci: uciMove,
-            piece: movingPieceCode,
-            isCapture: isCapture
+      const res = await fetch('https://chess-api.com/v1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fen: fen, depth: 12 })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.from && data.to) {
+          moveInfo = {
+            from: data.from.toLowerCase(),
+            to: data.to.toLowerCase(),
+            uci: (data.move || (data.from + data.to)).toLowerCase(),
+            san: data.san || '',
+            evaluation: data.eval !== undefined ? data.eval : null,
+            mate: data.mate || null,
+            continuation: Array.isArray(data.continuationArr) ? data.continuationArr.slice(0, 5).join(' ') : ''
           };
-
-          const actionVerb = isCapture ? 'Captures on' : 'Moves to';
-          const evalScore = data.evaluation !== null && data.evaluation !== undefined
-            ? (data.evaluation > 0 ? `+${data.evaluation}` : `${data.evaluation}`)
-            : (data.mate ? `Mate in ${Math.abs(data.mate)}` : '');
-
-          if (moveText) {
-            moveText.innerHTML = `
-              <div style="font-size:14px; color:#aaa; margin-bottom:4px;">WHITE TO MOVE:</div>
-              <div style="font-size:26px; font-weight:900; color:#00ff66; letter-spacing:1px;">
-                Move ${pieceName.replace('White ', '')} from <span style="color:#ffd875; text-decoration:underline;">${from.toUpperCase()}</span> ➔ <span style="color:#00ff66; text-decoration:underline;">${to.toUpperCase()}</span>
-                ${promo ? `(Promote to ${promo})` : ''}
-              </div>
-            `;
-          }
-
-          if (evalText) {
-            evalText.innerHTML = `
-              <span>Evaluation: <strong style="color:${parseFloat(evalScore) >= 0 ? '#00ff66' : '#ff5f57'};">${evalScore}</strong></span>
-              ${data.continuation ? `<span style="margin-left:14px; color:#888;">Line: ${data.continuation.split(' ').slice(0, 5).join(' ')}</span>` : ''}
-            `;
-          }
-
-          highlightMoveOnBoard(from, to);
-          if (statusText) statusText.textContent = `✓ Solved! Best move: ${from.toUpperCase()} ➔ ${to.toUpperCase()}`;
-          return;
         }
       }
-      throw new Error(data.data || "Could not retrieve best move");
-    } catch (err) {
-      console.warn("Stockfish online error, trying fallback:", err);
-      // Client-side simple fallback advice
-      if (moveText) {
-        moveText.innerHTML = `<span style="color:#ffd875;">Calculated position ready. Double check piece placements on board below.</span>`;
-      }
-      if (statusText) statusText.textContent = 'FEN generated successfully.';
+    } catch (e1) {
+      console.warn('chess-api.com direct failed, trying proxy:', e1);
     }
+
+    // 2. Secondary: Internal Vercel API proxy (/api/stockfish)
+    if (!moveInfo) {
+      try {
+        const res = await fetch(`/api/stockfish?fen=${encodeURIComponent(fen)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.bestmove) {
+            const parts = data.bestmove.split(' ');
+            const uciMove = parts[1] || parts[0];
+            if (uciMove && uciMove.length >= 4) {
+              moveInfo = {
+                from: uciMove.substring(0, 2).toLowerCase(),
+                to: uciMove.substring(2, 4).toLowerCase(),
+                uci: uciMove.toLowerCase(),
+                san: data.san || '',
+                evaluation: data.evaluation !== undefined ? data.evaluation : null,
+                mate: data.mate || null,
+                continuation: data.continuation || ''
+              };
+            }
+          }
+        }
+      } catch (e2) {
+        console.warn('Internal stockfish proxy failed:', e2);
+      }
+    }
+
+    // 3. Render results
+    if (moveInfo && moveInfo.from && moveInfo.to) {
+      const from = moveInfo.from;
+      const to = moveInfo.to;
+      const promo = moveInfo.uci.length > 4 ? moveInfo.uci[4].toUpperCase() : '';
+
+      const fromIdx = SQR_NAMES.indexOf(from);
+      const movingPieceCode = fromIdx !== -1 ? chessState.mergedTiles[fromIdx] : '';
+      const pieceName = PIECE_NAMES[movingPieceCode] || 'White Piece';
+
+      const targetIdx = SQR_NAMES.indexOf(to);
+      const targetPieceCode = targetIdx !== -1 ? chessState.mergedTiles[targetIdx] : '';
+      const isCapture = targetPieceCode && targetPieceCode !== 's';
+
+      chessState.bestMove = {
+        from: from,
+        to: to,
+        uci: moveInfo.uci,
+        piece: movingPieceCode,
+        isCapture: isCapture
+      };
+
+      const evalScore = moveInfo.evaluation !== null && moveInfo.evaluation !== undefined
+        ? (moveInfo.evaluation > 0 ? `+${moveInfo.evaluation}` : `${moveInfo.evaluation}`)
+        : (moveInfo.mate ? `Mate in ${Math.abs(moveInfo.mate)}` : '');
+
+      if (moveText) {
+        moveText.innerHTML = `
+          <div style="font-size:13px; font-weight:800; color:#ffd875; letter-spacing:1px; margin-bottom:6px;">BEST MOVE (WHITE):</div>
+          <div style="font-size:26px; font-weight:900; color:#00ff66; letter-spacing:0.5px;">
+            Move ${pieceName.replace('White ', '')} from <span style="color:#ffd875; text-decoration:underline;">${from.toUpperCase()}</span> ➔ <span style="color:#00ff66; text-decoration:underline;">${to.toUpperCase()}</span>
+            ${moveInfo.san ? `<span style="font-size:18px; color:#a5b4fc; margin-left:8px;">(${moveInfo.san})</span>` : ''}
+            ${promo ? `(Promote to ${promo})` : ''}
+          </div>
+        `;
+      }
+
+      if (evalText) {
+        evalText.innerHTML = `
+          <span>Eval: <strong style="color:${parseFloat(evalScore) >= 0 ? '#00ff66' : '#ff5f57'};">${evalScore}</strong></span>
+          ${moveInfo.continuation ? `<span style="margin-left:14px; color:#888;">Line: ${moveInfo.continuation}</span>` : ''}
+        `;
+      }
+
+      highlightMoveOnBoard(from, to);
+      if (statusText) statusText.textContent = `✓ Best move calculated: ${from.toUpperCase()} ➔ ${to.toUpperCase()}`;
+      return;
+    }
+
+    // If both failed
+    if (moveText) {
+      moveText.innerHTML = `<span style="color:#ff5f57;">Could not reach Stockfish engine. Check your connection or retry recalculation.</span>`;
+    }
+    if (statusText) statusText.textContent = 'Engine query failed.';
   }
 
   function highlightMoveOnBoard(from, to) {
