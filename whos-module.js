@@ -62,13 +62,13 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
 
   // Fixed Percentage Coordinates for Who's on First Module
   const REGION_BOUNDS = {
-    display:       { x: 0.16, y: 0.20, w: 0.68, h: 0.16 },
-    "top-left":    { x: 0.14, y: 0.37, w: 0.36, h: 0.13 },
-    "top-right":   { x: 0.50, y: 0.37, w: 0.36, h: 0.13 },
-    "middle-left": { x: 0.14, y: 0.50, w: 0.36, h: 0.13 },
-    "middle-right":{ x: 0.50, y: 0.50, w: 0.36, h: 0.13 },
-    "bottom-left": { x: 0.14, y: 0.63, w: 0.36, h: 0.13 },
-    "bottom-right":{ x: 0.50, y: 0.63, w: 0.36, h: 0.13 }
+    display:       { x: 0.22, y: 0.22, w: 0.56, h: 0.12 },
+    "top-left":    { x: 0.20, y: 0.40, w: 0.26, h: 0.08 },
+    "top-right":   { x: 0.53, y: 0.40, w: 0.26, h: 0.08 },
+    "middle-left": { x: 0.20, y: 0.53, w: 0.26, h: 0.08 },
+    "middle-right":{ x: 0.53, y: 0.53, w: 0.26, h: 0.08 },
+    "bottom-left": { x: 0.20, y: 0.66, w: 0.26, h: 0.08 },
+    "bottom-right":{ x: 0.53, y: 0.66, w: 0.26, h: 0.08 }
   };
 
   const whosState = {
@@ -613,7 +613,7 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     }
   }
 
-  // Helper to crop a specific region canvas using percentage bounds with upscale, padding and binarization
+  // Helper to crop a specific region canvas using percentage bounds scaled 2x for optimal OCR
   function getCroppedRegionCanvas(sourceImg, bounds) {
     const w = sourceImg.width;
     const h = sourceImg.height;
@@ -623,40 +623,13 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     const rw = Math.min(w - rx, Math.round(w * bounds.w));
     const rh = Math.min(h - ry, Math.round(h * bounds.h));
 
-    const scale = 2.5;
-    const pad = 15;
-    const sw = Math.round(rw * scale);
-    const sh = Math.round(rh * scale);
-
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = sw + pad * 2;
-    tempCanvas.height = sh + pad * 2;
+    tempCanvas.width = rw * 2;
+    tempCanvas.height = rh * 2;
     const tempCtx = tempCanvas.getContext('2d');
 
-    // Solid white background
-    tempCtx.fillStyle = '#ffffff';
-    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
     try {
-      tempCtx.drawImage(sourceImg, rx, ry, rw, rh, pad, pad, sw, sh);
-
-      // Preprocessing: KTaNE text is bright (white/cream/green) on dark button background.
-      // Convert to high-contrast crisp black text on white background for 100% OCR accuracy.
-      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const d = imgData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-        if (gray > 130) {
-          d[i] = 0;
-          d[i + 1] = 0;
-          d[i + 2] = 0;
-        } else {
-          d[i] = 255;
-          d[i + 1] = 255;
-          d[i + 2] = 255;
-        }
-      }
-      tempCtx.putImageData(imgData, 0, 0);
+      tempCtx.drawImage(sourceImg, rx, ry, rw, rh, 0, 0, rw * 2, rh * 2);
     } catch(err) {
       console.warn("Canvas crop fallback:", err);
     }
@@ -678,48 +651,46 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
 
   // Best fuzzy word match helper against candidate vocabulary
   function findBestWordMatch(rawText, candidates) {
-    const cleanText = rawText.toUpperCase().replace(/[^A-Z? ']/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!cleanText) return "";
+    const clean = rawText.toUpperCase().replace(/[^A-Z? ']/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) return "";
+    const noSpace = clean.replace(/[\s']/g, '');
 
-    // 1. Direct exact match
+    // 1. Direct exact match (handles spacing differences such as "UH HUH" vs "UHHUH")
     for (const cand of candidates) {
       if (cand === "(blank)") continue;
-      if (cleanText === cand.toUpperCase()) return cand;
+      const candNorm = cand.toUpperCase().trim();
+      if (clean === candNorm) return cand;
+      if (noSpace === candNorm.replace(/[\s']/g, '')) return cand;
     }
 
     // 2. Exact word token match
-    const tokens = cleanText.split(' ').filter(Boolean);
+    const tokens = clean.split(' ').filter(Boolean);
     for (const token of tokens) {
       for (const cand of candidates) {
         if (cand === "(blank)") continue;
-        if (token === cand.toUpperCase()) return cand;
+        if (token === cand.toUpperCase().trim()) return cand;
       }
     }
 
-    // 3. Edit distance similarity scoring
+    // 3. Substring match for longer candidate words
+    for (const cand of candidates) {
+      if (cand === "(blank)") continue;
+      const candNorm = cand.toUpperCase().trim();
+      if (clean.includes(candNorm) && candNorm.length >= 3) return cand;
+    }
+
+    // 4. Edit distance similarity scoring
     let bestMatch = "";
     let bestScore = -1;
 
     for (const cand of candidates) {
       if (cand === "(blank)") continue;
-      const cleanCand = cand.toUpperCase();
-
-      if (cleanText.includes(cleanCand) || cleanCand.includes(cleanText)) {
-        const lenDiff = Math.abs(cleanText.length - cleanCand.length);
-        if (lenDiff <= 1) {
-          const score = 100 - lenDiff * 10;
-          if (score > bestScore) {
-            bestScore = score;
-            bestMatch = cand;
-          }
-        }
-      }
-
-      const dist = whosLevenshtein(cleanText, cleanCand);
-      const maxLen = Math.max(cleanText.length, cleanCand.length);
+      const candNorm = cand.toUpperCase().replace(/[\s']/g, '');
+      const dist = whosLevenshtein(noSpace, candNorm);
+      const maxLen = Math.max(noSpace.length, candNorm.length);
       const sim = 1 - (dist / maxLen);
 
-      if (sim >= 0.60 && sim * 100 > bestScore) {
+      if (sim >= 0.50 && sim * 100 > bestScore) {
         bestScore = sim * 100;
         bestMatch = cand;
       }
@@ -743,10 +714,35 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     try {
       const sourceImg = whosState.image;
 
+      let worker = null;
+      if (typeof Tesseract.createWorker === 'function') {
+        try {
+          worker = await Tesseract.createWorker('eng');
+          await worker.setParameters({
+            tessedit_pageseg_mode: '7'
+          });
+        } catch(e) {
+          console.warn("Worker creation fallback:", e);
+        }
+      }
+
+      async function doRecognize(canvas) {
+        if (worker && typeof worker.recognize === 'function') {
+          const res = await worker.recognize(canvas);
+          return res?.data?.text || "";
+        }
+        try {
+          const res = await Tesseract.recognize(canvas, 'eng', { tessedit_pageseg_mode: 7 });
+          return res?.data?.text || "";
+        } catch(e) {
+          const res = await Tesseract.recognize(canvas, 'eng');
+          return res?.data?.text || "";
+        }
+      }
+
       // 1. Process Display Box
       const displayCanvas = getCroppedRegionCanvas(sourceImg, REGION_BOUNDS.display);
-      const displayRes = await Tesseract.recognize(displayCanvas, 'eng');
-      const rawDisplay = displayRes?.data?.text || "";
+      const rawDisplay = await doRecognize(displayCanvas);
       const matchedDisplay = findBestWordMatch(rawDisplay, whosState.displayWordsList);
 
       if (matchedDisplay) {
@@ -758,14 +754,17 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
       // 2. Process 6 Button Regions
       for (const pos of POSITIONS) {
         const btnCanvas = getCroppedRegionCanvas(sourceImg, REGION_BOUNDS[pos]);
-        const btnRes = await Tesseract.recognize(btnCanvas, 'eng');
-        const rawBtnText = btnRes?.data?.text || "";
+        const rawBtnText = await doRecognize(btnCanvas);
         const matchedBtn = findBestWordMatch(rawBtnText, whosState.buttonLabelsList);
 
         const btnSelect = document.getElementById(`whosSelect-${pos}`);
         if (btnSelect) {
           btnSelect.value = matchedBtn || "";
         }
+      }
+
+      if (worker && typeof worker.terminate === 'function') {
+        try { await worker.terminate(); } catch(e) {}
       }
 
       handleWhosInputChange();
