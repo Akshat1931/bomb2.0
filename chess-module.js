@@ -448,24 +448,30 @@
 
       if (moveText) {
         moveText.innerHTML = `
-          <div style="font-size:12px; font-weight:800; color:#ffd875; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px;">BEST MOVE (WHITE)</div>
-          <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin-bottom:4px;">
-            <span style="font-size:42px; font-weight:900; color:#00ff66; letter-spacing:1px; font-family:'Outfit', sans-serif;">
-              ${displaySan}
-            </span>
-            <span style="font-size:16px; color:#cbd5e1; font-weight:600;">
-              Move ${pieceName.replace('White ', '')} from <span style="color:#ffd875; text-decoration:underline;">${from.toUpperCase()}</span> ➔ <span style="color:#00ff66; text-decoration:underline;">${to.toUpperCase()}</span>
-              ${isCapture ? '<span style="color:#f87171; margin-left:6px;">(Takes)</span>' : ''}
-              ${promo ? `<span style="color:#a78bfa; margin-left:6px;">(Promotes to ${promo})</span>` : ''}
-            </span>
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+            <div style="background:rgba(0, 255, 102, 0.1); border:2px solid #00ff66; border-radius:14px; padding:10px 24px; box-shadow:0 0 20px rgba(0,255,102,0.2);">
+              <div style="font-size:11px; font-weight:800; color:#ffd875; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:2px;">ALGEBRAIC NOTATION ANSWER</div>
+              <div style="font-size:52px; font-weight:900; color:#00ff66; font-family:'Outfit', monospace, sans-serif; line-height:1; letter-spacing:1px;" id="chessAnswerSanText">${displaySan}</div>
+            </div>
+            <button onclick="navigator.clipboard.writeText('${displaySan}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='📋 Copy Move', 1500);" style="background:#1e204a; border:1.5px solid #00ff66; color:#00ff66; font-weight:800; padding:10px 18px; border-radius:10px; cursor:pointer; font-size:14px; transition:all 0.15s;">📋 Copy Move</button>
+          </div>
+          <div style="font-size:16px; color:#cbd5e1; font-weight:600; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span>Move <strong style="color:#ffd875;">${pieceName.replace('White ', '')}</strong>:</span>
+            <span style="background:#2a2618; border:1px solid #ffd875; color:#ffd875; padding:2px 8px; border-radius:6px; font-weight:800;">${from.toUpperCase()}</span>
+            <span>➔</span>
+            <span style="background:#133324; border:1px solid #00ff66; color:#00ff66; padding:2px 8px; border-radius:6px; font-weight:800;">${to.toUpperCase()}</span>
+            ${isCapture ? '<span style="color:#f87171; font-weight:800; margin-left:4px;">(Captures piece on ' + to.toUpperCase() + ')</span>' : ''}
+            ${promo ? `<span style="color:#a78bfa; font-weight:800; margin-left:4px;">(Promote to ${promo})</span>` : ''}
           </div>
         `;
       }
 
       if (evalText) {
         evalText.innerHTML = `
-          <span>Eval: <strong style="color:${parseFloat(evalScore) >= 0 ? '#00ff66' : '#ff5f57'};">${evalScore}</strong></span>
-          ${moveInfo.continuation ? `<span style="margin-left:14px; color:#888;">Line: ${moveInfo.continuation}</span>` : ''}
+          <div style="margin-top:10px; font-size:13px; color:#94a3b8;">
+            <span>Evaluation: <strong style="color:${parseFloat(evalScore) >= 0 ? '#00ff66' : '#ff5f57'}; font-size:14px;">${evalScore}</strong></span>
+            ${moveInfo.continuation ? `<span style="margin-left:16px; color:#64748b;">Engine Line: ${moveInfo.continuation}</span>` : ''}
+          </div>
         `;
       }
 
