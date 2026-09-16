@@ -16,6 +16,8 @@ serial has fewer than 2 vowels and label says Blue: 4s
 this is button 2 and label says Red: 5s
 Otherwise: 7s`;
 
+const COLOR_WORDS = ['red', 'blue', 'green', 'yellow', 'white', 'orange', 'purple', 'black', 'magenta', 'cyan', 'pink', 'gray', 'grey', 'brown'];
+
 const buttonState = {
   initialized: false,
   rulesText: DEFAULT_BUTTON_RULES,
@@ -269,10 +271,20 @@ function parseSingleRuleLine(line) {
     conditions.push({ type: 'color', color: (colMatch[1] || colMatch[2]).toLowerCase() });
   }
 
-  // 2. Label: label says (word) OR says (word) OR label is (word)
-  const lblMatch = cLower.match(/(?:label\s+says|label\s+is|says)\s+["']?([a-z0-9?]+)["']?/i);
-  if (lblMatch) {
-    conditions.push({ type: 'label', label: lblMatch[1].toLowerCase() });
+  // 2. Label
+  if (cLower.includes('different from the button color') || cLower.includes('different from button color')) {
+    conditions.push({ type: 'labelColorDiffers' });
+  } else if (cLower.includes('same as the button color') || cLower.includes('matches the button color') || cLower.includes('same color as the button')) {
+    conditions.push({ type: 'labelColorMatches' });
+  } else if (cLower.includes('label is a color word') || cLower.includes('label is a color')) {
+    conditions.push({ type: 'labelIsColorWord' });
+  } else if (cLower.includes('label is not a color word') || cLower.includes('label is not a color')) {
+    conditions.push({ type: 'labelNotColorWord' });
+  } else {
+    const lblMatch = cLower.match(/(?:label\s+says|label\s+is|says)\s+["']?([a-z0-9?]+)["']?/i);
+    if (lblMatch && !['a', 'the', 'not', 'different', 'same'].includes(lblMatch[1].toLowerCase())) {
+      conditions.push({ type: 'label', label: lblMatch[1].toLowerCase() });
+    }
   }
 
   // 3. Needy module count
@@ -388,6 +400,22 @@ function evaluateConditionWithState(cond, state) {
   if (cond.type === 'label') {
     return state.label === cond.label;
   }
+  if (cond.type === 'labelColorDiffers') {
+    if (!state.label || !state.color) return null;
+    return COLOR_WORDS.includes(state.label) && state.label !== state.color;
+  }
+  if (cond.type === 'labelColorMatches') {
+    if (!state.label || !state.color) return null;
+    return COLOR_WORDS.includes(state.label) && state.label === state.color;
+  }
+  if (cond.type === 'labelIsColorWord') {
+    if (!state.label) return null;
+    return COLOR_WORDS.includes(state.label);
+  }
+  if (cond.type === 'labelNotColorWord') {
+    if (!state.label) return null;
+    return !COLOR_WORDS.includes(state.label);
+  }
   if (cond.type === 'needyCount') {
     if (state.needy === null || state.needy === undefined) return null;
     return state.needy === cond.exact;
@@ -486,6 +514,10 @@ function evaluateButton() {
     for (const c of r.conditions) {
       if (c.type === 'color' && c.color !== currentColor) return false;
       if (c.type === 'label' && c.label !== currentLabel) return false;
+      if (c.type === 'labelColorDiffers' && (!COLOR_WORDS.includes(currentLabel) || currentLabel === currentColor)) return false;
+      if (c.type === 'labelColorMatches' && (!COLOR_WORDS.includes(currentLabel) || currentLabel !== currentColor)) return false;
+      if (c.type === 'labelIsColorWord' && !COLOR_WORDS.includes(currentLabel)) return false;
+      if (c.type === 'labelNotColorWord' && COLOR_WORDS.includes(currentLabel)) return false;
     }
     return true;
   });
