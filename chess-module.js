@@ -325,6 +325,32 @@
     calculateBestMoveForWhite(chessState.currentFen);
   }
 
+  function computeSan(from, to, movingPieceCode, isCapture, promo) {
+    const p = (movingPieceCode || '').toUpperCase();
+    if (p === 'K') {
+      if (from === 'e1' && to === 'g1') return 'O-O';
+      if (from === 'e1' && to === 'c1') return 'O-O-O';
+      if (from === 'e8' && to === 'g8') return 'O-O';
+      if (from === 'e8' && to === 'c8') return 'O-O-O';
+    }
+
+    let san = '';
+    if (p === 'P' || !p) {
+      if (isCapture) {
+        san = from[0] + 'x' + to;
+      } else {
+        san = to;
+      }
+    } else {
+      san = p + (isCapture ? 'x' : '') + to;
+    }
+
+    if (promo) {
+      san += '=' + promo.toUpperCase();
+    }
+    return san;
+  }
+
   // ── STOCKFISH INTEGRATION ─────────────────────────────────
   async function calculateBestMoveForWhite(fen) {
     const moveBanner = document.getElementById('chessBestMoveBanner');
@@ -405,10 +431,13 @@
       const targetPieceCode = targetIdx !== -1 ? chessState.mergedTiles[targetIdx] : '';
       const isCapture = targetPieceCode && targetPieceCode !== 's';
 
+      const displaySan = moveInfo.san || computeSan(from, to, movingPieceCode, isCapture, promo);
+
       chessState.bestMove = {
         from: from,
         to: to,
         uci: moveInfo.uci,
+        san: displaySan,
         piece: movingPieceCode,
         isCapture: isCapture
       };
@@ -419,11 +448,16 @@
 
       if (moveText) {
         moveText.innerHTML = `
-          <div style="font-size:13px; font-weight:800; color:#ffd875; letter-spacing:1px; margin-bottom:6px;">BEST MOVE (WHITE):</div>
-          <div style="font-size:26px; font-weight:900; color:#00ff66; letter-spacing:0.5px;">
-            Move ${pieceName.replace('White ', '')} from <span style="color:#ffd875; text-decoration:underline;">${from.toUpperCase()}</span> ➔ <span style="color:#00ff66; text-decoration:underline;">${to.toUpperCase()}</span>
-            ${moveInfo.san ? `<span style="font-size:18px; color:#a5b4fc; margin-left:8px;">(${moveInfo.san})</span>` : ''}
-            ${promo ? `(Promote to ${promo})` : ''}
+          <div style="font-size:12px; font-weight:800; color:#ffd875; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px;">BEST MOVE (WHITE)</div>
+          <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin-bottom:4px;">
+            <span style="font-size:42px; font-weight:900; color:#00ff66; letter-spacing:1px; font-family:'Outfit', sans-serif;">
+              ${displaySan}
+            </span>
+            <span style="font-size:16px; color:#cbd5e1; font-weight:600;">
+              Move ${pieceName.replace('White ', '')} from <span style="color:#ffd875; text-decoration:underline;">${from.toUpperCase()}</span> ➔ <span style="color:#00ff66; text-decoration:underline;">${to.toUpperCase()}</span>
+              ${isCapture ? '<span style="color:#f87171; margin-left:6px;">(Takes)</span>' : ''}
+              ${promo ? `<span style="color:#a78bfa; margin-left:6px;">(Promotes to ${promo})</span>` : ''}
+            </span>
           </div>
         `;
       }
@@ -436,7 +470,7 @@
       }
 
       highlightMoveOnBoard(from, to);
-      if (statusText) statusText.textContent = `✓ Best move calculated: ${from.toUpperCase()} ➔ ${to.toUpperCase()}`;
+      if (statusText) statusText.textContent = `✓ Best move: ${displaySan} (${from.toUpperCase()} ➔ ${to.toUpperCase()})`;
       return;
     }
 
