@@ -62,13 +62,13 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
 
   // Fixed Percentage Coordinates for Who's on First Module
   const REGION_BOUNDS = {
-    display:       { x: 0.16, y: 0.20, w: 0.68, h: 0.17 },
-    "top-left":    { x: 0.11, y: 0.40, w: 0.37, h: 0.13 },
-    "top-right":   { x: 0.52, y: 0.40, w: 0.37, h: 0.13 },
-    "middle-left": { x: 0.11, y: 0.54, w: 0.37, h: 0.13 },
-    "middle-right":{ x: 0.52, y: 0.54, w: 0.37, h: 0.13 },
-    "bottom-left": { x: 0.11, y: 0.68, w: 0.37, h: 0.13 },
-    "bottom-right":{ x: 0.52, y: 0.68, w: 0.37, h: 0.13 }
+    display:       { x: 0.16, y: 0.20, w: 0.68, h: 0.16 },
+    "top-left":    { x: 0.14, y: 0.37, w: 0.36, h: 0.13 },
+    "top-right":   { x: 0.50, y: 0.37, w: 0.36, h: 0.13 },
+    "middle-left": { x: 0.14, y: 0.50, w: 0.36, h: 0.13 },
+    "middle-right":{ x: 0.50, y: 0.50, w: 0.36, h: 0.13 },
+    "bottom-left": { x: 0.14, y: 0.63, w: 0.36, h: 0.13 },
+    "bottom-right":{ x: 0.50, y: 0.63, w: 0.36, h: 0.13 }
   };
 
   const whosState = {
@@ -613,47 +613,115 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     }
   }
 
-  // Helper to crop a specific region canvas using percentage bounds
+  // Helper to crop a specific region canvas using percentage bounds with upscale, padding and binarization
   function getCroppedRegionCanvas(sourceImg, bounds) {
     const w = sourceImg.width;
     const h = sourceImg.height;
 
-    const rx = Math.round(w * bounds.x);
-    const ry = Math.round(h * bounds.y);
-    const rw = Math.round(w * bounds.w);
-    const rh = Math.round(h * bounds.h);
+    const rx = Math.max(0, Math.round(w * bounds.x));
+    const ry = Math.max(0, Math.round(h * bounds.y));
+    const rw = Math.min(w - rx, Math.round(w * bounds.w));
+    const rh = Math.min(h - ry, Math.round(h * bounds.h));
+
+    const scale = 2.5;
+    const pad = 15;
+    const sw = Math.round(rw * scale);
+    const sh = Math.round(rh * scale);
 
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = rw;
-    tempCanvas.height = rh;
+    tempCanvas.width = sw + pad * 2;
+    tempCanvas.height = sh + pad * 2;
     const tempCtx = tempCanvas.getContext('2d');
 
+    // Solid white background
+    tempCtx.fillStyle = '#ffffff';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
     try {
-      tempCtx.drawImage(sourceImg, rx, ry, rw, rh, 0, 0, rw, rh);
+      tempCtx.drawImage(sourceImg, rx, ry, rw, rh, pad, pad, sw, sh);
+
+      // Preprocessing: KTaNE text is bright (white/cream/green) on dark button background.
+      // Convert to high-contrast crisp black text on white background for 100% OCR accuracy.
+      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        if (gray > 130) {
+          d[i] = 0;
+          d[i + 1] = 0;
+          d[i + 2] = 0;
+        } else {
+          d[i] = 255;
+          d[i + 1] = 255;
+          d[i + 2] = 255;
+        }
+      }
+      tempCtx.putImageData(imgData, 0, 0);
     } catch(err) {
       console.warn("Canvas crop fallback:", err);
     }
     return tempCanvas;
   }
 
+  function whosLevenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+    return dp[m][n];
+  }
+
   // Best fuzzy word match helper against candidate vocabulary
   function findBestWordMatch(rawText, candidates) {
-    const cleanText = rawText.toUpperCase().replace(/[^A-Z? ']/g, ' ').trim();
+    const cleanText = rawText.toUpperCase().replace(/[^A-Z? ']/g, ' ').replace(/\s+/g, ' ').trim();
     if (!cleanText) return "";
 
+    // 1. Direct exact match
+    for (const cand of candidates) {
+      if (cand === "(blank)") continue;
+      if (cleanText === cand.toUpperCase()) return cand;
+    }
+
+    // 2. Exact word token match
+    const tokens = cleanText.split(' ').filter(Boolean);
+    for (const token of tokens) {
+      for (const cand of candidates) {
+        if (cand === "(blank)") continue;
+        if (token === cand.toUpperCase()) return cand;
+      }
+    }
+
+    // 3. Edit distance similarity scoring
     let bestMatch = "";
     let bestScore = -1;
 
     for (const cand of candidates) {
       if (cand === "(blank)") continue;
       const cleanCand = cand.toUpperCase();
-      
-      if (cleanText.includes(cleanCand)) {
-        const score = cleanCand.length * 10;
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = cand;
+
+      if (cleanText.includes(cleanCand) || cleanCand.includes(cleanText)) {
+        const lenDiff = Math.abs(cleanText.length - cleanCand.length);
+        if (lenDiff <= 1) {
+          const score = 100 - lenDiff * 10;
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = cand;
+          }
         }
+      }
+
+      const dist = whosLevenshtein(cleanText, cleanCand);
+      const maxLen = Math.max(cleanText.length, cleanCand.length);
+      const sim = 1 - (dist / maxLen);
+
+      if (sim >= 0.60 && sim * 100 > bestScore) {
+        bestScore = sim * 100;
+        bestMatch = cand;
       }
     }
 
