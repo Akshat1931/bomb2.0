@@ -708,7 +708,7 @@ async function build() {
   let html = fs.readFileSync(path.join(ROOT, 'solver.html'), 'utf8');
 
   // 3. Find all local <script src="./..."> references
-  const scriptTagRe = /<script\s+src="\.\/([^"]+\.js)"\s*><\/script>/gi;
+  const scriptTagRe = /<script\s+src="\.\/([^"?#]+\.js)(?:\?[^"]*)?"\s*><\/script>/gi;
   const matches = [...html.matchAll(scriptTagRe)];
   console.log(`📦  Found ${matches.length} local module script(s):`);
 
