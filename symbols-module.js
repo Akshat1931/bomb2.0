@@ -1068,7 +1068,12 @@
   }
 
   // ── GLOBAL PASTE LISTENER ─────────────────────────────────────────
+  let pasteListenerAttached = false;
+
   function setupPasteListener() {
+    if (pasteListenerAttached) return;
+    pasteListenerAttached = true;
+
     window.addEventListener('paste', (e) => {
       const activeSection = document.querySelector('.page-section.active');
       if (!activeSection || activeSection.id !== 'symbolsSection') return;
@@ -1085,24 +1090,12 @@
               handleModuleImage(file);
             } else if (state.activeTarget === 'ref0') {
               handleReferenceImage(file, 0);
-              if (!state.refImages[1]) selectTarget('ref1');
-              else if (!state.moduleImage) selectTarget('mod');
             } else if (state.activeTarget === 'ref1') {
               handleReferenceImage(file, 1);
-              if (!state.refImages[2]) selectTarget('ref2');
-              else if (!state.moduleImage) selectTarget('mod');
             } else if (state.activeTarget === 'ref2') {
               handleReferenceImage(file, 2);
-              if (!state.moduleImage) selectTarget('mod');
             } else {
-              const firstEmptyRef = state.refImages.findIndex(x => x === null);
-              if (firstEmptyRef !== -1) {
-                handleReferenceImage(file, firstEmptyRef);
-                selectTarget(firstEmptyRef < 2 ? `ref${firstEmptyRef + 1}` : 'mod');
-              } else {
-                handleModuleImage(file);
-                selectTarget('mod');
-              }
+              handleReferenceImage(file, 0);
             }
             break;
           }
@@ -1112,25 +1105,36 @@
   }
 
   // ── PUBLIC INTERFACE ──────────────────────────────────────────────
+  let isInitialized = false;
+
   window.symbolsModule = {
     init: function () {
-      renderUI();
-      solveSymbols();
-      setupPasteListener();
+      if (!isInitialized) {
+        renderUI();
+        solveSymbols();
+        setupPasteListener();
+        isInitialized = true;
+      }
     },
     selectTarget: function (targetId) {
       selectTarget(targetId);
     },
     onRefFile: function (event, slotIndex) {
       const file = event.target.files && event.target.files[0];
-      if (file) handleReferenceImage(file, slotIndex);
+      if (file) {
+        handleReferenceImage(file, slotIndex);
+        event.target.value = '';
+      }
     },
     clearRef: function (slotIndex) {
       clearReferenceSlot(slotIndex);
     },
     onModFile: function (event) {
       const file = event.target.files && event.target.files[0];
-      if (file) handleModuleImage(file);
+      if (file) {
+        handleModuleImage(file);
+        event.target.value = '';
+      }
     },
     clearMod: function () {
       clearModuleImage();
