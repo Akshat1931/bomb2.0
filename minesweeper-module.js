@@ -433,6 +433,8 @@
 
         // Check if all remaining mines are accounted for on the boundary
         const maxRemainingForOff = Math.max(...validGlobalCombos.map(c => remainingMines - c.totalMines));
+        const minRemainingForOff = Math.min(...validGlobalCombos.map(c => remainingMines - c.totalMines));
+
         if (maxRemainingForOff === 0) {
           // All off-boundary cells are 100% Guaranteed SAFE!
           for (let r = 0; r < TOTAL_ROWS; r++) {
@@ -441,6 +443,29 @@
               if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
                 safeSet.add(id);
                 probabilities[id] = 0;
+              }
+            }
+          }
+        } else if (offBoundaryCount > 0 && minRemainingForOff === offBoundaryCount) {
+          // All off-boundary cells MUST be MINES!
+          for (let r = 0; r < TOTAL_ROWS; r++) {
+            for (let c = 0; c < TOTAL_COLS; c++) {
+              const id = coord(r, c);
+              if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
+                mineSet.add(id);
+                probabilities[id] = 100;
+              }
+            }
+          }
+        } else if (offBoundaryCount > 0) {
+          // Calculate average probability for off-boundary cells
+          const avgRemainingForOff = validGlobalCombos.reduce((sum, c) => sum + (remainingMines - c.totalMines), 0) / validGlobalCombos.length;
+          const offProb = Math.round((avgRemainingForOff / offBoundaryCount) * 100);
+          for (let r = 0; r < TOTAL_ROWS; r++) {
+            for (let c = 0; c < TOTAL_COLS; c++) {
+              const id = coord(r, c);
+              if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
+                probabilities[id] = offProb;
               }
             }
           }
