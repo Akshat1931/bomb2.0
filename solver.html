@@ -942,6 +942,7 @@
     <button class="nav-link" type="button" data-target="nqueenSection" onclick="showSection('nqueenSection')">N Queen</button>
     <button class="nav-link" type="button" data-target="complexWiresSection" onclick="showSection('complexWiresSection')">Complex Wires</button>
     <button class="nav-link" type="button" data-target="chessSection" onclick="showSection('chessSection')">Chess</button>
+    <button class="nav-link" type="button" data-target="minesweeperSection" onclick="showSection('minesweeperSection')">Mines</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -2470,6 +2471,7 @@
   </section>
 
   <section id="chessSection" class="page-section"></section>
+  <section id="minesweeperSection" class="page-section"></section>
 
   <section id="aboutSection" class="page-section">
     <div
@@ -2500,6 +2502,7 @@
   <script src="./nqueen-module.js"></script>
   <script src="./complex-wires-module.js"></script>
   <script src="./chess-module.js"></script>
+  <script src="./minesweeper-module.js"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2516,7 +2519,7 @@
 
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active')) return;
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
       for (const item of items) {
@@ -2680,6 +2683,12 @@
           window.initChessModule();
         }
         window.chessLoaded = true;
+      }
+      if (id === 'minesweeperSection' && !window.minesweeperLoaded) {
+        if (typeof window.initMinesweeperModule === 'function') {
+          window.initMinesweeperModule();
+        }
+        window.minesweeperLoaded = true;
       }
     }
 
