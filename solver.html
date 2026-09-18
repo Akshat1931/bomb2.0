@@ -943,6 +943,7 @@
     <button class="nav-link" type="button" data-target="complexWiresSection" onclick="showSection('complexWiresSection')">Complex Wires</button>
     <button class="nav-link" type="button" data-target="chessSection" onclick="showSection('chessSection')">Chess</button>
     <button class="nav-link" type="button" data-target="minesweeperSection" onclick="showSection('minesweeperSection')">Mines</button>
+    <button class="nav-link" type="button" data-target="symbolsSection" onclick="showSection('symbolsSection')">Symbols</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1533,6 +1534,10 @@
 
   <section id="pianoSection" class="page-section">
     <!-- Rendered dynamically by piano-module.js -->
+  </section>
+
+  <section id="symbolsSection" class="page-section">
+    <!-- Rendered dynamically by symbols-module.js -->
   </section>
 
   <section id="buttonSection" class="page-section">
@@ -2503,6 +2508,7 @@
   <script src="./complex-wires-module.js?v=20260918_v3"></script>
   <script src="./chess-module.js?v=20260918_v3"></script>
   <script src="./minesweeper-module.js?v=20260918_v3"></script>
+  <script src="./symbols-module.js?v=20260918_v1"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2689,6 +2695,12 @@
           window.initMinesweeperModule();
         }
         window.minesweeperLoaded = true;
+      }
+      if (id === 'symbolsSection' && !window.symbolsLoaded) {
+        if (typeof window.initSymbolsModule === 'function') {
+          window.initSymbolsModule();
+        }
+        window.symbolsLoaded = true;
       }
     }
 
