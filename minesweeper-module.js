@@ -113,8 +113,8 @@
         const cx = Math.floor(minX + (c + 0.5) * cellW);
         const cy = Math.floor(minY + (r + 0.5) * cellH);
 
-        const pw = Math.max(2, Math.floor(cellW * 0.28));
-        const ph = Math.max(2, Math.floor(cellH * 0.28));
+        const pw = Math.max(2, Math.floor(cellW * 0.22));
+        const ph = Math.max(2, Math.floor(cellH * 0.22));
 
         let sumR = 0, sumG = 0, sumB = 0;
         let count = 0;
@@ -151,22 +151,28 @@
 
         // Revealed cells have light gray background (~220-245)
         if (avgR > 140 && avgG > 140) {
-          if (minBrightness > 195) {
+          if (minBrightness > 185) {
             row.push('0'); // Blank revealed cell
           } else {
             const [pr, pg, pb] = minPixel;
-            if (pb > pr + 28 && pb > 85) {
-              row.push('1'); // Blue 1
-            } else if (pg > pr + 15 && pg > pb + 15) {
-              row.push('2'); // Green 2
-            } else if (pr > pg + 30 && pr > pb + 30) {
-              row.push('3'); // Red 3
-            } else if (pb > pr && pb > pg && (pr + pg + pb) < 220) {
-              row.push('4'); // Indigo 4
+            // 3: Red
+            if (pr > pg + 35 && pr > pb + 35) {
+              row.push('3');
+            // 2: Green
+            } else if (pg > pr + 20 && pg > pb + 15) {
+              row.push('2');
+            // 4: Purple (Blue + Red, Green is low)
+            } else if (pb > pg + 25 && pr > pg + 15 && pb > pr) {
+              row.push('4');
+            // 1: Blue (Blue is highest, Green > Red)
+            } else if (pb > pr + 35 && pb > 85) {
+              row.push('1');
+            // 5: Maroon
             } else if (pr > 90 && pg < 60 && pb < 60) {
-              row.push('5'); // Maroon 5
+              row.push('5');
+            // 6: Teal
             } else if (pg > 80 && pb > 80 && pr < 70) {
-              row.push('6'); // Teal 6
+              row.push('6');
             } else {
               row.push('?');
             }
