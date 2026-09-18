@@ -147,223 +147,265 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     return activeStage;
   }
 
-  function createCompositeLetterGridCanvas(img) {
-    const srcCanvas = document.createElement('canvas');
-    srcCanvas.width = img.width;
-    srcCanvas.height = img.height;
-    const srcCtx = srcCanvas.getContext('2d');
-    srcCtx.drawImage(img, 0, 0);
+  // ── PRECOMPUTED 16x16 LETTER BITMASK TEMPLATES (A-Z) ─────
+  const LETTER_TEMPLATES = {
+    "A": [0, 896, 896, 1984, 1984, 1984, 4064, 3552, 3808, 8176, 8176, 8176, 6264, 14392, 12312, 0],
+    "B": [0, 16256, 16368, 8184, 7800, 7736, 7800, 8184, 8188, 7740, 7740, 7740, 8184, 8176, 7680, 0],
+    "C": [0, 384, 4080, 8176, 7736, 15384, 15360, 15360, 15360, 15360, 15360, 7736, 8184, 4080, 384, 0],
+    "D": [0, 16128, 16352, 8176, 7792, 7736, 7736, 7736, 7736, 7736, 7800, 7920, 8176, 8160, 3840, 0],
+    "E": [0, 8160, 8176, 4080, 3584, 3584, 4064, 4064, 4064, 3584, 3584, 4080, 4080, 4080, 4080, 0],
+    "F": [0, 8176, 8176, 8176, 3600, 3584, 4064, 4064, 4064, 3584, 3584, 3584, 3584, 3584, 3072, 0],
+    "G": [0, 384, 2040, 4088, 7736, 7192, 7168, 15360, 15484, 7288, 7224, 7736, 8184, 4088, 480, 0],
+    "H": [0, 15900, 15932, 7740, 7740, 7740, 8188, 8188, 8188, 7740, 7740, 7740, 7740, 7224, 7224, 0],
+    "I": [0, 1984, 1984, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1984, 1984, 0],
+    "J": [0, 448, 448, 448, 448, 448, 448, 448, 448, 448, 448, 448, 448, 896, 768, 0],
+    "K": [0, 15600, 15600, 7392, 7616, 8064, 8064, 8064, 8128, 8128, 7648, 7392, 7408, 6264, 56, 0],
+    "L": [0, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 4088, 4088, 4088, 4088, 0],
+    "M": [0, 15420, 15996, 16380, 16380, 15324, 14748, 14364, 14364, 14364, 14364, 14364, 14364, 14364, 14364, 0],
+    "N": [0, 15420, 15932, 7992, 7960, 8088, 8152, 7160, 6648, 6392, 6392, 6264, 6264, 6200, 4120, 0],
+    "O": [0, 384, 4080, 8184, 7224, 15416, 14396, 14364, 14364, 14396, 15416, 7224, 8184, 4080, 384, 0],
+    "P": [0, 16256, 16368, 8184, 7800, 7736, 7736, 8056, 8184, 8160, 7680, 7680, 7680, 7680, 7168, 0],
+    "Q": [0, 960, 2016, 3696, 7288, 7224, 7224, 7224, 7224, 3696, 4080, 2016, 480, 240, 48, 0],
+    "R": [0, 16128, 16320, 8160, 7392, 7392, 8160, 8160, 8128, 8128, 7648, 7392, 7408, 7288, 56, 0],
+    "S": [0, 288, 2016, 4080, 3696, 3632, 3840, 4032, 2016, 1008, 496, 2160, 7280, 4080, 2016, 0],
+    "T": [0, 16376, 16376, 16376, 896, 896, 896, 896, 896, 896, 896, 896, 896, 896, 896, 0],
+    "U": [0, 15932, 15932, 7736, 7192, 7192, 7192, 7192, 7192, 7704, 7736, 7736, 4080, 2016, 384, 0],
+    "V": [0, 31804, 32316, 15416, 7224, 7728, 7792, 3952, 3936, 4064, 2016, 1984, 1984, 960, 896, 0],
+    "W": [0, 0, 30862, 30926, 14812, 15868, 7676, 8184, 8184, 3960, 3960, 3640, 1592, 0, 0, 0],
+    "X": [0, 15600, 15472, 7904, 8160, 4032, 1984, 1920, 1920, 1984, 4064, 7648, 6384, 14584, 12408, 0],
+    "Y": [0, 15932, 15932, 7736, 3952, 3952, 2016, 2016, 960, 960, 960, 960, 960, 960, 896, 0],
+    "Z": [0, 8176, 8176, 8176, 480, 480, 960, 960, 1920, 1920, 3840, 3840, 8176, 8176, 8176, 0]
+  };
 
-    const W = img.width;
-    const H = img.height;
-
-    // Create 350x350 composite image for high-accuracy OCR
-    const compCanvas = document.createElement('canvas');
-    compCanvas.width = 350;
-    compCanvas.height = 350;
-    const compCtx = compCanvas.getContext('2d');
-    compCtx.fillStyle = '#ffffff';
-    compCtx.fillRect(0, 0, 350, 350);
-
-    const srcData = srcCtx.getImageData(0, 0, W, H).data;
-
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const cx = Math.round(W * (0.267 + c * 0.0909));
-        const cy = Math.round(H * (0.365 + r * 0.0905));
-        const rw = Math.round(W * 0.075);
-        const rh = Math.round(H * 0.075);
-
-        const x0 = Math.max(0, cx - Math.floor(rw / 2));
-        const y0 = Math.max(0, cy - Math.floor(rh / 2));
-
-        const patchCanvas = document.createElement('canvas');
-        patchCanvas.width = rw;
-        patchCanvas.height = rh;
-        const patchCtx = patchCanvas.getContext('2d');
-        const patchData = patchCtx.createImageData(rw, rh);
-
-        for (let py = 0; py < rh; py++) {
-          for (let px = 0; px < rw; px++) {
-            const sIdx = ((y0 + py) * W + (x0 + px)) * 4;
-            const pIdx = (py * rw + px) * 4;
-
-            const pr = srcData[sIdx];
-            const pg = srcData[sIdx + 1];
-            const pb = srcData[sIdx + 2];
-            const gray = (pr + pg + pb) / 3;
-
-            // Invert: white letters on dark background -> black letters on white
-            const inv = 255 - gray;
-            // Contrast enhance
-            const enhanced = Math.min(255, Math.max(0, (inv - 40) * 1.4));
-
-            patchData.data[pIdx] = enhanced;
-            patchData.data[pIdx + 1] = enhanced;
-            patchData.data[pIdx + 2] = enhanced;
-            patchData.data[pIdx + 3] = 255;
-          }
+  const PRECOMPUTED_TEMPLATES = {};
+  for (const [ch, rows] of Object.entries(LETTER_TEMPLATES)) {
+    const vec = new Float32Array(256);
+    let sum = 0;
+    for (let r = 0; r < 16; r++) {
+      const val = rows[r];
+      for (let c = 0; c < 16; c++) {
+        if (val & (1 << (15 - c))) {
+          vec[r * 16 + c] = 1.0;
+          sum += 1.0;
         }
-        patchCtx.putImageData(patchData, 0, 0);
+      }
+    }
+    const mean = sum / 256;
+    let normSq = 0;
+    for (let i = 0; i < 256; i++) {
+      vec[i] -= mean;
+      normSq += vec[i] * vec[i];
+    }
+    const norm = Math.sqrt(normSq);
+    PRECOMPUTED_TEMPLATES[ch] = { vec, norm };
+  }
 
-        // Paste into composite canvas
-        compCtx.drawImage(patchCanvas, c * 65 + 15, r * 65 + 15, 50, 50);
+  function classifyCellPatch(ctx, cx, cy, rw, rh) {
+    const x0 = Math.max(0, cx - Math.floor(rw / 2));
+    const y0 = Math.max(0, cy - Math.floor(rh / 2));
+    const imgData = ctx.getImageData(x0, y0, rw, rh);
+    const data = imgData.data;
+
+    let minX = rw, maxX = -1, minY = rh, maxY = -1;
+    for (let py = 0; py < rh; py++) {
+      for (let px = 0; px < rw; px++) {
+        const idx = (py * rw + px) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        // White or light letter pixel on dark module screen
+        if (r > 165 && g > 165 && b > 165) {
+          if (px < minX) minX = px;
+          if (px > maxX) maxX = px;
+          if (py < minY) minY = py;
+          if (py > maxY) maxY = py;
+        }
       }
     }
 
-    return compCanvas;
+    if (maxX < minX || maxY < minY) {
+      return '';
+    }
+
+    const bw = maxX - minX + 1;
+    const bh = maxY - minY + 1;
+    const scale = Math.min(14 / bw, 14 / bh);
+    const nw = Math.max(1, Math.round(bw * scale));
+    const nh = Math.max(1, Math.round(bh * scale));
+    const ox = Math.floor((16 - nw) / 2);
+    const oy = Math.floor((16 - nh) / 2);
+
+    const normVec = new Float32Array(256);
+    let sum = 0;
+
+    for (let r = 0; r < nh; r++) {
+      const srcY = minY + Math.min(bh - 1, Math.floor(r / scale));
+      for (let c = 0; c < nw; c++) {
+        const srcX = minX + Math.min(bw - 1, Math.floor(c / scale));
+        const idx = (srcY * rw + srcX) * 4;
+        if (data[idx] > 165 && data[idx + 1] > 165 && data[idx + 2] > 165) {
+          normVec[(oy + r) * 16 + (ox + c)] = 1.0;
+          sum += 1.0;
+        }
+      }
+    }
+
+    const mean = sum / 256;
+    let normSq = 0;
+    for (let i = 0; i < 256; i++) {
+      normVec[i] -= mean;
+      normSq += normVec[i] * normVec[i];
+    }
+    const norm = Math.sqrt(normSq);
+    if (norm === 0) return '';
+
+    let bestCh = '';
+    let bestScore = -999999;
+    for (const [ch, tmpl] of Object.entries(PRECOMPUTED_TEMPLATES)) {
+      if (tmpl.norm === 0) continue;
+      let dot = 0;
+      for (let i = 0; i < 256; i++) {
+        dot += normVec[i] * tmpl.vec[i];
+      }
+      const score = dot / (norm * tmpl.norm);
+      if (score > bestScore) {
+        bestScore = score;
+        bestCh = ch;
+      }
+    }
+
+    return bestCh;
   }
 
-  // ── OCR RECOGNITION ───────────────────────────────────────
-  async function runOcrOnSearchImage() {
+  // ── INSTANT COMPUTER VISION GRID SCANNER (NO TESSERACT) ────
+  function runOcrOnSearchImage() {
     const statusEl = document.getElementById('searchOcrStatus');
     if (!searchState.image) return;
 
-    // Detect stage from lights
+    // Detect stage from the 3 indicator lights on the right
     const detectedStage = detectStageFromImage(searchState.image);
     searchState.autoDetectedStage = detectedStage;
     searchState.stage = detectedStage;
     updateStageButtons();
 
-    if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#ffd875;">⏳ Detected Stage ${detectedStage}. Reading letters with OCR...</span>`;
-    }
-
-    if (typeof Tesseract === 'undefined') {
-      if (statusEl) statusEl.innerHTML = `<span style="color:#ffd875;">Stage ${detectedStage} detected. Tesseract not ready; verify grid manually.</span>`;
-      solveSearch();
-      return;
-    }
-
     try {
-      const compCanvas = createCompositeLetterGridCanvas(searchState.image);
+      const img = searchState.image;
+      const W = img.width;
+      const H = img.height;
 
-      // Show preview
+      const srcCanvas = document.createElement('canvas');
+      srcCanvas.width = W;
+      srcCanvas.height = H;
+      const srcCtx = srcCanvas.getContext('2d');
+      srcCtx.drawImage(img, 0, 0);
+
+      // Create preview canvas showing recognized letters
       const previewCanvas = document.getElementById('searchOcrPreviewCanvas');
       const previewLabel = document.getElementById('searchOcrPreviewLabel');
       if (previewCanvas) {
-        previewCanvas.width = 175;
-        previewCanvas.height = 175;
+        previewCanvas.width = 240;
+        previewCanvas.height = 240;
         const pCtx = previewCanvas.getContext('2d');
-        pCtx.drawImage(compCanvas, 0, 0, 175, 175);
-        previewCanvas.style.display = 'inline-block';
+        pCtx.fillStyle = '#101426';
+        pCtx.fillRect(0, 0, 240, 240);
         if (previewLabel) previewLabel.style.display = 'block';
+        previewCanvas.style.display = 'inline-block';
       }
 
-      let worker = null;
-      if (typeof Tesseract.createWorker === 'function') {
-        worker = await Tesseract.createWorker('eng');
-        await worker.setParameters({
-          tessedit_pageseg_mode: '6', // uniform block of text
-          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ \n'
+      // Check aspect ratio to determine cell coordinates
+      const aspect = W / H;
+      let getCellCenter;
+      let cellW = Math.round(W * 0.08);
+      let cellH = Math.round(H * 0.08);
+
+      if (aspect >= 0.85 && aspect <= 1.18) {
+        // Standard cropped module:
+        // Col centers: W * (0.267 + c * 0.0909)
+        // Row centers: H * (0.365 + r * 0.0905)
+        getCellCenter = (r, c) => ({
+          cx: Math.round(W * (0.267 + c * 0.0909)),
+          cy: Math.round(H * (0.365 + r * 0.0905))
         });
-      }
-
-      let recognizedLines = [];
-      if (worker && typeof worker.recognize === 'function') {
-        const res = await worker.recognize(compCanvas);
-        if (res && res.data && res.data.text) {
-          recognizedLines = res.data.text
-            .toUpperCase()
-            .split('\n')
-            .map(l => l.replace(/[^A-Z]/g, ''))
-            .filter(l => l.length > 0);
-        }
-        await worker.terminate();
-      }
-
-      // Check if we extracted 5 lines of 5 letters
-      let success = false;
-      if (recognizedLines.length >= 5) {
-        let valid = true;
-        for (let r = 0; r < 5; r++) {
-          const line = recognizedLines[r];
-          if (line.length < 5) {
-            valid = false;
-            break;
-          }
-        }
-        if (valid) {
-          for (let r = 0; r < 5; r++) {
-            for (let c = 0; c < 5; c++) {
-              searchState.grid[r][c] = recognizedLines[r][c];
+      } else {
+        // Find screen area with white letter pixels
+        const imgData = srcCtx.getImageData(0, 0, W, H).data;
+        let minX = W, maxX = 0, minY = H, maxY = 0, count = 0;
+        for (let y = Math.floor(H * 0.1); y < Math.floor(H * 0.9); y += 3) {
+          for (let x = Math.floor(W * 0.1); x < Math.floor(W * 0.9); x += 3) {
+            const idx = (y * W + x) * 4;
+            if (imgData[idx] > 175 && imgData[idx + 1] > 175 && imgData[idx + 2] > 175) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+              count++;
             }
           }
-          success = true;
+        }
+
+        if (count > 20 && maxX > minX && maxY > minY) {
+          const gw = (maxX - minX);
+          const gh = (maxY - minY);
+          cellW = Math.max(10, Math.round(gw / 6));
+          cellH = Math.max(10, Math.round(gh / 6));
+          getCellCenter = (r, c) => ({
+            cx: Math.round(minX + (c + 0.5) * (gw / 5)),
+            cy: Math.round(minY + (r + 0.5) * (gh / 5))
+          });
+        } else {
+          // Fallback to relative percentages
+          getCellCenter = (r, c) => ({
+            cx: Math.round(W * (0.267 + c * 0.0909)),
+            cy: Math.round(H * (0.365 + r * 0.0905))
+          });
         }
       }
 
-      // Fallback: If block OCR was imperfect, recognize individual cell crops
-      if (!success) {
-        const W = searchState.image.width;
-        const H = searchState.image.height;
-        const srcCanvas = document.createElement('canvas');
-        srcCanvas.width = W;
-        srcCanvas.height = H;
-        const sCtx = srcCanvas.getContext('2d');
-        sCtx.drawImage(searchState.image, 0, 0);
-        const sData = sCtx.getImageData(0, 0, W, H).data;
+      let readCount = 0;
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const { cx, cy } = getCellCenter(r, c);
+          const recognized = classifyCellPatch(srcCtx, cx, cy, cellW, cellH);
+          if (recognized) {
+            searchState.grid[r][c] = recognized;
+            readCount++;
+          }
 
-        const cellWorker = await Tesseract.createWorker('eng');
-        await cellWorker.setParameters({
-          tessedit_pageseg_mode: '10', // single character
-          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        });
+          // Draw onto preview canvas
+          if (previewCanvas) {
+            const pCtx = previewCanvas.getContext('2d');
+            const px = c * 45 + 10;
+            const py = r * 45 + 10;
+            pCtx.fillStyle = '#1e2442';
+            pCtx.strokeStyle = '#3b82f6';
+            pCtx.lineWidth = 1.5;
+            pCtx.fillRect(px, py, 38, 38);
+            pCtx.strokeRect(px, py, 38, 38);
 
-        for (let r = 0; r < 5; r++) {
-          for (let c = 0; c < 5; c++) {
-            const cx = Math.round(W * (0.267 + c * 0.0909));
-            const cy = Math.round(H * (0.365 + r * 0.0905));
-            const rw = Math.round(W * 0.075);
-            const rh = Math.round(H * 0.075);
-
-            const cCanv = document.createElement('canvas');
-            cCanv.width = 60;
-            cCanv.height = 60;
-            const cCtx = cCanv.getContext('2d');
-            cCtx.fillStyle = '#fff';
-            cCtx.fillRect(0, 0, 60, 60);
-
-            // Draw inverted
-            const cData = cCtx.createImageData(rw, rh);
-            const x0 = cx - Math.floor(rw/2);
-            const y0 = cy - Math.floor(rh/2);
-
-            for (let py = 0; py < rh; py++) {
-              for (let px = 0; px < rw; px++) {
-                const sIdx = ((y0 + py) * W + (x0 + px)) * 4;
-                const pIdx = (py * rw + px) * 4;
-                const inv = 255 - ((sData[sIdx] + sData[sIdx+1] + sData[sIdx+2]) / 3);
-                const enh = Math.min(255, Math.max(0, (inv - 40) * 1.4));
-                cData.data[pIdx] = enh;
-                cData.data[pIdx+1] = enh;
-                cData.data[pIdx+2] = enh;
-                cData.data[pIdx+3] = 255;
-              }
-            }
-            const tmp = document.createElement('canvas');
-            tmp.width = rw;
-            tmp.height = rh;
-            tmp.getContext('2d').putImageData(cData, 0, 0);
-            cCtx.drawImage(tmp, 5, 5, 50, 50);
-
-            const cellRes = await cellWorker.recognize(cCanv);
-            const ch = (cellRes.data.text || '').toUpperCase().replace(/[^A-Z]/g, '')[0];
-            if (ch) searchState.grid[r][c] = ch;
+            pCtx.fillStyle = '#ffffff';
+            pCtx.font = 'bold 22px Outfit, sans-serif';
+            pCtx.textAlign = 'center';
+            pCtx.textBaseline = 'middle';
+            pCtx.fillText(searchState.grid[r][c] || '?', px + 19, py + 20);
           }
         }
-        await cellWorker.terminate();
       }
 
       updateGridInputs();
+
       if (statusEl) {
-        statusEl.innerHTML = `<span style="color:#22c55e;">✓ Stage ${detectedStage} scanned successfully!</span>`;
+        if (readCount >= 20) {
+          statusEl.innerHTML = `<span style="color:#22c55e;">✓ Stage ${detectedStage} scanned successfully (${readCount}/25 letters detected)!</span>`;
+        } else {
+          statusEl.innerHTML = `<span style="color:#ffd875;">⚠️ Scanned ${readCount}/25 letters. Verify letters in the 5×5 grid.</span>`;
+        }
       }
+
       solveSearch();
     } catch (err) {
-      console.error("Search OCR error:", err);
+      console.error("Search Vision error:", err);
       if (statusEl) {
-        statusEl.innerHTML = `<span style="color:#ff5f57;">⚠️ OCR error. You can type letters directly into the grid.</span>`;
+        statusEl.innerHTML = `<span style="color:#ff5f57;">⚠️ Error reading image. Please type letters into the grid.</span>`;
       }
       solveSearch();
     }
