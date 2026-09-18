@@ -150,21 +150,21 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
   // ── PRECOMPUTED 16x16 LETTER BITMASK TEMPLATES (A-Z) ─────
   const LETTER_TEMPLATES = {
     "A": [0, 896, 896, 1984, 1984, 1984, 4064, 3552, 3808, 8176, 8176, 8176, 6264, 14392, 12312, 0],
-    "B": [0, 0, 0, 32760, 15996, 15996, 16376, 16376, 16252, 15934, 15934, 16380, 0, 0, 0, 0],
+    "B": [0, 16368, 16368, 4088, 3640, 3640, 4080, 4080, 3640, 3640, 3640, 3644, 3640, 4088, 4032, 0],
     "C": [0, 384, 4080, 8176, 7736, 15384, 15360, 15360, 15360, 15360, 15360, 7736, 8184, 4080, 384, 0],
-    "D": [0, 16128, 16352, 8176, 7792, 7736, 7736, 7736, 7736, 7736, 7800, 7920, 8176, 8160, 3840, 0],
-    "E": [0, 8160, 8176, 4080, 3584, 3584, 4064, 4064, 4064, 3584, 3584, 4080, 4080, 4080, 4080, 0],
-    "F": [0, 8176, 8176, 8176, 3600, 3584, 4064, 4064, 4064, 3584, 3584, 3584, 3584, 3584, 3072, 0],
+    "D": [0, 8128, 16368, 8176, 3644, 3644, 3612, 3612, 3612, 3612, 3612, 3644, 3836, 4080, 4080, 0],
+    "E": [0, 8176, 8176, 8176, 1792, 1792, 2016, 2016, 1792, 1792, 1792, 1792, 2032, 2032, 2032, 0],
+    "F": [0, 8176, 8176, 8176, 1792, 1792, 1792, 2016, 2016, 2016, 1792, 1792, 1536, 1536, 1536, 0],
     "G": [0, 384, 2040, 4088, 7736, 7192, 7168, 15360, 15484, 7288, 7224, 7736, 8184, 4088, 480, 0],
     "H": [0, 15900, 15932, 7740, 7740, 7740, 8188, 8188, 8188, 7740, 7740, 7740, 7740, 7224, 7224, 0],
     "I": [0, 1984, 1984, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1984, 1984, 0],
     "J": [0, 448, 448, 448, 448, 448, 448, 448, 448, 448, 448, 448, 448, 896, 768, 0],
-    "K": [0, 15600, 15600, 7392, 7616, 8064, 8064, 8064, 8128, 8128, 7648, 7392, 7408, 6264, 56, 0],
-    "L": [0, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 4088, 4088, 4088, 4088, 0],
-    "M": [0, 0, 0, 0, 31774, 32318, 15998, 16382, 16382, 14302, 13278, 9118, 0, 0, 0, 0],
+    "K": [0, 15480, 15480, 15984, 3680, 3776, 4032, 4032, 4032, 4064, 3808, 3696, 3184, 3128, 0, 0],
+    "L": [0, 3840, 7936, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 4088, 4088, 0],
+    "M": [0, 31758, 31758, 31774, 32286, 32318, 32574, 32766, 32766, 32766, 30702, 29678, 29646, 29134, 0, 0],
     "N": [0, 15420, 15932, 7992, 7960, 8088, 8152, 7160, 6648, 6392, 6392, 6264, 6264, 6200, 4120, 0],
     "O": [0, 384, 4080, 8184, 7224, 15416, 14396, 14364, 14364, 14396, 15416, 7224, 8184, 4080, 384, 0],
-    "P": [0, 16256, 16368, 8184, 7800, 7736, 7736, 8056, 8184, 8160, 7680, 7680, 7680, 7680, 7168, 0],
+    "P": [0, 8176, 8176, 2040, 1848, 1848, 1848, 2040, 2032, 2032, 1920, 1792, 1792, 1536, 1024, 0],
     "Q": [0, 960, 2016, 3696, 7288, 7224, 7224, 7224, 7224, 3696, 4080, 2016, 480, 240, 48, 0],
     "R": [0, 16128, 16320, 8160, 7392, 7392, 8160, 8160, 8128, 8128, 7648, 7392, 7408, 7288, 56, 0],
     "S": [0, 288, 2016, 4080, 3696, 3632, 3840, 4032, 2016, 1008, 496, 2160, 7280, 4080, 2016, 0],
@@ -172,7 +172,7 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     "U": [0, 15932, 15932, 7736, 7192, 7192, 7192, 7192, 7192, 7704, 7736, 7736, 4080, 2016, 384, 0],
     "V": [0, 31804, 32316, 15416, 7224, 7728, 7792, 3952, 3936, 4064, 2016, 1984, 1984, 960, 896, 0],
     "W": [0, 0, 30862, 30926, 14812, 15868, 7676, 8184, 8184, 3960, 3960, 3640, 1592, 0, 0, 0],
-    "X": [0, 15600, 15472, 7904, 8160, 4032, 1984, 1920, 1920, 1984, 4064, 7648, 6384, 14584, 12408, 0],
+    "X": [0, 15932, 15932, 7736, 3888, 2032, 2016, 960, 960, 2016, 2032, 1776, 3824, 7228, 14396, 0],
     "Y": [0, 15932, 15932, 7736, 3952, 3952, 2016, 2016, 960, 960, 960, 960, 960, 960, 896, 0],
     "Z": [0, 8176, 8176, 8176, 480, 480, 960, 960, 1920, 1920, 3840, 3840, 8176, 8176, 8176, 0]
   };
@@ -200,35 +200,7 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     PRECOMPUTED_TEMPLATES[ch] = { vec, norm };
   }
 
-  function classifyCellPatch(ctx, cx, cy, rw, rh) {
-    const x0 = Math.max(0, cx - Math.floor(rw / 2));
-    const y0 = Math.max(0, cy - Math.floor(rh / 2));
-    const imgData = ctx.getImageData(x0, y0, rw, rh);
-    const data = imgData.data;
-
-    let minX = rw, maxX = -1, minY = rh, maxY = -1;
-    for (let py = 0; py < rh; py++) {
-      for (let px = 0; px < rw; px++) {
-        const idx = (py * rw + px) * 4;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-        // White or light letter pixel on dark module screen
-        if (r > 165 && g > 165 && b > 165) {
-          if (px < minX) minX = px;
-          if (px > maxX) maxX = px;
-          if (py < minY) minY = py;
-          if (py > maxY) maxY = py;
-        }
-      }
-    }
-
-    if (maxX < minX || maxY < minY) {
-      return '';
-    }
-
-    const bw = maxX - minX + 1;
-    const bh = maxY - minY + 1;
+  function classifyComponentPatch(imgData, W, x0, y0, bw, bh) {
     const scale = Math.min(14 / bw, 14 / bh);
     const nw = Math.max(1, Math.round(bw * scale));
     const nh = Math.max(1, Math.round(bh * scale));
@@ -239,11 +211,11 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     let sum = 0;
 
     for (let r = 0; r < nh; r++) {
-      const srcY = minY + Math.min(bh - 1, Math.floor(r / scale));
+      const srcY = y0 + Math.min(bh - 1, Math.floor(r / scale));
       for (let c = 0; c < nw; c++) {
-        const srcX = minX + Math.min(bw - 1, Math.floor(c / scale));
-        const idx = (srcY * rw + srcX) * 4;
-        if (data[idx] > 165 && data[idx + 1] > 165 && data[idx + 2] > 165) {
+        const srcX = x0 + Math.min(bw - 1, Math.floor(c / scale));
+        const idx = (srcY * W + srcX) * 4;
+        if (imgData[idx] > 165 && imgData[idx + 1] > 165 && imgData[idx + 2] > 165) {
           normVec[(oy + r) * 16 + (ox + c)] = 1.0;
           sum += 1.0;
         }
@@ -275,6 +247,105 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     }
 
     return bestCh;
+  }
+
+  // Connected Component Labeling using BFS (same high-reliability CV used in Complex Wires)
+  function extractGridComponents(srcCtx, W, H) {
+    const imgData = srcCtx.getImageData(0, 0, W, H).data;
+    const binary = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const idx = (y * W + x) * 4;
+        if (imgData[idx] > 165 && imgData[idx + 1] > 165 && imgData[idx + 2] > 165) {
+          binary[y * W + x] = 1;
+        }
+      }
+    }
+
+    const visited = new Uint8Array(W * H);
+    const components = [];
+    const queue = new Int32Array(W * H * 2);
+
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const startIdx = y * W + x;
+        if (binary[startIdx] === 1 && visited[startIdx] === 0) {
+          let qHead = 0, qTail = 0;
+          queue[qTail++] = x;
+          queue[qTail++] = y;
+          visited[startIdx] = 1;
+
+          let minX = x, maxX = x, minY = y, maxY = y;
+          let area = 0, sumX = 0, sumY = 0;
+
+          while (qHead < qTail) {
+            const cx = queue[qHead++];
+            const cy = queue[qHead++];
+            area++;
+            sumX += cx;
+            sumY += cy;
+
+            if (cx < minX) minX = cx;
+            if (cx > maxX) maxX = cx;
+            if (cy < minY) minY = cy;
+            if (cy > maxY) maxY = cy;
+
+            const neighbors = [
+              cx - 1, cy,
+              cx + 1, cy,
+              cx, cy - 1,
+              cx, cy + 1
+            ];
+            for (let i = 0; i < 8; i += 2) {
+              const nx = neighbors[i];
+              const ny = neighbors[i + 1];
+              if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
+                const nIdx = ny * W + nx;
+                if (binary[nIdx] === 1 && visited[nIdx] === 0) {
+                  visited[nIdx] = 1;
+                  queue[qTail++] = nx;
+                  queue[qTail++] = ny;
+                }
+              }
+            }
+          }
+
+          const bw = maxX - minX + 1;
+          const bh = maxY - minY + 1;
+          if (area >= 12 && bh >= 7 && bh <= 55 && bw >= 3 && bw <= 55) {
+            components.push({
+              cx: sumX / area,
+              cy: sumY / area,
+              x: minX,
+              y: minY,
+              bw,
+              bh,
+              area
+            });
+          }
+        }
+      }
+    }
+
+    return { components, imgData };
+  }
+
+  function drawPreviewCell(previewCanvas, r, c, char) {
+    if (!previewCanvas) return;
+    const pCtx = previewCanvas.getContext('2d');
+    const px = c * 45 + 10;
+    const py = r * 45 + 10;
+    pCtx.fillStyle = '#1e2442';
+    pCtx.strokeStyle = '#3b82f6';
+    pCtx.lineWidth = 1.5;
+    pCtx.fillRect(px, py, 38, 38);
+    pCtx.strokeRect(px, py, 38, 38);
+
+    pCtx.fillStyle = '#ffffff';
+    pCtx.font = 'bold 22px Outfit, sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'middle';
+    pCtx.fillText(char || '?', px + 19, py + 20);
   }
 
   // ── INSTANT COMPUTER VISION GRID SCANNER (NO TESSERACT) ────
@@ -312,81 +383,51 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
         previewCanvas.style.display = 'inline-block';
       }
 
-      // Check aspect ratio to determine cell coordinates
-      const aspect = W / H;
-      let getCellCenter;
-      let cellW = Math.round(W * 0.08);
-      let cellH = Math.round(H * 0.08);
-
-      if (aspect >= 0.85 && aspect <= 1.18) {
-        // Standard cropped module:
-        // Col centers: W * (0.267 + c * 0.0909)
-        // Row centers: H * (0.365 + r * 0.0905)
-        getCellCenter = (r, c) => ({
-          cx: Math.round(W * (0.267 + c * 0.0909)),
-          cy: Math.round(H * (0.365 + r * 0.0905))
-        });
-      } else {
-        // Find screen area with white letter pixels
-        const imgData = srcCtx.getImageData(0, 0, W, H).data;
-        let minX = W, maxX = 0, minY = H, maxY = 0, count = 0;
-        for (let y = Math.floor(H * 0.1); y < Math.floor(H * 0.9); y += 3) {
-          for (let x = Math.floor(W * 0.1); x < Math.floor(W * 0.9); x += 3) {
-            const idx = (y * W + x) * 4;
-            if (imgData[idx] > 175 && imgData[idx + 1] > 175 && imgData[idx + 2] > 175) {
-              if (x < minX) minX = x;
-              if (x > maxX) maxX = x;
-              if (y < minY) minY = y;
-              if (y > maxY) maxY = y;
-              count++;
-            }
-          }
-        }
-
-        if (count > 20 && maxX > minX && maxY > minY) {
-          const gw = (maxX - minX);
-          const gh = (maxY - minY);
-          cellW = Math.max(10, Math.round(gw / 6));
-          cellH = Math.max(10, Math.round(gh / 6));
-          getCellCenter = (r, c) => ({
-            cx: Math.round(minX + (c + 0.5) * (gw / 5)),
-            cy: Math.round(minY + (r + 0.5) * (gh / 5))
-          });
-        } else {
-          // Fallback to relative percentages
-          getCellCenter = (r, c) => ({
-            cx: Math.round(W * (0.267 + c * 0.0909)),
-            cy: Math.round(H * (0.365 + r * 0.0905))
-          });
-        }
-      }
-
+      const { components, imgData } = extractGridComponents(srcCtx, W, H);
       let readCount = 0;
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          const { cx, cy } = getCellCenter(r, c);
-          const recognized = classifyCellPatch(srcCtx, cx, cy, cellW, cellH);
-          if (recognized) {
-            searchState.grid[r][c] = recognized;
-            readCount++;
+
+      if (components.length >= 25) {
+        let letters = components;
+        if (letters.length > 25) {
+          // If extra noise components detected, select the top 25 by area
+          letters.sort((a, b) => b.area - a.area);
+          letters = letters.slice(0, 25);
+        }
+
+        // Sort vertically into 5 rows (by cy)
+        letters.sort((a, b) => a.cy - b.cy);
+
+        for (let r = 0; r < 5; r++) {
+          // Sort each row horizontally into 5 columns (by cx)
+          const rowComps = letters.slice(r * 5, (r + 1) * 5);
+          rowComps.sort((a, b) => a.cx - b.cx);
+
+          for (let c = 0; c < 5; c++) {
+            const comp = rowComps[c];
+            const ch = classifyComponentPatch(imgData, W, comp.x, comp.y, comp.bw, comp.bh);
+            if (ch) {
+              searchState.grid[r][c] = ch;
+              readCount++;
+            }
+            drawPreviewCell(previewCanvas, r, c, searchState.grid[r][c] || '?');
           }
-
-          // Draw onto preview canvas
-          if (previewCanvas) {
-            const pCtx = previewCanvas.getContext('2d');
-            const px = c * 45 + 10;
-            const py = r * 45 + 10;
-            pCtx.fillStyle = '#1e2442';
-            pCtx.strokeStyle = '#3b82f6';
-            pCtx.lineWidth = 1.5;
-            pCtx.fillRect(px, py, 38, 38);
-            pCtx.strokeRect(px, py, 38, 38);
-
-            pCtx.fillStyle = '#ffffff';
-            pCtx.font = 'bold 22px Outfit, sans-serif';
-            pCtx.textAlign = 'center';
-            pCtx.textBaseline = 'middle';
-            pCtx.fillText(searchState.grid[r][c] || '?', px + 19, py + 20);
+        }
+      } else {
+        // Fallback: geometric cell sampling if fewer than 25 components detected
+        const cellW = Math.max(10, Math.round(W * 0.08));
+        const cellH = Math.max(10, Math.round(H * 0.08));
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < 5; c++) {
+            const cx = Math.round(W * (0.267 + c * 0.0909));
+            const cy = Math.round(H * (0.365 + r * 0.0905));
+            const x0 = Math.max(0, cx - Math.floor(cellW / 2));
+            const y0 = Math.max(0, cy - Math.floor(cellH / 2));
+            const ch = classifyComponentPatch(imgData, W, x0, y0, cellW, cellH);
+            if (ch) {
+              searchState.grid[r][c] = ch;
+              readCount++;
+            }
+            drawPreviewCell(previewCanvas, r, c, searchState.grid[r][c] || '?');
           }
         }
       }
