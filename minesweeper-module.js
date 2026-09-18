@@ -306,7 +306,9 @@
         }
       });
 
-      // Solve each component
+      // 1. Solve each component locally
+      const compSolutions = [];
+
       components.forEach(compVars => {
         const compVarSet = new Set(compVars);
         const compConstraints = constraints.filter(con =>
@@ -319,7 +321,7 @@
           needed: con.needed
         }));
 
-        const solutions = [];
+        const rawSolutions = [];
 
         function backtrack(idx, currentAssignment) {
           if (idx === compVars.length) {
@@ -329,7 +331,7 @@
               for (const vIdx of con.indices) s += currentAssignment[vIdx];
               if (s !== con.needed) return;
             }
-            solutions.push([...currentAssignment]);
+            rawSolutions.push([...currentAssignment]);
             return;
           }
 
@@ -360,26 +362,84 @@
         }
 
         backtrack(0, []);
+        if (rawSolutions.length > 0) {
+          compSolutions.push({ vars: compVars, solutions: rawSolutions });
+        }
+      });
 
-        if (solutions.length > 0) {
-          for (let i = 0; i < compVars.length; i++) {
-            const varId = compVars[i];
-            const mineCounts = solutions.reduce((acc, sol) => acc + sol[i], 0);
+      // 2. Global mine count filter across all components and off-boundary squares
+      const confirmedMineCount = mineSet.size;
+      const remainingMines = TOTAL_MINES - confirmedMineCount;
 
-            if (mineCounts === 0) {
-              safeSet.add(varId);
-              mineSet.delete(varId);
-              probabilities[varId] = 0;
-            } else if (mineCounts === solutions.length) {
-              mineSet.add(varId);
-              safeSet.delete(varId);
-              probabilities[varId] = 100;
-            } else {
-              probabilities[varId] = Math.round((mineCounts / solutions.length) * 100);
+      let totalBoundaryVarsCount = 0;
+      compSolutions.forEach(cs => totalBoundaryVarsCount += cs.vars.length);
+
+      let totalUnrevealedCount = 0;
+      for (let r = 0; r < TOTAL_ROWS; r++) {
+        for (let c = 0; c < TOTAL_COLS; c++) {
+          if (grid[r][c] === '.' && !mineSet.has(coord(r, c))) {
+            totalUnrevealedCount++;
+          }
+        }
+      }
+      const offBoundaryCount = Math.max(0, totalUnrevealedCount - totalBoundaryVarsCount);
+
+      let validGlobalCombos = [{ assignments: {}, totalMines: 0 }];
+
+      for (const comp of compSolutions) {
+        const nextCombos = [];
+        for (const prev of validGlobalCombos) {
+          for (const sol of comp.solutions) {
+            const solMines = sol.reduce((a, b) => a + b, 0);
+            const newTotal = prev.totalMines + solMines;
+            if (newTotal <= remainingMines && (remainingMines - newTotal) <= offBoundaryCount) {
+              const newAssignments = { ...prev.assignments };
+              comp.vars.forEach((v, i) => { newAssignments[v] = sol[i]; });
+              nextCombos.push({ assignments: newAssignments, totalMines: newTotal });
             }
           }
         }
-      });
+        validGlobalCombos = nextCombos;
+      }
+
+      if (validGlobalCombos.length > 0) {
+        const allCompVars = [];
+        compSolutions.forEach(cs => allCompVars.push(...cs.vars));
+
+        for (const vId of allCompVars) {
+          let mineOccurrences = 0;
+          for (const combo of validGlobalCombos) {
+            if (combo.assignments[vId] === 1) mineOccurrences++;
+          }
+
+          if (mineOccurrences === 0) {
+            safeSet.add(vId);
+            mineSet.delete(vId);
+            probabilities[vId] = 0;
+          } else if (mineOccurrences === validGlobalCombos.length) {
+            mineSet.add(vId);
+            safeSet.delete(vId);
+            probabilities[vId] = 100;
+          } else {
+            probabilities[vId] = Math.round((mineOccurrences / validGlobalCombos.length) * 100);
+          }
+        }
+
+        // Check if all remaining mines are accounted for on the boundary
+        const maxRemainingForOff = Math.max(...validGlobalCombos.map(c => remainingMines - c.totalMines));
+        if (maxRemainingForOff === 0) {
+          // All off-boundary cells are 100% Guaranteed SAFE!
+          for (let r = 0; r < TOTAL_ROWS; r++) {
+            for (let c = 0; c < TOTAL_COLS; c++) {
+              const id = coord(r, c);
+              if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
+                safeSet.add(id);
+                probabilities[id] = 0;
+              }
+            }
+          }
+        }
+      }
     }
 
     // Global mine count check: If all 16 mines are found, ALL remaining unrevealed are safe!
