@@ -1,1290 +1,1078 @@
-﻿/**
+/**
  * Search Solver Module for Keep Talking and Nobody Explains
- * Finds stage words in a 5x5 letter grid in any direction.
- * Supports automatic client-side cell-by-cell OCR (Tesseract.js) to extract grid letters with 100% layout accuracy.
- * Dynamically parses pasted stage word lists so they are not hardcoded.
+ * 
+ * Features:
+ * 1. Computer Vision 5x5 Grid Scanner (non-destructive grayscale inverted composite).
+ * 2. Automatic Stage Detection from indicator lights on the right (Stage 1, 2, 3).
+ * 3. Pre-populated & Editable Word Lists (Search #1, Search #2, custom stage words).
+ * 4. Multi-word detection across all 8 directions, listing all matching words.
+ * 5. Interactive 5x5 grid with cell editing and neon green word path highlighting.
  */
 
 (function() {
-const searchState = {
-  initialized: false,
-  stage: 3, // Default to Stage 3
-  grid: Array.from({ length: 5 }, () => Array(5).fill('')),
-  // Word lists parsed dynamically (pre-populated with defaults)
-  wordLists: {
-    1: ["RUSH", "NEST", "STEM", "SPAN", "FOUL", "YOKE", "SIDE", "MEAN", "LEAD", "SPOT", "VEST", "CURE", "WEEK", "NOON", "ZERO", "POLL", "CAFE", "MESS", "DIET", "EASY"],
-    2: ["FEAR", "CELL", "GRIM", "DUCK", "LAVA", "FOOT", "VEST", "OATH", "COMB", "RUST", "CAST", "HACK", "POND", "RIDE", "NEST", "ALSO", "BEST", "FOLD", "KISS", "LAMP"],
-    3: ["ATOM", "LOOK", "POET", "ONCE", "DOOR", "SLAP", "PURE", "EXAM", "JACK", "MEMO", "STEW", "ODDS", "LIVE", "WILL", "FILL", "FILM", "BOWL", "CLIP", "BEAT", "MASK"]
-  },
-  wordListsRawText: `**Stage 1**
-\`RUSH\`  \`NEST\`  \`STEM\`  \`SPAN\`
-\`FOUL\`  \`YOKE\`  \`SIDE\`  \`MEAN\`
-\`LEAD\`  \`SPOT\`  \`VEST\`  \`CURE\`
-\`WEEK\`  \`NOON\`  \`ZERO\`  \`POLL\`
-\`CAFE\`  \`MESS\`  \`DIET\`  \`EASY\`
+  const DEFAULT_WORDS_TEXT = `Search #1, Stage 1:
+RAFT LOAD TASK POND VENT POET PART DESK SIZE LOOK SEAT USED REEL NORM MESS PACE BODY FEEL FAIR LOFT
 
-**Stage 2**
-\`FEAR\`  \`CELL\`  \`GRIM\`  \`DUCK\`
-\`LAVA\`  \`FOOT\`  \`VEST\`  \`OATH\`
-\`COMB\`  \`RUST\`  \`CAST\`  \`HACK\`
-\`POND\`  \`RIDE\`  \`NEST\`  \`ALSO\`
-\`BEST\`  \`FOLD\`  \`KISS\`  \`LAMP\`
+Search #1, Stage 2:
+HOOK BALL IRON MUST DOVE CELL VERB DICE MOON WARN WINK BOOK FISH MEET VERY WHAT THAT LOSE SNOW FAIR
 
-**Stage 3**
-\`ATOM\`  \`LOOK\`  \`POET\`  \`ONCE\`
-\`DOOR\`  \`SLAP\`  \`PURE\`  \`EXAM\`
-\`JACK\`  \`MEMO\`  \`STEW\`  \`ODDS\`
-\`LIVE\`  \`WILL\`  \`FILL\`  \`FILM\`
-\`BOWL\`  \`CLIP\`  \`BEAT\`  \`MASK\``,
-  foundWord: null, // { word, start: {r, c}, dir, cells: [] }
-  manualWord: "", // Custom word typed by user to highlight
-  image: null
-};
+Search #1, Stage 3:
+HOST GOOD RACE WORD MISS RUST LEAN LOST NICE ACID ROPE EASY TILE STEW GOAL TYPE YOUR PICK EPIC HARP
 
-const SEARCH_DIRS = [
-  { dr: -1, dc: 0, name: "Up" },
-  { dr: 1, dc: 0, name: "Down" },
-  { dr: 0, dc: -1, name: "Left" },
-  { dr: 0, dc: 1, name: "Right" },
-  { dr: -1, dc: -1, name: "Up-Left" },
-  { dr: -1, dc: 1, name: "Up-Right" },
-  { dr: 1, dc: -1, name: "Down-Left" },
-  { dr: 1, dc: 1, name: "Down-Right" }
-];
+Search #2, Stage 1:
+KEEP TILE REST CUBE MAZE CELL SURF PAST BANK CAST SLAM BODY BOLD FREE SENT SOAK KISS ITEM HAWK PORT
 
-let tesseractWorker = null;
+Search #2, Stage 2:
+GAME BELT OVER YEAR FEEL PLAN SWIM LIST JUST COLD RELY CAKE FELT TENT FEED ACID WIFE NEAT RACE ATOM
 
-// â”€â”€ DYNAMIC STYLE INJECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+Search #2, Stage 3:
+NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK VENT FEEL FOAM SENT`;
 
-function injectSearchStyles() {
-  const css = `
-  .search-shell {
-    max-width: 950px;
-    margin: auto;
-    background: #12122a;
-    padding: 24px;
-    border-radius: 12px;
-    border: 1px solid #222;
-  }
-  .search-layout {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 24px;
-    align-items: start;
-  }
-  @media (max-width: 820px) {
-    .search-layout {
-      grid-template-columns: 1fr;
-    }
-  }
-  .search-card {
-    background: #0f0f1c;
-    border: 2px solid #25253f;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  .search-card:last-child {
-    margin-bottom: 0;
-  }
-  .search-card-title {
-    font-family: 'Outfit', Arial, sans-serif;
-    font-size: 16px;
-    font-weight: bold;
-    color: #ffd875;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid #25253f;
-    padding-bottom: 8px;
-  }
-  .search-dropzone {
-    border: 2px dashed #444;
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    background: #090915;
-    color: #aaa;
-    transition: all 0.2s;
-    margin-bottom: 15px;
-  }
-  .search-dropzone:hover, .search-dropzone.active {
-    border-color: #ffd875;
-    background: #101025;
-    color: #fff;
-  }
-  .search-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    margin: 15px 0;
-    max-width: 250px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .search-cell {
-    width: 42px;
-    height: 42px;
-    background: #181826;
-    border: 2px solid #2c2c44;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 20px;
-    font-weight: bold;
-    text-align: center;
-    text-transform: uppercase;
-    outline: none;
-    transition: all 0.15s ease-in-out;
-  }
-  .search-cell:focus {
-    border-color: #ffd875;
-    box-shadow: 0 0 8px rgba(255, 216, 117, 0.4);
-    background: #202038;
-  }
-  .search-cell.highlighted {
-    border-color: #00ff66;
-    background: rgba(0, 255, 102, 0.25);
-    color: #00ff66;
-    box-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
-  }
-  .search-cell.manual-highlighted {
-    border-color: #00d2ff;
-    background: rgba(0, 210, 255, 0.25);
-    color: #00d2ff;
-    box-shadow: 0 0 12px rgba(0, 210, 255, 0.6);
-  }
-  .stage-buttons {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 15px;
-    justify-content: center;
-  }
-  .stage-btn {
-    flex: 1;
-    padding: 10px;
-    background: #181826;
-    border: 1px solid #333;
-    color: #aaa;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .stage-btn:hover {
-    background: #202035;
-    color: #fff;
-  }
-  .stage-btn.active {
-    background: rgba(245, 197, 66, 0.15);
-    border-color: #f5c542;
-    color: #f5c542;
-    box-shadow: 0 0 10px rgba(245, 197, 66, 0.2);
-  }
-  .search-result-box {
-    background: #0a0a1a;
-    border: 1px solid #2a2a4a;
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    margin-bottom: 16px;
-    min-height: 90px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-  .search-result-word {
-    font-size: 28px;
-    font-weight: 900;
-    color: #00ff66;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
-  }
-  .search-result-coords {
-    font-size: 13px;
-    color: #aaa;
-    margin-top: 6px;
-  }
-  .wordlist-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-top: 10px;
-  }
-  .wordlist-item {
-    font-family: monospace;
-    font-size: 13px;
-    background: #101025;
-    border: 1px solid #222;
-    padding: 6px 4px;
-    border-radius: 4px;
-    text-align: center;
-    color: #888;
-    transition: all 0.2s;
-  }
-  .wordlist-item.active-word {
-    background: rgba(0, 255, 102, 0.15);
-    border-color: #00ff66;
-    color: #00ff66;
-    font-weight: bold;
-    box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
-  }
-  .search-textarea {
-    width: 100%;
-    background: #0a0a1a;
-    border: 1px solid #333;
-    color: #eee;
-    padding: 8px;
-    border-radius: 6px;
-    font-family: monospace;
-    font-size: 12px;
-    resize: none;
-    margin-top: 10px;
-  }
-  .search-textarea.wordlists-area {
-    height: 180px;
-    color: #ffd875;
-    border-color: #ffd875;
-  }
-  .search-action-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .search-action-btn {
-    flex: 1;
-    padding: 8px;
-    font-size: 12px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: transparent;
-    color: #ccc;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .search-action-btn:hover {
-    background: #222;
-    color: #fff;
-  }
-  .search-action-btn.primary {
-    border-color: #f5c542;
-    color: #f5c542;
-  }
-  .search-action-btn.primary:hover {
-    background: rgba(245, 197, 66, 0.1);
-  }
-  .search-highlight-input {
-    width: 100%;
-    background: #0a0a1a;
-    border: 1px solid #333;
-    color: #00d2ff;
-    padding: 10px;
-    border-radius: 6px;
-    font-family: monospace;
-    font-size: 16px;
-    text-align: center;
-    font-weight: bold;
-    outline: none;
-    text-transform: uppercase;
-  }
-  .search-highlight-input:focus {
-    border-color: #00d2ff;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
-  }
-  
-  @keyframes blinker {
-    50% { opacity: 0.5; }
-  }
-  `;
+  const DIRS = [
+    { dr: -1, dc: 0, name: 'Up', arrow: '↑' },
+    { dr: 1, dc: 0, name: 'Down', arrow: '↓' },
+    { dr: 0, dc: -1, name: 'Left', arrow: '←' },
+    { dr: 0, dc: 1, name: 'Right', arrow: '→' },
+    { dr: -1, dc: -1, name: 'Up-Left', arrow: '↖' },
+    { dr: -1, dc: 1, name: 'Up-Right', arrow: '↗' },
+    { dr: 1, dc: -1, name: 'Down-Left', arrow: '↙' },
+    { dr: 1, dc: 1, name: 'Down-Right', arrow: '↘' }
+  ];
 
-  const styleEl = document.createElement('style');
-  styleEl.textContent = css;
-  document.head.appendChild(styleEl);
-}
+  const COLS = ['A', 'B', 'C', 'D', 'E'];
+  const ROWS = ['1', '2', '3', '4', '5'];
 
-// â”€â”€ INITIALIZATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function initSearchModule() {
-  if (searchState.initialized) return;
-  searchState.initialized = true;
-
-  injectSearchStyles();
-  renderSearchUI();
-  
-  // Set default raw text in wordlists textarea
-  const area = document.getElementById('searchWordlistsInput');
-  if (area) area.value = searchState.wordListsRawText;
-  
-  selectSearchStage(3); // Default to Stage 3
-  
-  // Set up event listeners
-  setupGridEvents();
-  setupPasteEvents();
-  setupImageUploadEvents();
-}
-
-function renderSearchUI() {
-  const container = document.getElementById('searchSection');
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="search-shell" style="max-width: 600px; margin: auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #25253f; padding-bottom:10px;">
-        <h2 style="color:#f5c542; margin:0;">Search Solver</h2>
-        <button id="searchResetBtn" class="upload-btn" type="button" style="margin-top:0; border-color:#f44336; color:#f44336;" onclick="resetSearchSolver()">Reset Solver</button>
-      </div>
-
-      <!-- 1. Screenshot Upload & OCR -->
-      <div class="search-card">
-        <div class="search-card-title">1. Screenshot Upload & OCR</div>
-        <div id="searchDropzone" class="search-dropzone" onclick="openSearchFileDialog()">
-          <span style="font-size:32px;">ðŸ“¸</span>
-          <p style="font-size:12px; color:#aaa; margin-top:8px;">Drag & Drop Grid Screenshot here, or click to Upload</p>
-          <input id="searchFileInput" type="file" accept="image/*" style="display:none;" onchange="handleSearchFileSelect(this)">
-        </div>
-        <div id="searchImageContainer" style="display:none; text-align:center; margin-top:10px; border:1px solid #25253f; border-radius:8px; overflow:hidden; background:#070712; padding:10px;">
-          <canvas id="searchImageCanvas" style="max-width:100%; height:auto; border-radius:4px; max-height:200px; display:inline-block;"></canvas>
-          
-          <div id="searchOcrStatus" style="font-size:13px; font-weight:bold; margin-top:10px; text-align:center;"></div>
-          
-          <div id="searchOcrPreviewLabel" style="font-size:11px; color:#888; margin-top:8px; display:none;">OCR Binarized View:</div>
-          <canvas id="searchOcrPreviewCanvas" style="max-width:100%; height:auto; border-radius:4px; max-height:100px; margin-top:4px; border:1px solid #333; background:#fff; display:none;"></canvas>
-          
-          <button class="search-action-btn" style="margin-top:12px; width:100%; border-color:#f44336; color:#f44336;" onclick="clearSearchImage()">Remove Image</button>
-        </div>
-      </div>
-
-      <!-- 2. Letter Grid (5x5) -->
-      <div class="search-card">
-        <div class="search-card-title">2. Letter Grid (5x5)</div>
-        <div style="font-size:12px; color:#888; margin-bottom:10px; text-align:center;">
-          Type letters directly or check OCR output below:
-        </div>
-        
-        <div class="search-grid" id="searchGridContainer">
-          ${Array.from({ length: 5 }, (_, r) => 
-            Array.from({ length: 5 }, (_, c) => 
-              `<input type="text" class="search-cell" id="cell-${r}-${c}" data-row="${r}" data-col="${c}" maxlength="1" autocomplete="off" spellcheck="false">`
-            ).join('')
-          ).join('')}
-        </div>
-
-        <div class="search-action-row">
-          <button class="search-action-btn" onclick="clearSearchGrid()">Clear Grid</button>
-        </div>
-      </div>
-
-      <!-- 3. Result / Answer Box -->
-      <div class="search-card">
-        <div class="search-card-title">Answer</div>
-        <div class="search-result-box" id="searchResultPanel" style="min-height: 80px;">
-          <div style="color:#888; font-size:14px;">Upload screenshot or type grid to find words...</div>
-        </div>
-      </div>
-
-      <!-- 4. Word Finder / Search Box -->
-      <div class="search-card">
-        <div class="search-card-title">Manual Word Highlight</div>
-        <input type="text" id="searchManualWordInput" class="search-highlight-input" placeholder="TYPE CUSTOM WORD TO HIGHLIGHT..." oninput="handleManualWordInput(this)">
-      </div>
-
-      <!-- 5. Advanced Config (Collapsible) -->
-      <details style="background: #0f0f1c; border: 1px solid #25253f; border-radius: 8px; padding: 12px; cursor: pointer; outline: none; margin-bottom: 20px;">
-        <summary style="color:#ffd875; font-size: 14px; font-weight: bold; user-select: none;">âš™ï¸ Stage Word Lists (Click to Expand)</summary>
-        <div style="margin-top: 12px; cursor: default;" onclick="event.stopPropagation()">
-          <div style="font-size:12px; color:#718096; margin-bottom:12px; text-align: left;">
-            Paste stage word lists here to customize standard/modded manual words:
-          </div>
-          <textarea id="searchWordlistsInput" class="search-textarea wordlists-area" style="height: 140px;" oninput="handleWordlistsAreaChange(this)" placeholder="Paste stage lists here..."></textarea>
-        </div>
-      </details>
-    </div>
-  `;
-}
-
-// â”€â”€ EVENTS & GRID INPUT MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function setupGridEvents() {
-  const container = document.getElementById('searchGridContainer');
-  if (!container) return;
-
-  container.addEventListener('input', (e) => {
-    if (e.target.classList.contains('search-cell')) {
-      const input = e.target;
-      input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '');
-      
-      const r = parseInt(input.dataset.row);
-      const c = parseInt(input.dataset.col);
-      searchState.grid[r][c] = input.value;
-
-      // Move focus to next cell if filled
-      if (input.value) {
-        const nextC = c + 1;
-        if (nextC < 5) {
-          focusCell(r, nextC);
-        } else if (r + 1 < 5) {
-          focusCell(r + 1, 0);
-        }
-      }
-      
-      solveSearch();
-    }
-  });
-
-  container.addEventListener('keydown', (e) => {
-    if (e.target.classList.contains('search-cell')) {
-      const input = e.target;
-      const r = parseInt(input.dataset.row);
-      const c = parseInt(input.dataset.col);
-
-      switch (e.key) {
-        case 'ArrowUp':
-          e.preventDefault();
-          if (r > 0) focusCell(r - 1, c);
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          if (r < 4) focusCell(r + 1, c);
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (c > 0) focusCell(r, c - 1);
-          else if (r > 0) focusCell(r - 1, 4);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (c < 4) focusCell(r, c + 1);
-          else if (r < 4) focusCell(r + 1, 0);
-          break;
-        case 'Backspace':
-          if (!input.value) {
-            e.preventDefault();
-            const prevC = c - 1;
-            if (prevC >= 0) {
-              const prevCell = focusCell(r, prevC);
-              if (prevCell) {
-                prevCell.value = '';
-                searchState.grid[r][prevC] = '';
-              }
-            } else if (r > 0) {
-              const prevCell = focusCell(r - 1, 4);
-              if (prevCell) {
-                prevCell.value = '';
-                searchState.grid[r - 1][4] = '';
-              }
-            }
-            solveSearch();
-          } else {
-            // Let normal backspace clear input
-            searchState.grid[r][c] = '';
-            setTimeout(solveSearch, 0);
-          }
-          break;
-        case 'Delete':
-          input.value = '';
-          searchState.grid[r][c] = '';
-          solveSearch();
-          break;
-      }
-    }
-  });
-}
-
-function focusCell(r, c) {
-  const cell = document.getElementById(`cell-${r}-${c}`);
-  if (cell) {
-    cell.focus();
-    cell.select();
-  }
-  return cell;
-}
-
-function setupPasteEvents() {
-  // Support pasting directly into the grid if a cell is focused
-  const container = document.getElementById('searchGridContainer');
-  if (container) {
-    container.addEventListener('paste', (e) => {
-      // Check if clipboard has an image
-      const items = e.clipboardData?.items;
-      if (items) {
-        for (const item of items) {
-          if (item.type.startsWith('image/')) {
-            e.preventDefault();
-            processSearchImage(item.getAsFile());
-            return;
-          }
-        }
-      }
-
-      // Check if it's text
-      const text = e.clipboardData.getData('text');
-      if (text && text.trim().length > 1) {
-        e.preventDefault();
-        parseAndLoadText(text);
-      }
-    });
-  }
-
-  // Also support document-wide paste when search tab is active
-  document.addEventListener('paste', (e) => {
-    const searchSection = document.getElementById('searchSection');
-    if (!searchSection || !searchSection.classList.contains('active')) return;
-
-    const items = e.clipboardData?.items;
-    if (items) {
-      for (const item of items) {
-        if (item.type.startsWith('image/')) {
-          e.preventDefault();
-          processSearchImage(item.getAsFile());
-          return;
-        }
-      }
-    }
-  });
-}
-
-// â”€â”€ IMAGE UPLOAD HANDLING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function setupImageUploadEvents() {
-  const dropzone = document.getElementById('searchDropzone');
-  if (!dropzone) return;
-
-  dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.classList.add('active');
-  });
-
-  dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('active');
-  });
-
-  dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('active');
-    const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
-    if (file) processSearchImage(file);
-  });
-}
-
-function openSearchFileDialog() {
-  const fileInput = document.getElementById('searchFileInput');
-  if (fileInput) fileInput.click();
-}
-
-function handleSearchFileSelect(input) {
-  const file = input.files && input.files[0];
-  if (file) processSearchImage(file);
-  input.value = '';
-}
-
-function processSearchImage(file) {
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = () => {
-      searchState.image = img;
-      renderSearchImageCanvas();
-      
-      // Update UI visibility
-      document.getElementById('searchDropzone').style.display = 'none';
-      document.getElementById('searchImageContainer').style.display = 'block';
-      
-      // Run OCR processing pipeline
-      runSearchOcrPipeline();
-    };
-    img.src = e.target.result;
+  const searchState = {
+    initialized: false,
+    stage: 1, // 1, 2, or 3
+    autoDetectedStage: null,
+    grid: Array.from({ length: 5 }, () => Array(5).fill('')),
+    rawWordsText: DEFAULT_WORDS_TEXT,
+    wordEntries: [], // { word, label, stage }
+    foundWords: [],  // list of all matched words
+    selectedWordIndex: 0,
+    image: null
   };
-  reader.readAsDataURL(file);
-}
 
-function renderSearchImageCanvas() {
-  const canvas = document.getElementById('searchImageCanvas');
-  if (!canvas || !searchState.image) return;
-  const ctx = canvas.getContext('2d');
-  
-  // Size canvas to fit image
-  canvas.width = searchState.image.width;
-  canvas.height = searchState.image.height;
-  
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(searchState.image, 0, 0);
-}
-
-function clearSearchImage() {
-  searchState.image = null;
-  document.getElementById('searchDropzone').style.display = 'block';
-  document.getElementById('searchImageContainer').style.display = 'none';
-  
-  // Hide OCR preview elements
-  const previewCanvas = document.getElementById('searchOcrPreviewCanvas');
-  const previewLabel = document.getElementById('searchOcrPreviewLabel');
-  if (previewCanvas) previewCanvas.style.display = 'none';
-  if (previewLabel) previewLabel.style.display = 'none';
-  
-  const statusEl = document.getElementById('searchOcrStatus');
-  if (statusEl) statusEl.textContent = "";
-}
-
-// â”€â”€ OCR PIPELINE: BOUNDS DETECTION & BINARIZATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function detectGridBounds(ctx, width, height) {
-  const imgData = ctx.getImageData(0, 0, width, height).data;
-  let minX = width, maxX = 0, minY = height, maxY = 0;
-  
-  // Outer margin to skip frame/screws
-  const marginX = Math.round(width * 0.05);
-  const marginY = Math.round(height * 0.05);
-  
-  for (let y = marginY; y < height - marginY; y++) {
-    for (let x = marginX; x < width - marginX; x++) {
-      const idx = (y * width + x) * 4;
-      const r = imgData[idx];
-      const g = imgData[idx + 1];
-      const b = imgData[idx + 2];
-      
-      // Filter strictly for bright white text pixels of the 5x5 grid letters
-      if (r > 200 && g > 200 && b > 200) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    }
-  }
-  
-  if (maxX <= minX || maxY <= minY) return null;
-  
-  // Calculate bounding box around all white letter pixels
-  const w = maxX - minX;
-  const h = maxY - minY;
-  
-  // Padding around the extreme edges of the letter grid so edge cells (col 0/4, row 0/4) are not sliced
-  const padX = Math.round(w * 0.08);
-  const padY = Math.round(h * 0.08);
-  
-  return {
-    x: Math.max(0, minX - padX),
-    y: Math.max(0, minY - padY),
-    w: Math.min(width - minX, w + 2 * padX),
-    h: Math.min(height - minY, h + 2 * padY)
-  };
-}
-
-function preprocessCell(sourceImg, bounds, r, c) {
-  const cw = bounds.w / 5;
-  const ch = bounds.h / 5;
-  
-  const cx = bounds.x + c * cw;
-  const cy = bounds.y + r * ch;
-  
-  // Take 85% of each cell box (centered) to capture full letter without cropping edges
-  const cropW = cw * 0.85;
-  const cropH = ch * 0.85;
-  const cropX = cx + (cw - cropW) / 2;
-  const cropY = cy + (ch - cropH) / 2;
-  
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = 40;
-  tempCanvas.height = 40;
-  const tempCtx = tempCanvas.getContext('2d');
-  
-  // Draw cropped image region into standard 40x40 canvas
-  tempCtx.drawImage(sourceImg, cropX, cropY, cropW, cropH, 0, 0, 40, 40);
-  
-  // Binarization: threshold bright pixels to white background with black text
-  const imgData = tempCtx.getImageData(0, 0, 40, 40);
-  const data = imgData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const rVal = data[i];
-    const gVal = data[i+1];
-    const bVal = data[i+2];
-    const gray = (rVal + gVal + bVal) / 3;
-    
-    // Invert to black text (0) on white background (255)
-    const val = (gray > 150) ? 0 : 255;
-    
-    data[i] = val;
-    data[i+1] = val;
-    data[i+2] = val;
-    data[i+3] = 255;
-  }
-  tempCtx.putImageData(imgData, 0, 0);
-  return tempCanvas;
-}
-
-function runSearchOcrPipeline() {
-  const canvas = document.getElementById('searchImageCanvas');
-  if (!canvas || !searchState.image) return;
-  
-  const ctx = canvas.getContext('2d');
-  
-  // Detect bounds
-  let bounds = detectGridBounds(ctx, canvas.width, canvas.height);
-  if (!bounds) {
-    // Fallback to full canvas if bounds detection fails
-    bounds = { x: 0, y: 0, w: canvas.width, h: canvas.height };
-  }
-  
-  // Create a composite preview of all 25 preprocessed cells
-  const compositeCanvas = document.getElementById('searchOcrPreviewCanvas');
-  const previewLabel = document.getElementById('searchOcrPreviewLabel');
-  if (compositeCanvas && previewLabel) {
-    compositeCanvas.width = 200;
-    compositeCanvas.height = 200;
-    const compCtx = compositeCanvas.getContext('2d');
-    compCtx.fillStyle = '#fff';
-    compCtx.fillRect(0, 0, 200, 200);
-    
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const cellCanvas = preprocessCell(searchState.image, bounds, r, c);
-        compCtx.drawImage(cellCanvas, c * 40, r * 40);
-      }
-    }
-    compositeCanvas.style.display = 'inline-block';
-    previewLabel.style.display = 'block';
-  }
-  
-  // Run Tesseract OCR cell-by-cell
-  runSearchOcrCellByCell(bounds);
-}
-
-// Map lookalike numbers/symbols to uppercase letters
-const OCR_CHAR_MAP = {
-  '0': 'O',
-  '1': 'I',
-  '2': 'Z',
-  '3': 'B',
-  '5': 'S',
-  '6': 'G',
-  '8': 'B',
-  '9': 'G',
-  '|': 'I',
-  '[': 'I',
-  ']': 'I',
-  '(': 'C',
-  ')': 'D',
-  '$': 'S',
-  '&': 'B'
-};
-
-async function getTesseractWorker() {
-  if (tesseractWorker) return tesseractWorker;
-  
-  const statusEl = document.getElementById('searchOcrStatus');
-  if (statusEl) {
-    statusEl.innerHTML = `<span style="color:#ffd875;">â³ Initializing OCR Engine...</span>`;
-  }
-  
-  tesseractWorker = await Tesseract.createWorker('eng');
-  
-  await tesseractWorker.setParameters({
-    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789()[]|$&',
-    tessedit_pageseg_mode: '10' // Treat the image as a single character
-  });
-  
-  return tesseractWorker;
-}
-
-async function runSearchOcrCellByCell(bounds) {
-  const statusEl = document.getElementById('searchOcrStatus');
-  if (statusEl) {
-    statusEl.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">🧠 Running AI Vision Grid Recognition...</span>`;
+  function coord(r, c) {
+    return `${COLS[c]}${ROWS[r]}`;
   }
 
-  try {
-    const canvas = document.getElementById('searchImageCanvas');
-    if (!canvas || !searchState.image) throw new Error("No image loaded");
+  // ── DYNAMIC WORD LIST PARSER ──────────────────────────────
+  function parseWordListText(raw) {
+    searchState.rawWordsText = raw;
+    const lines = raw.split('\n');
+    const entries = [];
+    let currentLabel = 'Custom List';
+    let currentStage = 1;
 
-    // Crop the grid region directly into a temporary canvas
-    const gridCanvas = document.createElement('canvas');
-    gridCanvas.width = bounds.w;
-    gridCanvas.height = bounds.h;
-    const gridCtx = gridCanvas.getContext('2d');
-    gridCtx.drawImage(searchState.image, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, bounds.w, bounds.h);
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
 
-    const base64Image = gridCanvas.toDataURL('image/png');
-
-    // Call browser-based AI vision processing
-    const promptText = "Extract the 5x5 grid of uppercase letters from this game grid. Return strictly a JSON object with a single key 'grid' containing a 2D array of 5 rows and 5 letter strings (e.g. {\"grid\":[[\"S\",\"G\",\"O\",\"V\",\"L\"],[\"N\",\"T\",\"R\",\"P\",\"L\"],[\"V\",\"M\",\"E\",\"W\",\"U\"],[\"A\",\"X\",\"E\",\"W\",\"R\"],[\"M\",\"M\",\"D\",\"M\",\"N\"]]}). Do not include markdown or conversational text.";
-
-    // If an external AI endpoint is available, fetch it; otherwise execute accurate fallback vision grid parser
-    let parsedGrid = null;
-
-    try {
-      const response = await fetch('/api/vision-ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Image, prompt: promptText })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.grid) parsedGrid = data.grid;
-      }
-    } catch (apiErr) {
-      console.log("No API backend configured, running client-side AI Vision model...");
-    }
-
-    if (!parsedGrid) {
-      // Deterministic layout extraction on un-chopped grid
-      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const templates = {};
-      const SIZE = 40;
-
-      for (let i = 0; i < alphabet.length; i++) {
-        const char = alphabet[i];
-        const tmpC = document.createElement('canvas');
-        tmpC.width = SIZE; tmpC.height = SIZE;
-        const tmpX = tmpC.getContext('2d');
-        tmpX.fillStyle = '#fff'; tmpX.fillRect(0, 0, SIZE, SIZE);
-        tmpX.fillStyle = '#000';
-        tmpX.font = `bold 34px "Impact", "Arial Black", sans-serif`;
-        tmpX.textAlign = 'center'; tmpX.textBaseline = 'middle';
-        tmpX.fillText(char, SIZE / 2, SIZE / 2);
-
-        const imgData = tmpX.getImageData(0, 0, SIZE, SIZE).data;
-        const bin = new Uint8Array(SIZE * SIZE);
-        for (let j = 0; j < SIZE * SIZE; j++) bin[j] = imgData[j * 4] < 128 ? 1 : 0;
-        templates[char] = bin;
+      // Check if line is a header like "Search #1, Stage 2:"
+      const headerMatch = line.match(/(?:Search\s*#?([12])\s*,\s*)?Stage\s*([123])/i);
+      if (headerMatch) {
+        const searchNum = headerMatch[1] ? `Search #${headerMatch[1]}` : 'Search';
+        currentStage = parseInt(headerMatch[2], 10);
+        currentLabel = `${searchNum}, Stage ${currentStage}`;
+        continue;
       }
 
-      clearSearchGrid();
-
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          const cellCanvas = preprocessCell(searchState.image, bounds, r, c);
-          const cellCtx = cellCanvas.getContext('2d');
-          const cellData = cellCtx.getImageData(0, 0, SIZE, SIZE).data;
-
-          const cellBin = new Uint8Array(SIZE * SIZE);
-          for (let j = 0; j < SIZE * SIZE; j++) {
-            cellBin[j] = cellData[j * 4] < 128 ? 1 : 0;
-          }
-
-          let bestChar = '?';
-          let maxMatchScore = -1;
-
-          for (const char of alphabet) {
-            const tmplBin = templates[char];
-            let match = 0, totalUnion = 0;
-
-            for (let j = 0; j < SIZE * SIZE; j++) {
-              const isCellText = cellBin[j] === 1;
-              const isTmplText = tmplBin[j] === 1;
-
-              if (isCellText && isTmplText) match++;
-              if (isCellText || isTmplText) totalUnion++;
-            }
-
-            const score = totalUnion > 0 ? (match / totalUnion) : 0;
-            if (score > maxMatchScore) {
-              maxMatchScore = score;
-              bestChar = char;
-            }
-          }
-
-          searchState.grid[r][c] = bestChar;
-          const cellEl = document.getElementById(`cell-${r}-${c}`);
-          if (cellEl) cellEl.value = bestChar;
-        }
-      }
-    } else {
-      // Populate grid from AI response
-      clearSearchGrid();
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          const char = (parsedGrid[r] && parsedGrid[r][c]) ? parsedGrid[r][c].toUpperCase() : '?';
-          searchState.grid[r][c] = char;
-          const cellEl = document.getElementById(`cell-${r}-${c}`);
-          if (cellEl) cellEl.value = char;
-        }
-      }
-    }
-
-    solveSearch();
-
-    let unk = 0;
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) if (searchState.grid[r][c] === '?') unk++;
-
-    if (statusEl) {
-      statusEl.innerHTML = unk > 0
-        ? `<span style="color:#ffd875;">⚠️ AI OCR completed (${unk} uncertain letters). Please review grid.</span>`
-        : `<span style="color:#00ff66;">✓ AI Vision Extracted all 25 letters 100% accurately!</span>`;
-    }
-
-  } catch (err) {
-    console.error("AI OCR Error:", err);
-    if (statusEl) statusEl.innerHTML = `<span style="color:#f44336;">❌ AI OCR Error: ${err.message || err}</span>`;
-  }
-}
-
-function handleWordlistsAreaChange(textarea) {
-  const text = textarea.value;
-  searchState.wordListsRawText = text;
-  
-  const parsed = parseStageWordListsText(text);
-  
-  // If we parsed successfully, update
-  if (parsed[1].length > 0) searchState.wordLists[1] = parsed[1];
-  if (parsed[2].length > 0) searchState.wordLists[2] = parsed[2];
-  if (parsed[3].length > 0) searchState.wordLists[3] = parsed[3];
-  
-  updateWordListUI();
-  solveSearch();
-}
-
-function parseStageWordListsText(text) {
-  const lists = { 1: [], 2: [], 3: [] };
-  
-  // Regex to split by stage sections (case insensitive)
-  const stage1Match = text.match(/Stage\s*1([\s\S]*?)(?=Stage\s*2|Stage\s*3|$)/i);
-  const stage2Match = text.match(/Stage\s*2([\s\S]*?)(?=Stage\s*1|Stage\s*3|$)/i);
-  const stage3Match = text.match(/Stage\s*3([\s\S]*?)(?=Stage\s*1|Stage\s*2|$)/i);
-  
-  const extractWords = (str) => {
-    if (!str) return [];
-    
-    // First try extracting words enclosed in backticks, e.g. `RUSH`
-    const matches = str.match(/`([A-Z]+)`/gi);
-    if (matches && matches.length > 0) {
-      return matches.map(m => m.replace(/`/g, '').trim().toUpperCase());
-    }
-    
-    // Otherwise, extract any uppercase words of length 3 to 8
-    const rawMatches = str.match(/\b[A-Z]{3,8}\b/g);
-    return rawMatches ? rawMatches.map(m => m.toUpperCase()) : [];
-  };
-  
-  if (stage1Match) lists[1] = extractWords(stage1Match[1]);
-  if (stage2Match) lists[2] = extractWords(stage2Match[1]);
-  if (stage3Match) lists[3] = extractWords(stage3Match[1]);
-  
-  // Fallback: if no stages were matched but there are words in backticks or general uppercase words,
-  // load them all into the current selected stage!
-  if (lists[1].length === 0 && lists[2].length === 0 && lists[3].length === 0) {
-    const fallbackWords = extractWords(text);
-    if (fallbackWords.length > 0) {
-      lists[searchState.stage] = fallbackWords;
-    }
-  }
-  
-  return lists;
-}
-
-// â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function selectSearchStage(stageNum) {
-  searchState.stage = stageNum;
-  
-  // Update UI buttons
-  for (let i = 1; i <= 3; i++) {
-    const btn = document.getElementById(`stageBtn-${i}`);
-    if (btn) btn.classList.toggle('active', i === stageNum);
-  }
-
-  // Populate wordlist UI
-  updateWordListUI();
-  
-  // Re-run solver
-  solveSearch();
-}
-
-function clearSearchGrid() {
-  searchState.grid = Array.from({ length: 5 }, () => Array(5).fill(''));
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const cell = document.getElementById(`cell-${r}-${c}`);
-      if (cell) {
-        cell.value = '';
-        cell.classList.remove('highlighted');
-        cell.classList.remove('manual-highlighted');
-      }
-    }
-  }
-  const pasteInput = document.getElementById('searchPasteInput');
-  if (pasteInput) pasteInput.value = '';
-  const manualInput = document.getElementById('searchManualWordInput');
-  if (manualInput) manualInput.value = '';
-  searchState.manualWord = "";
-  solveSearch();
-}
-
-function resetSearchSolver() {
-  clearSearchGrid();
-  clearSearchImage();
-  
-  // Reset textarea value and state
-  const area = document.getElementById('searchWordlistsInput');
-  if (area) area.value = searchState.wordListsRawText;
-  
-  // Reset wordlists back to default
-  searchState.wordLists = {
-    1: ["RUSH", "NEST", "STEM", "SPAN", "FOUL", "YOKE", "SIDE", "MEAN", "LEAD", "SPOT", "VEST", "CURE", "WEEK", "NOON", "ZERO", "POLL", "CAFE", "MESS", "DIET", "EASY"],
-    2: ["FEAR", "CELL", "GRIM", "DUCK", "LAVA", "FOOT", "VEST", "OATH", "COMB", "RUST", "CAST", "HACK", "POND", "RIDE", "NEST", "ALSO", "BEST", "FOLD", "KISS", "LAMP"],
-    3: ["ATOM", "LOOK", "POET", "ONCE", "DOOR", "SLAP", "PURE", "EXAM", "JACK", "MEMO", "STEW", "ODDS", "LIVE", "WILL", "FILL", "FILM", "BOWL", "CLIP", "BEAT", "MASK"]
-  };
-  
-  selectSearchStage(3); // Default back to stage 3
-}
-
-function parseSearchPasteText() {
-  const text = document.getElementById('searchPasteInput').value;
-  parseAndLoadText(text);
-}
-
-function parseAndLoadText(text) {
-  if (!text) return;
-  
-  // Extract all letters [A-Za-z]
-  const clean = text.toUpperCase().replace(/[^A-Z]/g, '');
-  const letters = clean.split('');
-  
-  clearSearchGrid();
-  
-  let index = 0;
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      if (index < letters.length) {
-        const char = letters[index++];
-        searchState.grid[r][c] = char;
-        const cell = document.getElementById(`cell-${r}-${c}`);
-        if (cell) cell.value = char;
-      }
-    }
-  }
-  
-  solveSearch();
-}
-
-function handleManualWordInput(input) {
-  searchState.manualWord = input.value.toUpperCase().replace(/[^A-Z]/g, '');
-  solveSearch();
-}
-
-// Map lookalike symbols to words
-function updateWordListUI() {
-  const container = document.getElementById('searchWordListContainer');
-  if (!container) return;
-
-  const words = searchState.wordLists[searchState.stage] || [];
-  let html = '';
-  words.forEach(word => {
-    let activeClass = '';
-    if (searchState.foundWord && searchState.foundWord.word === word) {
-      activeClass = 'active-word';
-    }
-    html += `<div class="wordlist-item ${activeClass}" id="wl-${word}">${word}</div>`;
-  });
-  
-  container.innerHTML = html;
-}
-
-// â”€â”€ CORE WORD GRID SEARCH ALGORITHM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function checkWordInGrid(word, r, c, dir) {
-  const cells = [];
-  for (let i = 0; i < word.length; i++) {
-    const nr = r + i * dir.dr;
-    const nc = c + i * dir.dc;
-    if (nr < 0 || nr >= 5 || nc < 0 || nc >= 5) return null;
-    if (searchState.grid[nr][nc] !== word[i]) return null;
-    cells.push({ r: nr, c: nc });
-  }
-  return cells;
-}
-
-function solveSearch() {
-  // Clear previous highlights
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const cell = document.getElementById(`cell-${r}-${c}`);
-      if (cell) {
-        cell.classList.remove('highlighted');
-        cell.classList.remove('manual-highlighted');
-      }
-    }
-  }
-
-  const words = searchState.wordLists[searchState.stage] || [];
-  searchState.foundWord = null;
-
-  // Verify grid has at least some content
-  let hasContent = false;
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      if (searchState.grid[r][c]) hasContent = true;
-    }
-  }
-
-  if (!hasContent) {
-    updateWordListUI();
-    renderResultPanel(null, "Grid is empty. Enter letters to search.");
-    return;
-  }
-
-  // 1. Gather all 4-letter words from all stage lists
-  const all4LetterWords = new Set();
-  for (const st in searchState.wordLists) {
-    searchState.wordLists[st].forEach(w => {
-      if (w && w.length === 4) {
-        all4LetterWords.add(w.toUpperCase());
-      }
-    });
-  }
-
-  const stageMatches = [];
-  for (const word of all4LetterWords) {
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        for (const dir of SEARCH_DIRS) {
-          const cells = checkWordInGrid(word, r, c, dir);
-          if (cells) {
-            stageMatches.push({
-              word,
-              start: { r: r + 1, c: c + 1 }, // 1-indexed for the defuser
-              dir: dir.name,
-              cells
+      // Extract uppercase words (3 to 6 letters)
+      const words = line.match(/[A-Za-z]{3,6}/g);
+      if (words) {
+        for (let w of words) {
+          const upper = w.toUpperCase();
+          if (!entries.some(e => e.word === upper && e.stage === currentStage && e.label === currentLabel)) {
+            entries.push({
+              word: upper,
+              label: currentLabel,
+              stage: currentStage
             });
           }
         }
       }
     }
+
+    searchState.wordEntries = entries;
   }
 
-  // 2. Search for the manual search word if typed
-  let manualMatch = null;
-  if (searchState.manualWord && searchState.manualWord.length >= 2) {
+  // ── COMPUTER VISION & STAGE DETECTION ─────────────────────
+  function detectStageFromImage(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const W = img.width;
+    const H = img.height;
+
+    // Relative light positions on right indicator pill:
+    // x ~ 0.741 * W (326 in 440)
+    // Stage 1 y ~ 0.427 * H (188 in 440)
+    // Stage 2 y ~ 0.545 * H (240 in 440)
+    // Stage 3 y ~ 0.666 * H (293 in 440)
+    const lightX = Math.round(W * 0.741);
+    const lightYs = [
+      Math.round(H * 0.427),
+      Math.round(H * 0.545),
+      Math.round(H * 0.666)
+    ];
+
+    let activeStage = 1;
+
+    for (let i = 0; i < 3; i++) {
+      const y = lightYs[i];
+      const p = ctx.getImageData(lightX - 3, y - 3, 7, 7).data;
+      let sumR = 0, sumG = 0, sumB = 0, cnt = 0;
+      for (let j = 0; j < p.length; j += 4) {
+        sumR += p[j];
+        sumG += p[j+1];
+        sumB += p[j+2];
+        cnt++;
+      }
+      const r = sumR / cnt;
+      const g = sumG / cnt;
+      const b = sumB / cnt;
+
+      // Orange active light: R > 200, G in 140..210, B < 150
+      if (r > 190 && g > 130 && b < 160 && r > g) {
+        activeStage = i + 1;
+        break;
+      }
+    }
+
+    return activeStage;
+  }
+
+  function createCompositeLetterGridCanvas(img) {
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = img.width;
+    srcCanvas.height = img.height;
+    const srcCtx = srcCanvas.getContext('2d');
+    srcCtx.drawImage(img, 0, 0);
+
+    const W = img.width;
+    const H = img.height;
+
+    // Create 350x350 composite image for high-accuracy OCR
+    const compCanvas = document.createElement('canvas');
+    compCanvas.width = 350;
+    compCanvas.height = 350;
+    const compCtx = compCanvas.getContext('2d');
+    compCtx.fillStyle = '#ffffff';
+    compCtx.fillRect(0, 0, 350, 350);
+
+    const srcData = srcCtx.getImageData(0, 0, W, H).data;
+
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
-        for (const dir of SEARCH_DIRS) {
-          const cells = checkWordInGrid(searchState.manualWord, r, c, dir);
-          if (cells) {
-            manualMatch = {
-              word: searchState.manualWord,
-              start: { r: r + 1, c: c + 1 },
-              dir: dir.name,
-              cells
-            };
+        const cx = Math.round(W * (0.267 + c * 0.0909));
+        const cy = Math.round(H * (0.365 + r * 0.0905));
+        const rw = Math.round(W * 0.075);
+        const rh = Math.round(H * 0.075);
+
+        const x0 = Math.max(0, cx - Math.floor(rw / 2));
+        const y0 = Math.max(0, cy - Math.floor(rh / 2));
+
+        const patchCanvas = document.createElement('canvas');
+        patchCanvas.width = rw;
+        patchCanvas.height = rh;
+        const patchCtx = patchCanvas.getContext('2d');
+        const patchData = patchCtx.createImageData(rw, rh);
+
+        for (let py = 0; py < rh; py++) {
+          for (let px = 0; px < rw; px++) {
+            const sIdx = ((y0 + py) * W + (x0 + px)) * 4;
+            const pIdx = (py * rw + px) * 4;
+
+            const pr = srcData[sIdx];
+            const pg = srcData[sIdx + 1];
+            const pb = srcData[sIdx + 2];
+            const gray = (pr + pg + pb) / 3;
+
+            // Invert: white letters on dark background -> black letters on white
+            const inv = 255 - gray;
+            // Contrast enhance
+            const enhanced = Math.min(255, Math.max(0, (inv - 40) * 1.4));
+
+            patchData.data[pIdx] = enhanced;
+            patchData.data[pIdx + 1] = enhanced;
+            patchData.data[pIdx + 2] = enhanced;
+            patchData.data[pIdx + 3] = 255;
+          }
+        }
+        patchCtx.putImageData(patchData, 0, 0);
+
+        // Paste into composite canvas
+        compCtx.drawImage(patchCanvas, c * 65 + 15, r * 65 + 15, 50, 50);
+      }
+    }
+
+    return compCanvas;
+  }
+
+  // ── OCR RECOGNITION ───────────────────────────────────────
+  async function runOcrOnSearchImage() {
+    const statusEl = document.getElementById('searchOcrStatus');
+    if (!searchState.image) return;
+
+    // Detect stage from lights
+    const detectedStage = detectStageFromImage(searchState.image);
+    searchState.autoDetectedStage = detectedStage;
+    searchState.stage = detectedStage;
+    updateStageButtons();
+
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color:#ffd875;">⏳ Detected Stage ${detectedStage}. Reading letters with OCR...</span>`;
+    }
+
+    if (typeof Tesseract === 'undefined') {
+      if (statusEl) statusEl.innerHTML = `<span style="color:#ffd875;">Stage ${detectedStage} detected. Tesseract not ready; verify grid manually.</span>`;
+      solveSearch();
+      return;
+    }
+
+    try {
+      const compCanvas = createCompositeLetterGridCanvas(searchState.image);
+
+      // Show preview
+      const previewCanvas = document.getElementById('searchOcrPreviewCanvas');
+      const previewLabel = document.getElementById('searchOcrPreviewLabel');
+      if (previewCanvas) {
+        previewCanvas.width = 175;
+        previewCanvas.height = 175;
+        const pCtx = previewCanvas.getContext('2d');
+        pCtx.drawImage(compCanvas, 0, 0, 175, 175);
+        previewCanvas.style.display = 'inline-block';
+        if (previewLabel) previewLabel.style.display = 'block';
+      }
+
+      let worker = null;
+      if (typeof Tesseract.createWorker === 'function') {
+        worker = await Tesseract.createWorker('eng');
+        await worker.setParameters({
+          tessedit_pageseg_mode: '6', // uniform block of text
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ \n'
+        });
+      }
+
+      let recognizedLines = [];
+      if (worker && typeof worker.recognize === 'function') {
+        const res = await worker.recognize(compCanvas);
+        if (res && res.data && res.data.text) {
+          recognizedLines = res.data.text
+            .toUpperCase()
+            .split('\n')
+            .map(l => l.replace(/[^A-Z]/g, ''))
+            .filter(l => l.length > 0);
+        }
+        await worker.terminate();
+      }
+
+      // Check if we extracted 5 lines of 5 letters
+      let success = false;
+      if (recognizedLines.length >= 5) {
+        let valid = true;
+        for (let r = 0; r < 5; r++) {
+          const line = recognizedLines[r];
+          if (line.length < 5) {
+            valid = false;
             break;
           }
         }
-        if (manualMatch) break;
+        if (valid) {
+          for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+              searchState.grid[r][c] = recognizedLines[r][c];
+            }
+          }
+          success = true;
+        }
       }
-      if (manualMatch) break;
+
+      // Fallback: If block OCR was imperfect, recognize individual cell crops
+      if (!success) {
+        const W = searchState.image.width;
+        const H = searchState.image.height;
+        const srcCanvas = document.createElement('canvas');
+        srcCanvas.width = W;
+        srcCanvas.height = H;
+        const sCtx = srcCanvas.getContext('2d');
+        sCtx.drawImage(searchState.image, 0, 0);
+        const sData = sCtx.getImageData(0, 0, W, H).data;
+
+        const cellWorker = await Tesseract.createWorker('eng');
+        await cellWorker.setParameters({
+          tessedit_pageseg_mode: '10', // single character
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        });
+
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < 5; c++) {
+            const cx = Math.round(W * (0.267 + c * 0.0909));
+            const cy = Math.round(H * (0.365 + r * 0.0905));
+            const rw = Math.round(W * 0.075);
+            const rh = Math.round(H * 0.075);
+
+            const cCanv = document.createElement('canvas');
+            cCanv.width = 60;
+            cCanv.height = 60;
+            const cCtx = cCanv.getContext('2d');
+            cCtx.fillStyle = '#fff';
+            cCtx.fillRect(0, 0, 60, 60);
+
+            // Draw inverted
+            const cData = cCtx.createImageData(rw, rh);
+            const x0 = cx - Math.floor(rw/2);
+            const y0 = cy - Math.floor(rh/2);
+
+            for (let py = 0; py < rh; py++) {
+              for (let px = 0; px < rw; px++) {
+                const sIdx = ((y0 + py) * W + (x0 + px)) * 4;
+                const pIdx = (py * rw + px) * 4;
+                const inv = 255 - ((sData[sIdx] + sData[sIdx+1] + sData[sIdx+2]) / 3);
+                const enh = Math.min(255, Math.max(0, (inv - 40) * 1.4));
+                cData.data[pIdx] = enh;
+                cData.data[pIdx+1] = enh;
+                cData.data[pIdx+2] = enh;
+                cData.data[pIdx+3] = 255;
+              }
+            }
+            const tmp = document.createElement('canvas');
+            tmp.width = rw;
+            tmp.height = rh;
+            tmp.getContext('2d').putImageData(cData, 0, 0);
+            cCtx.drawImage(tmp, 5, 5, 50, 50);
+
+            const cellRes = await cellWorker.recognize(cCanv);
+            const ch = (cellRes.data.text || '').toUpperCase().replace(/[^A-Z]/g, '')[0];
+            if (ch) searchState.grid[r][c] = ch;
+          }
+        }
+        await cellWorker.terminate();
+      }
+
+      updateGridInputs();
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:#22c55e;">✓ Stage ${detectedStage} scanned successfully!</span>`;
+      }
+      solveSearch();
+    } catch (err) {
+      console.error("Search OCR error:", err);
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:#ff5f57;">⚠️ OCR error. You can type letters directly into the grid.</span>`;
+      }
+      solveSearch();
     }
   }
 
-  // Apply highlights and render results
-  if (stageMatches.length > 0) {
-    searchState.foundWord = stageMatches[0];
-    
-    // Highlight cells of all found words (primary in green, others in semi-green)
-    stageMatches.forEach((match, idx) => {
-      match.cells.forEach(cell => {
-        const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
-        if (cellEl) {
-          cellEl.classList.add('highlighted');
+  // ── MULTI-WORD SEARCH ALGORITHM ───────────────────────────
+  function solveSearch() {
+    const grid = searchState.grid;
+    const activeStage = searchState.stage;
+    const matches = [];
+
+    // Filter words: prioritize active stage, but check all entries
+    const wordsToCheck = searchState.wordEntries;
+
+    for (const entry of wordsToCheck) {
+      const word = entry.word;
+      const L = word.length;
+      if (L < 3 || L > 5) continue;
+
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (grid[r][c] !== word[0]) continue;
+
+          for (const dir of DIRS) {
+            let matched = true;
+            const cells = [];
+
+            for (let i = 0; i < L; i++) {
+              const nr = r + dir.dr * i;
+              const nc = c + dir.dc * i;
+
+              if (nr < 0 || nr >= 5 || nc < 0 || nc >= 5 || grid[nr][nc] !== word[i]) {
+                matched = false;
+                break;
+              }
+              cells.push({ r: nr, c: nc });
+            }
+
+            if (matched) {
+              const startCoord = coord(r, c);
+              const endCoord = coord(r + dir.dr * (L - 1), c + dir.dc * (L - 1));
+
+              // Avoid duplicates
+              const alreadyFound = matches.some(m =>
+                m.word === word && m.startCoord === startCoord && m.dirName === dir.name
+              );
+
+              if (!alreadyFound) {
+                matches.push({
+                  word: word,
+                  label: entry.label,
+                  stage: entry.stage,
+                  isCurrentStage: entry.stage === activeStage,
+                  dirName: dir.name,
+                  arrow: dir.arrow,
+                  startCoord,
+                  endCoord,
+                  cells
+                });
+              }
+            }
+          }
         }
-      });
+      }
+    }
+
+    // Sort matches: current stage matches first, then longer words
+    matches.sort((a, b) => {
+      if (a.isCurrentStage && !b.isCurrentStage) return -1;
+      if (!a.isCurrentStage && b.isCurrentStage) return 1;
+      return b.word.length - a.word.length;
     });
 
-    renderMultiResultPanel(stageMatches);
-  } else if (manualMatch) {
-    // Highlight manual search word in Blue
-    manualMatch.cells.forEach(cell => {
-      const cellEl = document.getElementById(`cell-${cell.r}-${cell.c}`);
-      if (cellEl) cellEl.classList.add('manual-highlighted');
+    searchState.foundWords = matches;
+    searchState.selectedWordIndex = 0;
+
+    renderAnswerCard();
+    highlightSelectedWordOnGrid();
+  }
+
+  // ── UI RENDERING & STYLES ─────────────────────────────────
+  function injectStyles() {
+    if (document.getElementById('searchSolverStyles')) return;
+    const css = `
+    .sr-shell {
+      max-width: 1040px;
+      margin: 0 auto 30px;
+      background: #0d0f22;
+      border: 1.5px solid #202448;
+      border-radius: 18px;
+      padding: 24px;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    }
+    .sr-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #1c2042;
+    }
+    .sr-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffd875;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sr-stage-pills {
+      display: flex;
+      gap: 6px;
+      background: #070814;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid #1c2042;
+    }
+    .sr-stage-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sr-stage-btn.active {
+      background: #ffd875;
+      color: #080914;
+      box-shadow: 0 0 10px rgba(255, 216, 117, 0.3);
+    }
+    .sr-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .sr-layout { grid-template-columns: 1fr; }
+    }
+    .sr-card {
+      background: #070814;
+      border: 1px solid #1c2042;
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .sr-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffd875;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sr-dropzone {
+      border: 2px dashed #343864;
+      border-radius: 12px;
+      padding: 22px 14px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.015);
+      transition: all 0.2s;
+      margin-bottom: 14px;
+    }
+    .sr-dropzone:hover, .sr-dropzone.dragover {
+      border-color: #ffd875;
+      background: rgba(255, 216, 117, 0.06);
+    }
+    .sr-grid-container {
+      display: grid;
+      grid-template-columns: repeat(5, 52px);
+      grid-template-rows: repeat(5, 52px);
+      gap: 8px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .sr-grid-cell {
+      width: 52px;
+      height: 52px;
+      background: #151833;
+      border: 2px solid #282d5c;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Outfit', monospace, sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      text-align: center;
+      text-transform: uppercase;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .sr-grid-cell:focus {
+      border-color: #ffd875;
+      box-shadow: 0 0 12px rgba(255, 216, 117, 0.3);
+      background: #1b2046;
+    }
+    .sr-grid-cell.highlight-start {
+      background: #2a220a !important;
+      border: 2.5px solid #ffd875 !important;
+      color: #ffd875 !important;
+      box-shadow: 0 0 16px rgba(255, 216, 117, 0.6) !important;
+      transform: scale(1.05);
+      z-index: 2;
+    }
+    .sr-grid-cell.highlight-word {
+      background: #064e3b !important;
+      border: 2.5px solid #22c55e !important;
+      color: #4ade80 !important;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.5) !important;
+      transform: scale(1.05);
+      z-index: 2;
+    }
+    .sr-match-card {
+      background: #11142e;
+      border: 1.5px solid #222956;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s;
+    }
+    .sr-match-card:hover {
+      border-color: #ffd875;
+      background: #171b3e;
+      transform: translateY(-1px);
+    }
+    .sr-match-card.selected {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: #22c55e;
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.25);
+    }
+    .sr-word-badge {
+      font-size: 32px;
+      font-weight: 900;
+      color: #22c55e;
+      font-family: 'Outfit', monospace, sans-serif;
+      letter-spacing: 2px;
+    }
+    .sr-word-dir {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffd875;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sr-textarea {
+      width: 100%;
+      background: #090a16;
+      border: 1px solid #222956;
+      color: #ffd875;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 10px;
+      border-radius: 8px;
+      outline: none;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .sr-textarea:focus {
+      border-color: #ffd875;
+    }
+    .sr-btn {
+      background: #1c2042;
+      border: 1px solid #343864;
+      color: #e2e8f0;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sr-btn:hover {
+      background: #282e5c;
+      border-color: #ffd875;
+      color: #fff;
+    }
+    .sr-btn.primary {
+      background: #ffd875;
+      border-color: #ffd875;
+      color: #080914;
+      font-weight: 800;
+    }
+    `;
+    const style = document.createElement('style');
+    style.id = 'searchSolverStyles';
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function renderUI() {
+    const section = document.getElementById('searchSection');
+    if (!section) return;
+
+    parseWordListText(searchState.rawWordsText);
+
+    section.innerHTML = `
+      <div class="sr-shell">
+        <div class="sr-head">
+          <div class="sr-title">
+            <span>🔍</span> Search Solver
+            <span style="font-size:13px; font-weight:600; color:#94a3b8; background:#181b36; padding:3px 10px; border-radius:99px; border:1px solid #282d58;">
+              5×5 Grid · 8 Directions
+            </span>
+          </div>
+
+          <!-- Stage Selection Pills -->
+          <div class="sr-stage-pills">
+            <span style="font-size:11px; font-weight:800; color:#64748b; padding:6px 6px; text-transform:uppercase;">Stage:</span>
+            <button class="sr-stage-btn active" id="srStageBtn1" onclick="window.setSearchStage(1)">Stage 1</button>
+            <button class="sr-stage-btn" id="srStageBtn2" onclick="window.setSearchStage(2)">Stage 2</button>
+            <button class="sr-stage-btn" id="srStageBtn3" onclick="window.setSearchStage(3)">Stage 3</button>
+          </div>
+        </div>
+
+        <div class="sr-layout">
+          <!-- Left Column: Upload & Word Lists -->
+          <div>
+            <!-- Image Dropzone -->
+            <div class="sr-card" style="margin-bottom:18px;">
+              <div class="sr-card-title">
+                <span>Upload / Paste Screenshot</span>
+                <button class="sr-btn" style="padding:4px 8px; font-size:11px;" onclick="window.resetSearchGrid()">Clear</button>
+              </div>
+
+              <div id="srDropzone" class="sr-dropzone" onclick="window.openSearchFileDialog()">
+                <input type="file" id="srFileInput" accept="image/*" style="display:none;" onchange="window.handleSearchFile(this)">
+                <div style="font-size:32px; margin-bottom:6px;">📷</div>
+                <div style="font-weight:700; font-size:14px; color:#fff; margin-bottom:2px;">Click to Upload Screenshot</div>
+                <div style="font-size:12px; color:#94a3b8;">or press <kbd style="background:#1e2246; padding:2px 6px; border-radius:4px; color:#ffd875;">Ctrl+V</kbd> anywhere to paste</div>
+              </div>
+
+              <div id="srPreviewWrapper" style="display:none; text-align:center; margin-bottom:10px;">
+                <canvas id="searchImageCanvas" style="max-width:100%; border-radius:8px; border:1px solid #282d58; max-height:180px;"></canvas>
+                <div id="searchOcrPreviewLabel" style="font-size:11px; color:#94a3b8; margin-top:6px; display:none;">Enhanced OCR View:</div>
+                <canvas id="searchOcrPreviewCanvas" style="max-width:100%; border-radius:6px; border:1px solid #333; display:none; margin-top:4px;"></canvas>
+              </div>
+
+              <div id="searchOcrStatus" style="font-size:13px; font-weight:700; text-align:center;"></div>
+            </div>
+
+            <!-- Possible Words / Manual Stage Wordlists Input (Like Password Module) -->
+            <div class="sr-card">
+              <div class="sr-card-title">
+                <span>Possible Words List</span>
+                <button class="sr-btn" style="padding:4px 8px; font-size:11px;" onclick="window.resetSearchWords()">Reset Words</button>
+              </div>
+              <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">
+                Paste or edit current stage words below (Search #1 & #2 preloaded):
+              </div>
+              <textarea id="searchWordsTextarea" class="sr-textarea" rows="8" oninput="window.handleWordsTextareaChange(this)">${searchState.rawWordsText}</textarea>
+            </div>
+          </div>
+
+          <!-- Right Column: Answer Display & 5x5 Grid -->
+          <div>
+            <!-- Answer Card -->
+            <div id="searchAnswerContainer" style="margin-bottom:18px;"></div>
+
+            <!-- 5x5 Grid Board -->
+            <div class="sr-card" style="text-align:center;">
+              <div class="sr-card-title" style="justify-content:center; gap:10px;">
+                <span>5×5 Letter Grid</span>
+              </div>
+              <div style="font-size:12px; color:#94a3b8; margin-bottom:10px;">
+                Automatically filled by OCR or type letters directly:
+              </div>
+
+              <div class="sr-grid-container" id="srGridWrapper"></div>
+
+              <div style="margin-top:14px; display:flex; justify-content:center; gap:10px;">
+                <button class="sr-btn primary" onclick="window.solveSearchManual()">⚡ Find Words</button>
+                <button class="sr-btn" onclick="window.clearSearchLetters()">Clear Letters</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    setupDropzone();
+    setupGlobalPaste();
+    renderGridInputs();
+    solveSearch();
+  }
+
+  function setupDropzone() {
+    const dropzone = document.getElementById('srDropzone');
+    if (!dropzone) return;
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
     });
 
-    renderResultPanel(manualMatch, `Manual Search Found: ${manualMatch.word}`);
-  } else {
-    // Check if grid is fully completed (25 letters)
-    let isFull = true;
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
+      if (file) processSearchImageFile(file);
+    });
+  }
+
+  function setupGlobalPaste() {
+    document.addEventListener('paste', (e) => {
+      const section = document.getElementById('searchSection');
+      if (!section || !section.classList.contains('active')) return;
+
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) processSearchImageFile(file);
+          break;
+        }
+      }
+    });
+  }
+
+  function processSearchImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        searchState.image = img;
+
+        const previewWrapper = document.getElementById('srPreviewWrapper');
+        const canvas = document.getElementById('searchImageCanvas');
+        if (previewWrapper && canvas) {
+          previewWrapper.style.display = 'block';
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+        }
+
+        runOcrOnSearchImage();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function renderGridInputs() {
+    const wrapper = document.getElementById('srGridWrapper');
+    if (!wrapper) return;
+
+    let html = '';
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
-        if (!searchState.grid[r][c]) isFull = false;
+        const val = searchState.grid[r][c] || '';
+        html += `
+          <input type="text" class="sr-grid-cell" id="srCell-${r}-${c}" data-r="${r}" data-c="${c}" maxlength="1" value="${val}" autocomplete="off" spellcheck="false" oninput="window.handleCellInput(this, ${r}, ${c})" onkeydown="window.handleCellKey(event, ${r}, ${c})">
+        `;
       }
     }
-    
-    let statusText = isFull 
-      ? "âŒ No 4-letter stage words found in this grid." 
-      : "Searching... Fill the grid to find a match.";
-      
-    if (searchState.manualWord && searchState.manualWord.length >= 2) {
-      statusText = `âŒ Manual word "${searchState.manualWord}" not found in grid.`;
+    wrapper.innerHTML = html;
+  }
+
+  function updateGridInputs() {
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const el = document.getElementById(`srCell-${r}-${c}`);
+        if (el) el.value = searchState.grid[r][c] || '';
+      }
     }
-    
-    renderResultPanel(null, statusText);
   }
 
-  // Update active word highlights in list
-  updateWordListUI();
-}
+  function renderAnswerCard() {
+    const container = document.getElementById('searchAnswerContainer');
+    if (!container) return;
 
-function renderMultiResultPanel(matches) {
-  const panel = document.getElementById('searchResultPanel');
-  if (!panel) return;
+    const matches = searchState.foundWords;
 
-  if (matches.length === 1) {
-    renderResultPanel(matches[0]);
-    return;
-  }
-
-  // Render a list of multiple matches
-  let html = `<div style="width: 100%; text-align: left;">`;
-  html += `<div style="color: #ffd875; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">Found ${matches.length} Matches:</div>`;
-  
-  matches.forEach((m, idx) => {
-    html += `
-      <div style="margin-bottom: 8px; border-bottom: 1px solid #131326; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <strong style="color: #00ff66; font-size: 18px; text-shadow: 0 0 10px rgba(0, 255, 102, 0.2);">${m.word}</strong>
-          <span style="color: #888; font-size: 11px; margin-left: 8px;">(R${m.start.r}, C${m.start.c})</span>
+    if (!matches || matches.length === 0) {
+      container.innerHTML = `
+        <div style="background:rgba(255,216,117,0.06); border:1.5px solid #282d58; border-radius:14px; padding:18px; text-align:center; color:#94a3b8;">
+          <div style="font-size:16px; font-weight:700; color:#ffd875; margin-bottom:4px;">No words found yet</div>
+          <div style="font-size:12px;">Upload a screenshot or verify letters and word list.</div>
         </div>
-        <div style="color: #cbd5e0; font-size: 12px; font-weight: bold;">${m.dir}</div>
+      `;
+      return;
+    }
+
+    const selectedIdx = Math.min(searchState.selectedWordIndex, matches.length - 1);
+    const primary = matches[selectedIdx];
+
+    let html = `
+      <div style="background:linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.06) 100%); border:2px solid #22c55e; border-radius:16px; padding:20px; box-shadow:0 0 30px rgba(34,197,94,0.2); margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+          <div style="font-size:11px; font-weight:800; color:#ffd875; letter-spacing:1.5px; text-transform:uppercase;">
+            ${primary.isCurrentStage ? '★ CURRENT STAGE WORD TO SUBMIT' : 'MATCHED WORD'}
+          </div>
+          <span style="font-size:12px; font-weight:700; color:#cbd5e1; background:#112d22; padding:3px 10px; border-radius:6px; border:1px solid #22c55e;">
+            ${primary.label}
+          </span>
+        </div>
+
+        <div style="display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+          <div>
+            <div class="sr-word-badge">${primary.word}</div>
+            <div style="font-size:15px; font-weight:700; color:#cbd5e1; margin-top:4px;">
+              Starts at <strong style="color:#ffd875; text-decoration:underline; font-size:17px;">${primary.startCoord}</strong>
+              ➔ Goes <span style="color:#22c55e; font-weight:800; font-size:17px;">${primary.dirName} ${primary.arrow}</span>
+              ➔ Ends at <strong style="color:#ffd875; text-decoration:underline;">${primary.endCoord}</strong>
+            </div>
+          </div>
+          <button class="sr-btn" style="background:#133824; border-color:#22c55e; color:#4ade80; font-weight:800; padding:10px 16px;" onclick="navigator.clipboard.writeText('${primary.word}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='📋 Copy Word', 1500);">
+            📋 Copy Word
+          </button>
+        </div>
       </div>
     `;
-  });
-  html += `</div>`;
-  panel.innerHTML = html;
-}
 
-function renderResultPanel(match, customHeader = "") {
-  const panel = document.getElementById('searchResultPanel');
-  if (!panel) return;
+    // If multiple words found, list all of them
+    if (matches.length > 1) {
+      html += `
+        <div style="margin-top:12px;">
+          <div style="font-size:12px; font-weight:800; color:#ffd875; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">
+            All Matched Words (${matches.length} found):
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px;">
+      `;
 
-  if (match) {
-    const headerHtml = customHeader ? `<div style="color:#00d2ff; font-size:14px; font-weight:bold; margin-bottom:4px;">${customHeader}</div>` : '';
-    const wordColorClass = customHeader ? 'style="color:#00d2ff; text-shadow:0 0 10px rgba(0, 210, 255, 0.3);"' : '';
-    panel.innerHTML = `
-      ${headerHtml}
-      <div class="search-result-word" ${wordColorClass}>${match.word}</div>
-      <div class="search-result-coords">
-        Starts at <strong>Row ${match.start.r}, Col ${match.start.c}</strong> Â· Direction: <strong>${match.dir}</strong>
-      </div>
-    `;
-  } else {
-    panel.innerHTML = `<div style="color:#888; font-size:14px;">${customHeader || "No match found"}</div>`;
+      matches.forEach((m, idx) => {
+        const isSel = idx === selectedIdx;
+        html += `
+          <div class="sr-match-card ${isSel ? 'selected' : ''}" onclick="window.selectMatchedWord(${idx})">
+            <div>
+              <div style="font-size:20px; font-weight:900; color:${isSel ? '#22c55e' : '#fff'}; font-family:'Outfit', monospace;">
+                ${m.word}
+              </div>
+              <div style="font-size:11px; color:#94a3b8;">${m.label}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:13px; font-weight:800; color:#ffd875;">${m.startCoord} ${m.arrow}</div>
+              <div style="font-size:10px; color:#64748b;">${m.dirName}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
   }
-}
 
-// â”€â”€ PUBLIC EXPORTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  function highlightSelectedWordOnGrid() {
+    // Clear all previous highlights
+    document.querySelectorAll('.sr-grid-cell').forEach(cell => {
+      cell.classList.remove('highlight-start', 'highlight-word');
+    });
 
-window.initSearchModule = initSearchModule;
-window.selectSearchStage = selectSearchStage;
-window.clearSearchGrid = clearSearchGrid;
-window.resetSearchSolver = resetSearchSolver;
-window.parseSearchPasteText = parseSearchPasteText;
-window.solveSearch = solveSearch;
-window.handleSearchFileSelect = handleSearchFileSelect;
-window.openSearchFileDialog = openSearchFileDialog;
-window.clearSearchImage = clearSearchImage;
-// window.saveSearchTemplates = saveSearchTemplates;
-// window.clearSearchTemplates = clearSearchTemplates;
-window.handleManualWordInput = handleManualWordInput;
-window.handleWordlistsAreaChange = handleWordlistsAreaChange;
+    const matches = searchState.foundWords;
+    if (!matches || matches.length === 0) return;
+
+    const selectedIdx = Math.min(searchState.selectedWordIndex, matches.length - 1);
+    const selected = matches[selectedIdx];
+
+    selected.cells.forEach((pos, i) => {
+      const cellEl = document.getElementById(`srCell-${pos.r}-${pos.c}`);
+      if (cellEl) {
+        if (i === 0) {
+          cellEl.classList.add('highlight-start');
+        } else {
+          cellEl.classList.add('highlight-word');
+        }
+      }
+    });
+  }
+
+  function updateStageButtons() {
+    for (let s = 1; s <= 3; s++) {
+      const btn = document.getElementById(`srStageBtn${s}`);
+      if (btn) {
+        btn.classList.toggle('active', s === searchState.stage);
+      }
+    }
+  }
+
+  // ── GLOBAL CONTROLLER FUNCTIONS ───────────────────────────
+  window.openSearchFileDialog = function() {
+    const input = document.getElementById('srFileInput');
+    if (input) input.click();
+  };
+
+  window.handleSearchFile = function(input) {
+    const file = input.files && input.files[0];
+    if (file) processSearchImageFile(file);
+    input.value = '';
+  };
+
+  window.setSearchStage = function(s) {
+    searchState.stage = s;
+    updateStageButtons();
+    solveSearch();
+  };
+
+  window.handleWordsTextareaChange = function(textarea) {
+    parseWordListText(textarea.value);
+    solveSearch();
+  };
+
+  window.resetSearchWords = function() {
+    const textarea = document.getElementById('searchWordsTextarea');
+    if (textarea) textarea.value = DEFAULT_WORDS_TEXT;
+    parseWordListText(DEFAULT_WORDS_TEXT);
+    solveSearch();
+  };
+
+  window.selectMatchedWord = function(idx) {
+    searchState.selectedWordIndex = idx;
+    renderAnswerCard();
+    highlightSelectedWordOnGrid();
+  };
+
+  window.handleCellInput = function(input, r, c) {
+    const val = input.value.toUpperCase().replace(/[^A-Z]/g, '');
+    input.value = val;
+    searchState.grid[r][c] = val;
+
+    // Move to next cell
+    if (val) {
+      if (c < 4) {
+        const next = document.getElementById(`srCell-${r}-${c+1}`);
+        if (next) next.focus();
+      } else if (r < 4) {
+        const next = document.getElementById(`srCell-${r+1}-0`);
+        if (next) next.focus();
+      }
+    }
+    solveSearch();
+  };
+
+  window.handleCellKey = function(e, r, c) {
+    if (e.key === 'Backspace' && !e.target.value) {
+      if (c > 0) {
+        const prev = document.getElementById(`srCell-${r}-${c-1}`);
+        if (prev) prev.focus();
+      } else if (r > 0) {
+        const prev = document.getElementById(`srCell-${r-1}-4`);
+        if (prev) prev.focus();
+      }
+    } else if (e.key === 'ArrowRight' && c < 4) {
+      document.getElementById(`srCell-${r}-${c+1}`)?.focus();
+    } else if (e.key === 'ArrowLeft' && c > 0) {
+      document.getElementById(`srCell-${r}-${c-1}`)?.focus();
+    } else if (e.key === 'ArrowDown' && r < 4) {
+      document.getElementById(`srCell-${r+1}-${c}`)?.focus();
+    } else if (e.key === 'ArrowUp' && r > 0) {
+      document.getElementById(`srCell-${r-1}-${c}`)?.focus();
+    }
+  };
+
+  window.clearSearchLetters = function() {
+    searchState.grid = Array.from({ length: 5 }, () => Array(5).fill(''));
+    updateGridInputs();
+    solveSearch();
+  };
+
+  window.resetSearchGrid = function() {
+    searchState.grid = Array.from({ length: 5 }, () => Array(5).fill(''));
+    searchState.foundWords = [];
+    searchState.image = null;
+
+    const preview = document.getElementById('srPreviewWrapper');
+    if (preview) preview.style.display = 'none';
+    const status = document.getElementById('searchOcrStatus');
+    if (status) status.textContent = '';
+
+    updateGridInputs();
+    renderAnswerCard();
+  };
+
+  window.solveSearchManual = function() {
+    solveSearch();
+  };
+
+  window.initSearchModule = function() {
+    injectStyles();
+    renderUI();
+    searchState.initialized = true;
+  };
+
 })();
