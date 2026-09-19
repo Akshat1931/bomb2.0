@@ -155,9 +155,13 @@
             row.push('0'); // Blank revealed cell
           } else {
             const [pr, pg, pb] = minPixel;
-            // 3: Red
-            if (pr > pg + 35 && pr > pb + 35) {
-              row.push('3');
+            // 3: Bright Red vs 5: Maroon (Dark Red)
+            if (pr > pg + 30 && pr > pb + 30) {
+              if (pr >= 150) {
+                row.push('3');
+              } else {
+                row.push('5');
+              }
             // 2: Green
             } else if (pg > pr + 20 && pg > pb + 15) {
               row.push('2');
@@ -167,9 +171,6 @@
             // 1: Blue (Blue is highest, Green > Red)
             } else if (pb > pr + 35 && pb > 85) {
               row.push('1');
-            // 5: Maroon
-            } else if (pr > 90 && pg < 60 && pb < 60) {
-              row.push('5');
             // 6: Teal
             } else if (pg > 80 && pb > 80 && pr < 70) {
               row.push('6');
