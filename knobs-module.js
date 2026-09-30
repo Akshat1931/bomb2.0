@@ -248,6 +248,32 @@ XXOOXX`;
       align-items: center;
       gap: 8px;
     }
+    .knobs-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 22px;
+      background: #181b36;
+      border: 1.5px solid #22c55e;
+      color: #4ade80;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+    }
+    .knobs-copy-btn:hover {
+      background: #133824;
+      border-color: #4ade80;
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+      transform: translateY(-1px);
+    }
+    .knobs-copy-btn:active {
+      transform: translateY(0);
+    }
     `;
 
     const styleEl = document.createElement('style');
@@ -614,23 +640,90 @@ XXOOXX`;
       evenDesc = `Tie! Both rows have ${litCount1} lit lights`;
     }
 
+    const copyText = `# odd ${oddAnswer.toLowerCase()}\n# even ${evenAnswer.toLowerCase()}`;
+    window.__knobsCopyText = copyText;
+
     resultPanel.innerHTML = `
-      <div style="display: flex; gap: 16px; width: 100%; justify-content: center; margin-top: 10px;">
-        <div class="knobs-solution-card odd">
-          <div class="knobs-solution-title">Odd Disarmed Count</div>
-          <div class="knobs-solution-dir">${oddAnswer}</div>
-          <div class="knobs-solution-desc">${oddDesc}</div>
-        </div>
-        <div class="knobs-solution-card even">
-          <div class="knobs-solution-title">Even Disarmed Count</div>
-          <div class="knobs-solution-dir">${evenAnswer}</div>
-          <div class="knobs-solution-desc">${evenDesc}</div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; margin-top: 8px;">
+        <button id="knobsCopyBtn" class="knobs-copy-btn" type="button" onclick="window.copyKnobsAnswer(this)">
+          📋 Copy Answer
+        </button>
+        <div style="display: flex; gap: 16px; width: 100%; justify-content: center;">
+          <div class="knobs-solution-card odd" onclick="window.copyKnobsSingle('# odd ${oddAnswer.toLowerCase()}', this)" style="cursor: pointer;" title="Click to copy: # odd ${oddAnswer.toLowerCase()}">
+            <div class="knobs-solution-title">Odd Disarmed Count</div>
+            <div class="knobs-solution-dir">${oddAnswer}</div>
+            <div class="knobs-solution-desc">${oddDesc}</div>
+          </div>
+          <div class="knobs-solution-card even" onclick="window.copyKnobsSingle('# even ${evenAnswer.toLowerCase()}', this)" style="cursor: pointer;" title="Click to copy: # even ${evenAnswer.toLowerCase()}">
+            <div class="knobs-solution-title">Even Disarmed Count</div>
+            <div class="knobs-solution-dir">${evenAnswer}</div>
+            <div class="knobs-solution-desc">${evenDesc}</div>
+          </div>
         </div>
       </div>
     `;
   }
 
+  function copyKnobsAnswer(btn) {
+    if (!window.__knobsCopyText) return;
+    performClipboardCopy(window.__knobsCopyText, () => {
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ Copied!';
+        btn.style.borderColor = '#22c55e';
+        btn.style.color = '#22c55e';
+        setTimeout(() => {
+          btn.innerHTML = orig;
+          btn.style.borderColor = '';
+          btn.style.color = '';
+        }, 1500);
+      }
+    });
+  }
+
+  function copyKnobsSingle(text, el) {
+    performClipboardCopy(text, () => {
+      if (el) {
+        const titleEl = el.querySelector('.knobs-solution-title');
+        if (titleEl) {
+          const orig = titleEl.textContent;
+          titleEl.textContent = '✓ Copied!';
+          titleEl.style.color = '#22c55e';
+          setTimeout(() => {
+            titleEl.textContent = orig;
+            titleEl.style.color = '';
+          }, 1500);
+        }
+      }
+    });
+  }
+
+  function performClipboardCopy(text, callback) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(callback).catch(() => {
+        fallbackCopy(text, callback);
+      });
+    } else {
+      fallbackCopy(text, callback);
+    }
+  }
+
+  function fallbackCopy(text, callback) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      if (callback) callback();
+    } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
   function resetKnobsSolver() {
+    window.__knobsCopyText = null;
     knobsState.lights = [
       [false, false, false, false, false, false],
       [false, false, false, false, false, false]
@@ -664,4 +757,6 @@ XXOOXX`;
   window.handleKnobsActiveInput = handleKnobsActiveInput;
   window.handleKnobsManualInput = handleKnobsManualInput;
   window.resetKnobsSolver = resetKnobsSolver;
+  window.copyKnobsAnswer = copyKnobsAnswer;
+  window.copyKnobsSingle = copyKnobsSingle;
 })();
