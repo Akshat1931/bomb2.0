@@ -188,7 +188,7 @@
             <div style="display:flex; align-items:center; gap:10px;">
               <span id="multiProgressText" style="color:#aaa; font-size:12px;">Upload multi-maze image to start</span>
               <button type="button" id="multiCopyAllBtn" onclick="window.multiMazeCopyAll(this)" style="display:none; background:#2563eb; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s;">
-                📋 Copy All Answers
+                📋 Copy All Codes
               </button>
             </div>
           </div>
@@ -541,27 +541,23 @@
         </div>
       </div>
 
-      <!-- Solution Section -->
+      <!-- Solution Section (LRUD Code Only) -->
       ${isSolved ? `
         <div style="background:#0e0e22; border:1px solid #1e3a2b; border-radius:8px; padding:10px; margin-top:8px;">
-          <!-- Moves output -->
-          <div style="margin-bottom:6px;">
-            <div style="font-size:10px; color:#8c8fae; text-transform:uppercase; font-weight:700;">Steps (${movesCode.length})</div>
-            <div style="color:#4ade80; font-family:monospace; font-size:14px; font-weight:700; word-break:break-all; line-height:1.4;">
-              ${movesReadable}
+          <!-- Code output -->
+          <div style="margin-bottom:8px;">
+            <div style="font-size:10px; color:#8c8fae; text-transform:uppercase; font-weight:700; margin-bottom:4px;">
+              Code (${movesCode.length} steps)
             </div>
-            <div style="color:#64748b; font-family:monospace; font-size:11px; margin-top:2px;">
-              Code: ${movesCode}
+            <div style="color:#4ade80; font-family:monospace; font-size:15px; font-weight:800; letter-spacing:1px; word-break:break-all; line-height:1.4; background:#14142b; padding:8px 10px; border-radius:6px; border:1px solid #28382c;">
+              ${movesCode}
             </div>
           </div>
 
-          <!-- Direct Copy Button -->
-          <div style="display:flex; gap:6px; margin-top:8px;">
-            <button type="button" class="slot-copy-btn" onclick="event.stopPropagation(); window.multiMazeCopySlot(${idx}, this)" style="flex:1; background:#22c55e; color:#0e0e1e; border:none; border-radius:6px; padding:7px 10px; font-weight:700; font-size:12px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px;">
-              <span>📋 Copy Moves</span>
-            </button>
-            <button type="button" class="slot-copy-code-btn" onclick="event.stopPropagation(); window.multiMazeCopySlotCode(${idx}, this)" title="Copy compact UURR code" style="background:#1e293b; color:#94a3b8; border:1px solid #334155; border-radius:6px; padding:7px 10px; font-weight:600; font-size:11px; cursor:pointer;">
-              Code
+          <!-- Direct Copy Code Button -->
+          <div>
+            <button type="button" class="slot-copy-code-btn" onclick="event.stopPropagation(); window.multiMazeCopySlotCode(${idx}, this)" style="width:100%; background:#22c55e; color:#0e0e1e; border:none; border-radius:6px; padding:8px 10px; font-weight:700; font-size:13px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px;">
+              <span>📋 Copy Code</span>
             </button>
           </div>
         </div>
@@ -650,12 +646,11 @@
     e.target.value = '';
   };
 
-  // Copy single slot readable moves
-  window.multiMazeCopySlot = function (idx, btnEl) {
+  // Copy single slot code (LRUD combination)
+  window.multiMazeCopySlotCode = function (idx, btnEl) {
     const slot = slotsData[idx];
     if (!slot || !slot.solveResult) return;
-    const readable = formatMovesReadable(slot.solveResult.moves);
-    navigator.clipboard.writeText(readable).then(() => {
+    navigator.clipboard.writeText(slot.solveResult.moves).then(() => {
       const origText = btnEl.innerHTML;
       btnEl.innerHTML = '<span>✓ Copied!</span>';
       btnEl.style.background = '#16a34a';
@@ -666,27 +661,12 @@
     });
   };
 
-  // Copy single slot compact code
-  window.multiMazeCopySlotCode = function (idx, btnEl) {
-    const slot = slotsData[idx];
-    if (!slot || !slot.solveResult) return;
-    navigator.clipboard.writeText(slot.solveResult.moves).then(() => {
-      const origText = btnEl.textContent;
-      btnEl.textContent = '✓';
-      btnEl.style.color = '#4ade80';
-      setTimeout(() => {
-        btnEl.textContent = origText;
-        btnEl.style.color = '#94a3b8';
-      }, 1500);
-    });
-  };
-
-  // Copy All Answers
+  // Copy All Codes
   window.multiMazeCopyAll = function (btnEl) {
     const answers = [];
     slotsData.forEach((slot, idx) => {
       if (slot.status === 'solved' && slot.solveResult) {
-        answers.push(`Maze ${idx + 1}: ${formatMovesReadable(slot.solveResult.moves)}`);
+        answers.push(`Maze ${idx + 1}: ${slot.solveResult.moves}`);
       }
     });
 
