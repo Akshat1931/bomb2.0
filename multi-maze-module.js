@@ -216,9 +216,151 @@
     setupGlobalListeners();
   }
 
+  // ── URL & Drag-Drop Helpers ─────────────────────────────────────
+  function extractImageUrl(textOrHtml) {
+    if (!textOrHtml || typeof textOrHtml !== 'string') return null;
+    const str = textOrHtml.trim();
+
+    // 1. Markdown link e.g. [module.png (440x440)](https://cdn.discordapp.com/...)
+    const mdMatch = str.match(/\[.*?\]\((https?:\/\/[^\s)]+)\)/i);
+    if (mdMatch) return mdMatch[1];
+
+    // 2. HTML img tag e.g. <img src="https://...">
+    const htmlImgMatch = str.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/i);
+    if (htmlImgMatch) return htmlImgMatch[1];
+
+    // 3. HTML anchor tag e.g. <a href="https://...">
+    const htmlAnchorMatch = str.match(/<a[^>]+href=["'](https?:\/\/[^"']+)["']/i);
+    if (htmlAnchorMatch) {
+      const u = htmlAnchorMatch[1];
+      if (/\.(png|jpe?g|webp|gif|bmp)(\?.*)?$/i.test(u) || u.includes('discordapp.') || u.includes('discord.com')) {
+        return u;
+      }
+    }
+
+    // 4. Any direct URL starting with http/https
+    const urlMatch = str.match(/https?:\/\/[^\s<>"')]+/i);
+    if (urlMatch) {
+      const u = urlMatch[0];
+      if (/\.(png|jpe?g|webp|gif|bmp)(\?.*)?$/i.test(u) || u.includes('discordapp.') || u.includes('discord.com')) {
+        return u;
+      }
+    }
+    return null;
+  }
+
+  function loadImageFromUrl(url, onSuccess, onError) {
+    // For Discord CDN URLs, route via our server-side proxy to bypass browser CORS.
+    // For other URLs, try fetch() directly then fall back to img.src.
+    const isDiscord = url.includes('discordapp.com') || url.includes('discordapp.net') || url.includes('discord.com/attachments');
+    const proxyUrl = '/api/imgproxy?url=' + encodeURIComponent(url);
+    const primaryUrl = isDiscord ? proxyUrl : url;
+
+    // 1. Try fetching (via proxy for Discord, direct for others)
+    fetch(primaryUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+        return res.blob();
+      })
+      .then(blob => {
+        const img = new Image();
+        img.onload = () => onSuccess(img);
+        img.onerror = () => fallbackDirect(url);
+        img.src = URL.createObjectURL(blob);
+      })
+      .catch(() => {
+        // If proxy failed, try original URL directly
+        if (isDiscord) {
+          fetch(url)
+            .then(r => { if (!r.ok) throw new Error(); return r.blob(); })
+            .then(b => { const img = new Image(); img.onload = () => onSuccess(img); img.src = URL.createObjectURL(b); })
+            .catch(() => fallbackDirect(url));
+        } else {
+          fallbackDirect(url);
+        }
+      });
+
+    function fallbackDirect(src) {
+      // Try with crossOrigin first (works if server allows CORS)
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => onSuccess(img);
+      img.onerror = () => {
+        // Last resort: no crossOrigin (canvas will be tainted but at least image loads)
+        const img2 = new Image();
+        img2.onload = () => onSuccess(img2);
+        img2.onerror = (e) => { if (onError) onError(e); };
+        img2.src = src;
+      };
+      img.src = src;
+    }
+  }
+
+  function handleDataTransferImage(dataTransfer, callback) {
+    if (!dataTransfer) return;
+
+    // 1. Try dataTransfer.files — Discord desktop may provide file with no MIME type
+    //    so we attempt ALL files and let img.onerror discard non-images.
+    const files = dataTransfer.files;
+    if (files && files.length > 0) {
+      // Check image/* first (fastest path)
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          const img = new Image();
+          img.onload = () => callback(img);
+          img.src = URL.createObjectURL(file);
+          return;
+        }
+      }
+      // Try any file (Discord desktop drops often have empty/wrong MIME)
+      const f = files[0];
+      const blobUrl = URL.createObjectURL(f);
+      const img = new Image();
+      img.onload = () => { callback(img); };
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        tryUrlFallback();
+      };
+      img.src = blobUrl;
+      return;
+    }
+
+    // 2. Items blob (DataTransferItemList)
+    const items = dataTransfer.items;
+    if (items) {
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const f = item.getAsFile();
+          if (f) {
+            const img = new Image();
+            img.onload = () => callback(img);
+            img.src = URL.createObjectURL(f);
+            return;
+          }
+        }
+      }
+    }
+
+    tryUrlFallback();
+
+    // 3. URLs in uri-list, text/plain, or text/html (e.g. dragged from Discord)
+    function tryUrlFallback() {
+      const uriList = dataTransfer.getData('text/uri-list');
+      const textPlain = dataTransfer.getData('text/plain');
+      const textHtml = dataTransfer.getData('text/html');
+
+      const url = extractImageUrl(uriList) || extractImageUrl(textPlain) || extractImageUrl(textHtml);
+      if (url) {
+        loadImageFromUrl(url, callback, (err) => {
+          console.warn('Could not load dropped image URL:', err);
+        });
+      }
+    }
+  }
+
   // Setup paste & drag/drop listeners
   function setupGlobalListeners() {
-    // Paste listener
+    // Paste listener (supports both image blobs and Discord image links)
     document.addEventListener('paste', function (e) {
       const multiView = document.getElementById('multiMazeView');
       const solverSec = document.getElementById('solverSection');
@@ -226,61 +368,110 @@
         return;
       }
 
+      // 1. Check image blob
       const items = e.clipboardData && e.clipboardData.items;
-      if (!items) return;
-
-      for (const item of items) {
-        if (item.type.startsWith('image/')) {
-          e.preventDefault();
-          const blob = item.getAsFile();
-          const img = new Image();
-          img.onload = () => {
-            // If master maze not loaded yet, load as master maze
-            if (!masterMazeImg) {
-              loadMasterMaze(img, currentLayoutKey);
-            } else {
-              // Feed to currently active slot
-              feedDotsToSlot(activeSlotIndex, img);
-            }
-          };
-          img.src = URL.createObjectURL(blob);
-          return;
+      if (items) {
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            const blob = item.getAsFile();
+            const img = new Image();
+            img.onload = () => {
+              if (!masterMazeImg) {
+                loadMasterMaze(img, currentLayoutKey);
+              } else {
+                feedDotsToSlot(activeSlotIndex, img);
+              }
+            };
+            img.src = URL.createObjectURL(blob);
+            return;
+          }
         }
+      }
+
+      // 2. Check text or HTML for Discord / web image link
+      const textPlain = e.clipboardData && e.clipboardData.getData('text/plain');
+      const textHtml = e.clipboardData && e.clipboardData.getData('text/html');
+      const url = extractImageUrl(textPlain) || extractImageUrl(textHtml);
+      if (url) {
+        e.preventDefault();
+        loadImageFromUrl(url, (img) => {
+          if (!masterMazeImg) {
+            loadMasterMaze(img, currentLayoutKey);
+          } else {
+            feedDotsToSlot(activeSlotIndex, img);
+          }
+        });
       }
     });
 
-    // Drag and drop for master dropzones
+    // Drag and drop for master dropzones (supports both local files and Discord drag-and-drop)
     ['multiMazeDropzone', 'multiDotsDropzone'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         el.style.borderColor = '#f5c542';
         el.style.background = '#202042';
       });
       el.addEventListener('dragleave', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         el.style.borderColor = '#3a3a60';
         el.style.background = '#181832';
       });
       el.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         el.style.borderColor = '#3a3a60';
         el.style.background = '#181832';
-        const file = e.dataTransfer && e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-          const img = new Image();
-          img.onload = () => {
-            if (id === 'multiMazeDropzone') {
-              loadMasterMaze(img, currentLayoutKey);
-            } else {
-              loadMasterDots(img);
-            }
-          };
-          img.src = URL.createObjectURL(file);
-        }
+        handleDataTransferImage(e.dataTransfer, (img) => {
+          if (id === 'multiMazeDropzone') {
+            loadMasterMaze(img, currentLayoutKey);
+          } else {
+            loadMasterDots(img);
+          }
+        });
       });
     });
+
+    // ── Document-level safety net ─────────────────────────────────────
+    // Prevents the browser from opening dropped images in a new tab.
+    // dragover: preventDefault only (no stopPropagation) so element-level
+    //   dragover handlers still fire and can highlight the hovered zone.
+    // drop: bubble phase so slot card / dropzone element handlers fire FIRST.
+    //   Those handlers call stopPropagation, so the document only handles
+    //   drops that landed on the page background (outside any dropzone).
+    function isMultiMazeActive() {
+      const multiView = document.getElementById('multiMazeView');
+      const solverSec = document.getElementById('solverSection');
+      return multiView && multiView.style.display !== 'none' &&
+             solverSec && solverSec.classList.contains('active');
+    }
+
+    document.addEventListener('dragover', (e) => {
+      if (!isMultiMazeActive()) return;
+      e.preventDefault();
+      // !! No stopPropagation — let element dragover handlers fire too
+    });
+
+    document.addEventListener('drop', (e) => {
+      // Bubble phase: element handlers (slot cards / master dropzones) call
+      // stopPropagation, so this only runs for drops on the page background.
+      if (!isMultiMazeActive()) return;
+      e.preventDefault();
+
+      handleDataTransferImage(e.dataTransfer, (img) => {
+        if (!masterMazeImg) {
+          loadMasterMaze(img, currentLayoutKey);
+        } else if (!masterDotsImg) {
+          loadMasterDots(img);
+        } else {
+          feedDotsToSlot(activeSlotIndex, img);
+        }
+      });
+    });  // bubble phase (no true) — fires AFTER element handlers
   }
 
   // File Loaded Handler
@@ -613,6 +804,32 @@
           ctx.restore();
         }
       }
+
+      // Enable drag & drop (files or Discord image links) on slot card and dots box.
+      // IMPORTANT: dragover must NOT call stopPropagation — the document-level
+      // dragover needs to fire too so it can call preventDefault() and block the
+      // browser from opening the image in a new tab.
+      const dotsBox = card.querySelector('.slot-dots-box');
+      [card, dotsBox].forEach(el => {
+        if (!el) return;
+        el.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          // No stopPropagation here — let document dragover run for preventDefault
+          dotsBox && (dotsBox.style.borderColor = '#f5c542');
+        });
+        el.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          dotsBox && (dotsBox.style.borderColor = slot.dotsImg ? '#22c55e' : (isActive ? '#f5c542' : '#3d3d66'));
+        });
+        el.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation(); // Stop document bubble handler from double-processing
+          dotsBox && (dotsBox.style.borderColor = slot.dotsImg ? '#22c55e' : (isActive ? '#f5c542' : '#3d3d66'));
+          handleDataTransferImage(e.dataTransfer, (img) => {
+            feedDotsToSlot(idx, img);
+          });
+        });
+      });
     }, 10);
   }
 
