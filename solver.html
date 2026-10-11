@@ -950,64 +950,82 @@
   </div>
 
   <section id="solverSection" class="page-section active">
-    <div class="solver-wrapper">
-      <div class="boxes">
-        <div class="box selected" id="b1" data-slot="1" onclick="selectSlot(1)">
-          <input id="file1" type="file" accept="image/*" onchange="load(1,this)">
-          <div class="icon">🔴🟡</div>
-          <div class="name">Dots Image</div>
-          <div class="hint">Red = start · Yellow = goal</div>
-          <div class="hint paste-hint">or Ctrl+V to paste</div>
-          <button type="button" class="upload-btn" onclick="openFileDialog(event,1)">Upload</button>
-          <div class="tick">✓ Loaded</div>
-        </div>
-        <div class="box" id="b2" data-slot="2" onclick="selectSlot(2)">
-          <input id="file2" type="file" accept="image/*" onchange="load(2,this)">
-          <div class="icon">🔲</div>
-          <div class="name">Maze Image</div>
-          <div class="hint">The one with walls</div>
-          <div class="hint paste-hint">or Ctrl+V to paste</div>
-          <button type="button" class="upload-btn" onclick="openFileDialog(event,2)">Upload</button>
-          <div class="tick">✓ Loaded</div>
-        </div>
-      </div>
-
-      <div id="status">Upload both images to get the answer.</div>
-
-      <details style="font-size:13px; color:#bbb; width: 100%; max-width: 620px; background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:16px;">
-        <summary style="color:#f5c542; font-weight:600; font-size:13px; cursor:pointer; outline:none;">📖 Quick Guide: How to Solve Mazes</summary>
-        <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
-          <p style="margin:0 0 6px;"><strong>1. Dots Image (Slot 1):</strong> Click Slot 1, then upload or press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Ctrl+V</kbd> to paste the image with the Red start dot and Yellow goal.</p>
-          <p style="margin:0 0 6px;"><strong>2. Maze Image (Slot 2):</strong> Click Slot 2, then upload or paste the maze walls screenshot.</p>
-          <p style="margin:0;"><strong>3. Solution:</strong> The solver computes the shortest path, draws the bright green route, and outputs directional steps (e.g. <code>UP 2, RIGHT 3</code>).</p>
-        </div>
-      </details>
-
-      <details style="font-size:13px; color:#555; cursor:pointer; width: 100%; max-width: 620px;">
-        <summary style="color: var(--text-muted); font-size: 12px; letter-spacing: 0.3px;">⚙ Advanced Settings</summary>
-        <div class="debug-controls" style="margin-top:8px;">
-          <label><input type="checkbox" id="showDebug" onchange="if(lastSolveData) redraw()"> Show debug grid</label>
-          <label>DX: <input type="range" id="nudgeDX" min="-15" max="15" value="0"
-              onchange="document.getElementById('dxVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
-              id="dxVal">0</span></label>
-          <label>DY: <input type="range" id="nudgeDY" min="-15" max="15" value="0"
-              onchange="document.getElementById('dyVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
-              id="dyVal">0</span></label>
-          <label>Wall sensitivity: <input type="range" id="wallSens" min="20" max="80" value="47"
-              onchange="document.getElementById('wsVal').textContent=this.value+'%'; if(lastSolveData) resolveWithCurrentSettings()"><span
-              id="wsVal">47%</span></label>
-        </div>
-        <div id="calibInfo" style="margin-top:4px;"></div>
-        <div id="boxSizeInfo" style="margin-top:4px; color:#aaa; font-size:12px;"></div>
-      </details>
-      <div id="ans"></div>
-
-      <div class="canvas-area" id="canvasArea">
-        <canvas id="cBase"></canvas>
-        <canvas id="cOver"></canvas>
-        <canvas id="cPath"></canvas>
+    <!-- Sub-tab toggle for Single Maze vs Multi Maze -->
+    <div class="maze-subtabs-wrap" style="display:flex; justify-content:center; margin-bottom: 20px;">
+      <div style="background: rgba(14, 14, 30, 0.85); border: 1px solid #2d2d54; padding: 4px; border-radius: 12px; display: inline-flex; gap: 6px;">
+        <button type="button" id="subtabSingleMazeBtn" class="maze-subtab-btn active" onclick="switchMazeView('single')" style="padding: 8px 18px; border-radius: 8px; border: 1px solid transparent; background: #f5c542; color: #0e0e1e; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+          <span>🔲 Single Maze</span>
+        </button>
+        <button type="button" id="subtabMultiMazeBtn" class="maze-subtab-btn" onclick="switchMazeView('multi')" style="padding: 8px 18px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #a0a0c0; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+          <span>🔲🔲 Multi Maze</span>
+        </button>
       </div>
     </div>
+
+    <!-- Single Maze Mode -->
+    <div id="singleMazeView">
+      <div class="solver-wrapper">
+        <div class="boxes">
+          <div class="box selected" id="b1" data-slot="1" onclick="selectSlot(1)">
+            <input id="file1" type="file" accept="image/*" onchange="load(1,this)">
+            <div class="icon">🔴🟡</div>
+            <div class="name">Dots Image</div>
+            <div class="hint">Red = start · Yellow = goal</div>
+            <div class="hint paste-hint">or Ctrl+V to paste</div>
+            <button type="button" class="upload-btn" onclick="openFileDialog(event,1)">Upload</button>
+            <div class="tick">✓ Loaded</div>
+          </div>
+          <div class="box" id="b2" data-slot="2" onclick="selectSlot(2)">
+            <input id="file2" type="file" accept="image/*" onchange="load(2,this)">
+            <div class="icon">🔲</div>
+            <div class="name">Maze Image</div>
+            <div class="hint">The one with walls</div>
+            <div class="hint paste-hint">or Ctrl+V to paste</div>
+            <button type="button" class="upload-btn" onclick="openFileDialog(event,2)">Upload</button>
+            <div class="tick">✓ Loaded</div>
+          </div>
+        </div>
+
+        <div id="status">Upload both images to get the answer.</div>
+
+        <details style="font-size:13px; color:#bbb; width: 100%; max-width: 620px; background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:16px;">
+          <summary style="color:#f5c542; font-weight:600; font-size:13px; cursor:pointer; outline:none;">📖 Quick Guide: How to Solve Mazes</summary>
+          <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
+            <p style="margin:0 0 6px;"><strong>1. Dots Image (Slot 1):</strong> Click Slot 1, then upload or press <kbd style="background:#222; padding:2px 5px; border-radius:3px;">Ctrl+V</kbd> to paste the image with the Red start dot and Yellow goal.</p>
+            <p style="margin:0 0 6px;"><strong>2. Maze Image (Slot 2):</strong> Click Slot 2, then upload or paste the maze walls screenshot.</p>
+            <p style="margin:0;"><strong>3. Solution:</strong> The solver computes the shortest path, draws the bright green route, and outputs directional steps (e.g. <code>UP 2, RIGHT 3</code>).</p>
+          </div>
+        </details>
+
+        <details style="font-size:13px; color:#555; cursor:pointer; width: 100%; max-width: 620px;">
+          <summary style="color: var(--text-muted); font-size: 12px; letter-spacing: 0.3px;">⚙ Advanced Settings</summary>
+          <div class="debug-controls" style="margin-top:8px;">
+            <label><input type="checkbox" id="showDebug" onchange="if(lastSolveData) redraw()"> Show debug grid</label>
+            <label>DX: <input type="range" id="nudgeDX" min="-15" max="15" value="0"
+                onchange="document.getElementById('dxVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
+                id="dxVal">0</span></label>
+            <label>DY: <input type="range" id="nudgeDY" min="-15" max="15" value="0"
+                onchange="document.getElementById('dyVal').textContent=this.value; if(lastSolveData) resolveWithCurrentSettings()"><span
+                id="dyVal">0</span></label>
+            <label>Wall sensitivity: <input type="range" id="wallSens" min="20" max="80" value="47"
+                onchange="document.getElementById('wsVal').textContent=this.value+'%'; if(lastSolveData) resolveWithCurrentSettings()"><span
+                id="wsVal">47%</span></label>
+          </div>
+          <div id="calibInfo" style="margin-top:4px;"></div>
+          <div id="boxSizeInfo" style="margin-top:4px; color:#aaa; font-size:12px;"></div>
+        </details>
+        <div id="ans"></div>
+
+        <div class="canvas-area" id="canvasArea">
+          <canvas id="cBase"></canvas>
+          <canvas id="cOver"></canvas>
+          <canvas id="cPath"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi Maze Mode -->
+    <div id="multiMazeView" style="display:none;"></div>
   </section>
 
   <section id="vennSection" class="page-section">
@@ -2500,6 +2518,7 @@
   <script src="./chess-module.js?v=20260918_v3"></script>
   <script src="./minesweeper-module.js?v=20260918_v3"></script>
   <script src="./symbols-module.js?v=20260918_v1"></script>
+  <script src="./multi-maze-module.js?v=20261011_v1"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2514,8 +2533,36 @@
     const ctxO = cOver.getContext('2d');
     const ctxP = cPath.getContext('2d');
 
+    // ── Sub-tab switcher for Maze Solver ──────────────────────────
+    function switchMazeView(mode) {
+      const isMulti = mode === 'multi';
+      const singleView = document.getElementById('singleMazeView');
+      const multiView = document.getElementById('multiMazeView');
+      const singleBtn = document.getElementById('subtabSingleMazeBtn');
+      const multiBtn = document.getElementById('subtabMultiMazeBtn');
+
+      if (singleView) singleView.style.display = isMulti ? 'none' : 'block';
+      if (multiView) multiView.style.display = isMulti ? 'block' : 'none';
+
+      if (singleBtn) {
+        singleBtn.style.background = isMulti ? 'transparent' : '#f5c542';
+        singleBtn.style.color = isMulti ? '#a0a0c0' : '#0e0e1e';
+        singleBtn.style.fontWeight = isMulti ? '600' : '700';
+      }
+      if (multiBtn) {
+        multiBtn.style.background = isMulti ? '#f5c542' : 'transparent';
+        multiBtn.style.color = isMulti ? '#0e0e1e' : '#a0a0c0';
+        multiBtn.style.fontWeight = isMulti ? '700' : '600';
+      }
+
+      if (isMulti && typeof window.initMultiMazeModule === 'function') {
+        window.initMultiMazeModule();
+      }
+    }
+
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
+      if (document.getElementById('multiMazeView')?.style.display === 'block') return;
       if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active')) return;
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
@@ -3414,17 +3461,12 @@
       solve();
     }
 
-    // ── Main solve ────────────────────────────────────────────────
-    function solve() {
-      setStatus('Solving…');
-      setTimeout(doSolve, 50);
-    }
-
-    function doSolve() {
-      const t0 = performance.now();
-
-      const located = locateDotsImage(img1, img2);
-      if (!located) { setStatus('❌ Could not determine which image contains the red/yellow dots.'); return; }
+    // ── Reusable Maze Solve Instance (Used by both Single & Multi Maze) ──
+    window.solveMazeInstance = function(imageA, imageB, opts = {}) {
+      const located = locateDotsImage(imageA, imageB);
+      if (!located) {
+        return { success: false, error: 'Could not determine which image contains the red/yellow dots.' };
+      }
 
       const { dotImage, mazeImage, dots } = located;
       const imageW = FIXED_DISPLAY_SIZE;
@@ -3434,9 +3476,10 @@
 
       const bounds = detectBounds(mazeCanvas);
       let baseStructure = detectGridLines(mazeCanvas, bounds);
-      if (!baseStructure) { setStatus('❌ Could not detect the maze grid.'); setBoxSizeInfo(''); return; }
+      if (!baseStructure) {
+        return { success: false, error: 'Could not detect the maze grid.' };
+      }
 
-      // Force the green grid cell size to 43px
       const rows = baseStructure.rows;
       const cols = baseStructure.cols;
       const ox = baseStructure.ox;
@@ -3450,24 +3493,15 @@
         rowCenters: Array.from({ length: rows }, (_, i) => oy + (i + 0.5) * cs),
         colCenters: Array.from({ length: cols }, (_, i) => ox + (i + 0.5) * cs)
       };
-      setBoxSizeInfo(`Fixed box size: ${HARD_CELL_SIZE} px`);
 
-      // ── Auto-calibrate grid alignment ──────────────────────
       const calib = autoAlignGrid(mazeCanvas, baseStructure);
-
-      // ── Apply manual nudge on top of auto-calibration ──────
-      const manualDX = parseInt(document.getElementById('nudgeDX').value) || 0;
-      const manualDY = parseInt(document.getElementById('nudgeDY').value) || 0;
+      const manualDX = opts.nudgeDX != null ? opts.nudgeDX : 0;
+      const manualDY = opts.nudgeDY != null ? opts.nudgeDY : 0;
       const totalDX = calib.dx + manualDX;
       const totalDY = calib.dy + manualDY;
       const structure = shiftStructure(baseStructure, totalDX, totalDY);
 
-      const calibMs = Math.round(performance.now() - t0);
-      document.getElementById('calibInfo').textContent =
-        `Auto: DX=${calib.dx} DY=${calib.dy} + Manual: DX=${manualDX} DY=${manualDY} = Total: DX=${totalDX} DY=${totalDY} (${calibMs}ms)`;
-
-      // ── Build wall graph + BFS with threshold retries ──────
-      const wallSensitivity = parseInt(document.getElementById('wallSens').value) / 100;
+      const wallSensitivity = opts.wallSens != null ? opts.wallSens : 0.47;
 
       const tryParams = [
         { wallThreshold: wallSensitivity, darkThreshold: 140, marginFrac: 0.25 },
@@ -3485,8 +3519,6 @@
         const goal = nearestCell(wd.centers, scaledDots.yellow.x, scaledDots.yellow.y);
         const p = bfsWalls(wd, start, goal);
 
-        console.log('Attempt:', params, '→', p ? p.length + ' steps' : 'no path');
-
         if (p) {
           wallData = wd;
           path = p;
@@ -3495,25 +3527,63 @@
       }
 
       if (!path) {
-        setStatus('❌ No path found. Try adjusting wall sensitivity.');
-        return;
+        return { success: false, error: 'No path found. Try adjusting wall sensitivity.' };
       }
 
-      lastSolveData = { dotImage, mazeCanvas, wallData, path };
-
-      // Build answer string
       const moves = [];
       for (let i = 1; i < path.length; i++) {
         const dr = path[i].row - path[i - 1].row;
         const dc = path[i].col - path[i - 1].col;
         moves.push(dr === -1 ? 'U' : dr === 1 ? 'D' : dc === -1 ? 'L' : 'R');
       }
+
+      return {
+        success: true,
+        moves: moves.join(''),
+        path,
+        wallData,
+        mazeCanvas,
+        dotImage,
+        structure,
+        calib,
+        totalDX,
+        totalDY,
+        scaledDots
+      };
+    };
+
+    // ── Main solve ────────────────────────────────────────────────
+    function solve() {
+      setStatus('Solving…');
+      setTimeout(doSolve, 50);
+    }
+
+    function doSolve() {
+      const t0 = performance.now();
+      const manualDX = parseInt(document.getElementById('nudgeDX').value) || 0;
+      const manualDY = parseInt(document.getElementById('nudgeDY').value) || 0;
+      const wallSens = parseInt(document.getElementById('wallSens').value) / 100;
+
+      const res = window.solveMazeInstance(img1, img2, { nudgeDX: manualDX, nudgeDY: manualDY, wallSens });
+      if (!res.success) {
+        setStatus('❌ ' + res.error);
+        if (res.error.includes('Could not detect')) setBoxSizeInfo('');
+        return;
+      }
+
+      setBoxSizeInfo(`Fixed box size: ${HARD_CELL_SIZE} px`);
+      const calibMs = Math.round(performance.now() - t0);
+      document.getElementById('calibInfo').textContent =
+        `Auto: DX=${res.calib.dx} DY=${res.calib.dy} + Manual: DX=${manualDX} DY=${manualDY} = Total: DX=${res.totalDX} DY=${res.totalDY} (${calibMs}ms)`;
+
+      lastSolveData = { dotImage: res.dotImage, mazeCanvas: res.mazeCanvas, wallData: res.wallData, path: res.path };
+
       const el = document.getElementById('ans');
-      el.textContent = moves.join('');
+      el.textContent = res.moves;
       el.style.display = 'block';
 
       const totalMs = Math.round(performance.now() - t0);
-      setStatus(`✅ ${moves.length} steps (${totalMs}ms)`);
+      setStatus(`✅ ${res.moves.length} steps (${totalMs}ms)`);
 
       redraw();
     }
