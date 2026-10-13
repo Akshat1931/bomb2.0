@@ -934,9 +934,16 @@
       dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
       dropzone.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropzone.classList.remove('active');
-        const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
-        if (file) processSlotImage(file, slot);
+        if (window.BombDragDrop) {
+          window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+            if (file) processSlotImage(file, slot);
+          });
+        } else {
+          const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
+          if (file) processSlotImage(file, slot);
+        }
       });
       dropzone.addEventListener('click', () => {
         chessState.activePasteSlot = slot;
@@ -947,6 +954,20 @@
       const section = document.getElementById('chessSection');
       if (!section || !section.classList.contains('active')) return;
 
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.clipboardData, (file) => {
+          if (file) {
+            let targetSlot = chessState.activePasteSlot;
+            if (!chessState.imgBlack) targetSlot = 1;
+            else if (!chessState.imgWhite) targetSlot = 2;
+
+            processSlotImage(file, targetSlot);
+            chessState.activePasteSlot = targetSlot === 1 ? 2 : 1;
+          }
+        });
+        return;
+      }
+
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
 
@@ -955,7 +976,6 @@
           e.preventDefault();
           const file = item.getAsFile();
           if (file) {
-            // If slot 1 is empty, fill slot 1; otherwise fill slot 2
             let targetSlot = chessState.activePasteSlot;
             if (!chessState.imgBlack) targetSlot = 1;
             else if (!chessState.imgWhite) targetSlot = 2;

@@ -442,17 +442,25 @@ function initMorseModule() {
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
     dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       dropzone.classList.remove('active');
-      const file = [...(e.dataTransfer?.files || [])].find(f =>
-        f.type.startsWith('video/') ||
-        f.type === 'image/gif' ||
-        f.name.toLowerCase().endsWith('.gif') ||
-        /\.(mp4|webm|ogg|mov|avi|wmv|m4v)$/i.test(f.name)
-      );
-      if (file) {
-        handleMorseFileLoad(file);
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+          if (file) handleMorseFileLoad(file);
+          else setMorseStatus("Unsupported file type. Please drop an animated GIF or Video.", '#ff5c5c');
+        });
       } else {
-        setMorseStatus("Unsupported file type. Please drop an animated GIF or Video.", '#ff5c5c');
+        const file = [...(e.dataTransfer?.files || [])].find(f =>
+          f.type.startsWith('video/') ||
+          f.type === 'image/gif' ||
+          f.name.toLowerCase().endsWith('.gif') ||
+          /\.(mp4|webm|ogg|mov|avi|wmv|m4v)$/i.test(f.name)
+        );
+        if (file) {
+          handleMorseFileLoad(file);
+        } else {
+          setMorseStatus("Unsupported file type. Please drop an animated GIF or Video.", '#ff5c5c');
+        }
       }
     });
   }

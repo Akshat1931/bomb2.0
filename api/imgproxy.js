@@ -30,12 +30,17 @@ export default async function handler(req, res) {
   const allowedHosts = [
     'cdn.discordapp.com',
     'media.discordapp.net',
+    'images-ext-1.discordapp.net',
+    'images-ext-2.discordapp.net',
+    'discordapp.com',
+    'discordapp.net',
+    'discord.com',
+    'cdn.discord.com',
+    'attachments.discord.net',
     'i.imgur.com',
     'imgur.com',
     'pbs.twimg.com',
     'media.tenor.com',
-    'images-ext-1.discordapp.net',
-    'images-ext-2.discordapp.net',
   ];
   if (!allowedHosts.some(h => parsedUrl.hostname === h || parsedUrl.hostname.endsWith('.' + h))) {
     return res.status(403).json({ error: 'Host not allowed' });

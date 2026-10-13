@@ -1078,6 +1078,27 @@
       const activeSection = document.querySelector('.page-section.active');
       if (!activeSection || activeSection.id !== 'symbolsSection') return;
 
+      const target = state.activeTarget || 'mod';
+      const targetHandler = (file) => {
+        if (!file) return;
+        if (target === 'mod') {
+          handleModuleImage(file);
+        } else if (target === 'ref0') {
+          handleReferenceImage(file, 0);
+        } else if (target === 'ref1') {
+          handleReferenceImage(file, 1);
+        } else if (target === 'ref2') {
+          handleReferenceImage(file, 2);
+        } else {
+          handleReferenceImage(file, 0);
+        }
+      };
+
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.clipboardData, targetHandler);
+        return;
+      }
+
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
 
@@ -1086,17 +1107,7 @@
           const file = items[i].getAsFile();
           if (file) {
             e.preventDefault();
-            if (state.activeTarget === 'mod') {
-              handleModuleImage(file);
-            } else if (state.activeTarget === 'ref0') {
-              handleReferenceImage(file, 0);
-            } else if (state.activeTarget === 'ref1') {
-              handleReferenceImage(file, 1);
-            } else if (state.activeTarget === 'ref2') {
-              handleReferenceImage(file, 2);
-            } else {
-              handleReferenceImage(file, 0);
-            }
+            targetHandler(file);
             break;
           }
         }
@@ -1110,9 +1121,11 @@
   window.symbolsModule = {
     init: function () {
       if (!isInitialized) {
+        window.symbolsModuleState = state;
         renderUI();
         solveSymbols();
         setupPasteListener();
+        if (window.BombDragDrop) window.BombDragDrop.initAllDropzones();
         isInitialized = true;
       }
     },

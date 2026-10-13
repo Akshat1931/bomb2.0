@@ -617,7 +617,16 @@
         }));
 
         dropzone.addEventListener('drop', e => {
-          if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('active');
+          if (window.BombDragDrop) {
+            window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+              if (file) handleFile(file);
+            });
+          } else {
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+          }
         });
       }
 
@@ -637,6 +646,13 @@
       window.addEventListener('paste', e => {
         const isSecActive = document.getElementById('complexWiresSection')?.classList.contains('active');
         if (!isSecActive) return;
+
+        if (window.BombDragDrop) {
+          window.BombDragDrop.handleDataTransfer(e.clipboardData, (file) => {
+            if (file) handleFile(file);
+          });
+          return;
+        }
 
         const items = [...((e.clipboardData || {}).items || [])];
         const it = items.find(i => i.type.startsWith('image/'));

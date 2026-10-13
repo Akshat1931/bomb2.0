@@ -211,9 +211,16 @@ ninth black occurrence: cut if connected to A, B or C.`;
       dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
       dropzone.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropzone.classList.remove('active');
-        const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
-        if (file) processWireImage(file);
+        if (window.BombDragDrop) {
+          window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+            if (file) processWireImage(file);
+          });
+        } else {
+          const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
+          if (file) processWireImage(file);
+        }
       });
     }
 
@@ -437,6 +444,13 @@ ninth black occurrence: cut if connected to A, B or C.`;
   function handleWirePaste(e) {
     const section = document.getElementById('wiresSection');
     if (!section || !section.classList.contains('active')) return;
+
+    if (window.BombDragDrop) {
+      window.BombDragDrop.handleDataTransfer(e.clipboardData, (file) => {
+        if (file) processWireImage(file);
+      });
+      return;
+    }
 
     const items = e.clipboardData?.items;
     if (items) {

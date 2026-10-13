@@ -531,14 +531,28 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
 
     dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       dropzone.classList.remove('active');
-      const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
-      if (file) processWhosImage(file);
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+          if (file) processWhosImage(file);
+        });
+      } else {
+        const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
+        if (file) processWhosImage(file);
+      }
     });
 
     document.addEventListener('paste', (e) => {
       const whosSection = document.getElementById('whosSection');
       if (!whosSection || !whosSection.classList.contains('active')) return;
+
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.clipboardData, (file) => {
+          if (file) processWhosImage(file);
+        });
+        return;
+      }
 
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;

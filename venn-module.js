@@ -57,9 +57,16 @@ function initVennModule() {
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
     dropzone.addEventListener('drop', (event) => {
       event.preventDefault();
+      event.stopPropagation();
       dropzone.classList.remove('active');
-      const file = [...(event.dataTransfer?.files || [])].find((item) => item.type.startsWith('image/'));
-      if (file) processVennImage(file);
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(event.dataTransfer, (file) => {
+          if (file) processVennImage(file);
+        });
+      } else {
+        const file = [...(event.dataTransfer?.files || [])].find((item) => item.type.startsWith('image/'));
+        if (file) processVennImage(file);
+      }
     });
   }
 
@@ -76,6 +83,13 @@ function openVennFileDialog() {
 function handleVennPaste(event) {
   const vennSection = document.getElementById('vennSection');
   if (!vennSection || !vennSection.classList.contains('active')) return;
+
+  if (window.BombDragDrop) {
+    window.BombDragDrop.handleDataTransfer(event.clipboardData, (file) => {
+      if (file) processVennImage(file);
+    });
+    return;
+  }
 
   const items = event.clipboardData?.items;
   if (items) {

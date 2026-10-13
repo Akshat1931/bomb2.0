@@ -2519,6 +2519,7 @@
   <script src="./minesweeper-module.js?v=20260918_v3"></script>
   <script src="./symbols-module.js?v=20260918_v1"></script>
   <script src="./multi-maze-module.js?v=20261011_v1"></script>
+  <script src="./dragdrop-helper.js?v=20261013_v1"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2883,6 +2884,10 @@
           window.initSymbolsModule();
         }
         window.symbolsLoaded = true;
+      }
+
+      if (window.BombDragDrop) {
+        setTimeout(() => window.BombDragDrop.initAllDropzones(), 50);
       }
     }
 

@@ -856,9 +856,16 @@
 
     dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       dropzone.classList.remove('dragover');
-      const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
-      if (file) processImageFile(file);
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+          if (file) processImageFile(file);
+        });
+      } else {
+        const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
+        if (file) processImageFile(file);
+      }
     });
   }
 
@@ -866,6 +873,13 @@
     document.addEventListener('paste', (e) => {
       const section = document.getElementById('minesweeperSection');
       if (!section || !section.classList.contains('active')) return;
+
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.clipboardData, (file) => {
+          if (file) processImageFile(file);
+        });
+        return;
+      }
 
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;

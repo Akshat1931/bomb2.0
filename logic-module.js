@@ -955,6 +955,39 @@ async function _runLogicOCR(imageData) {
 }
 
 function handleLogicImagePaste(e, stageNum) {
+  const processImg = (img) => {
+    if (!img) return;
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    c.getContext('2d').drawImage(img, 0, 0);
+    const id = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+    _runLogicOCR(id).then(expr => {
+      if (!expr) return;
+      const inp = document.getElementById(`logicStageInput-${stageNum}`);
+      if (!inp) return;
+      inp.value = expr;
+      handleLogicStageInput({ target: inp });
+      const statusEl = document.getElementById(`logicOcrStatus-${stageNum}`);
+      if (statusEl) { statusEl.textContent = 'Read: ' + expr; statusEl.style.color = '#3ddc84'; }
+    });
+  };
+
+  if (window.BombDragDrop) {
+    window.BombDragDrop.handleDataTransfer(e.clipboardData || e.dataTransfer, (file, img) => {
+      if (img) processImg(img);
+      else if (file) {
+        const r = new FileReader();
+        r.onload = ev => {
+          const i = new Image();
+          i.onload = () => processImg(i);
+          i.src = ev.target.result;
+        };
+        r.readAsDataURL(file);
+      }
+    });
+    return;
+  }
+
   const items = e.clipboardData && e.clipboardData.items;
   if (!items) return;
   for (const item of items) {
@@ -963,21 +996,7 @@ function handleLogicImagePaste(e, stageNum) {
     const reader = new FileReader();
     reader.onload = ev => {
       const img = new Image();
-      img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = img.width; c.height = img.height;
-        c.getContext('2d').drawImage(img, 0, 0);
-        const id = c.getContext('2d').getImageData(0, 0, c.width, c.height);
-        _runLogicOCR(id).then(expr => {
-          if (!expr) return;
-          const inp = document.getElementById(`logicStageInput-${stageNum}`);
-          if (!inp) return;
-          inp.value = expr;
-          handleLogicStageInput({ target: inp });
-          const statusEl = document.getElementById(`logicOcrStatus-${stageNum}`);
-          if (statusEl) { statusEl.textContent = 'Read: ' + expr; statusEl.style.color = '#3ddc84'; }
-        });
-      };
+      img.onload = () => processImg(img);
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);

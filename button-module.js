@@ -164,9 +164,16 @@ function initButtonModule() {
     dropzone.ondragleave = () => dropzone.classList.remove('active');
     dropzone.ondrop = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       dropzone.classList.remove('active');
-      const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
-      if (file) processButtonImage(file);
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
+          if (file) processButtonImage(file);
+        });
+      } else {
+        const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/'));
+        if (file) processButtonImage(file);
+      }
     };
   }
 
@@ -195,6 +202,13 @@ function updateSerialDetailsUI(serial) {
 function handleButtonPaste(e) {
   const section = document.getElementById('buttonSection');
   if (!section || !section.classList.contains('active')) return;
+
+  if (window.BombDragDrop) {
+    window.BombDragDrop.handleDataTransfer(e.clipboardData, (file) => {
+      if (file) processButtonImage(file);
+    });
+    return;
+  }
 
   const items = e.clipboardData?.items;
   if (items) {

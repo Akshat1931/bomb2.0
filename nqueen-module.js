@@ -1888,7 +1888,19 @@
       fileInput.onchange = e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); fileInput.value = ''; };
       ['dragover', 'dragenter'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('over'); }));
       ['dragleave'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('over'); }));
-      dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('over');
+        if (window.BombDragDrop) {
+          window.BombDragDrop.handleDataTransfer(e.dataTransfer, (f) => {
+            if (f) loadFile(f);
+          });
+        } else {
+          const f = e.dataTransfer.files[0];
+          if (f) loadFile(f);
+        }
+      });
     }
 
     // Global paste listener on window
@@ -1896,6 +1908,13 @@
       const isNQueenActive = document.getElementById('nqueenSection')?.classList.contains('active');
       const isOverlayOpen = overlay && overlay.classList.contains('show');
       if (!isNQueenActive && !isOverlayOpen) return;
+
+      if (window.BombDragDrop) {
+        window.BombDragDrop.handleDataTransfer(e.clipboardData, (f) => {
+          if (f) loadFile(f);
+        });
+        return;
+      }
 
       const items = [...((e.clipboardData || {}).items || [])];
       const it = items.find(i => i.type.indexOf('image') === 0);
