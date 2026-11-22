@@ -286,6 +286,11 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'knobsSection': {
+          const input = document.getElementById('knobsManualFile');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
         case 'circuitSection': {
           const input = document.getElementById('cktLegendFile');
           if (file && input) feedFileToInput(input, file);
