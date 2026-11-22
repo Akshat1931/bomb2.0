@@ -286,6 +286,41 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'knobsSection': {
+          const input = document.getElementById('knobsManualFile');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'circuitSection': {
+          const input = document.getElementById('cktLegendFile');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'limboSection': {
+          const input = document.getElementById('limboFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'pipesSection': {
+          const input = document.getElementById('pipesFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'astrologySection': {
+          const input = document.getElementById('astrologyFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'hangmanSection': {
+          const input = document.getElementById('hangmanFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'simonsSection': {
+          const input = document.getElementById('simonsFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     });
   }

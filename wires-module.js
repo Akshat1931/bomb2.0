@@ -5,38 +5,39 @@
  */
 
 (function () {
+  // Universal table from the image manual (22 Nov 2026), written out in the text format below
   const DEFAULT_WIRE_RULES = `Red
-first red occurrence: cut if connected to A or B.
-second red occurrence: cut if connected to B or C.
-third red occurrence: cut if connected to A or C.
+first red occurrence: cut if connected to A, B or C.
+second red occurrence: cut if connected to A.
+third red occurrence: cut if connected to B.
 fourth red occurrence: cut if connected to C.
-fifth red occurrence: cut if connected to B.
-sixth red occurrence: cut if connected to A or C.
-seventh red occurrence: cut if connected to A or B.
-eighth red occurrence: cut if connected to A, B or C.
-ninth red occurrence: cut if connected to B or C.
+fifth red occurrence: cut if connected to A, B or C.
+sixth red occurrence: cut if connected to B or C.
+seventh red occurrence: cut if connected to B or C.
+eighth red occurrence: cut if connected to A or B.
+ninth red occurrence: cut if connected to C.
 
 Blue
-first blue occurrence: cut if connected to C.
-second blue occurrence: cut if connected to A.
+first blue occurrence: cut if connected to A.
+second blue occurrence: cut if connected to A or C.
 third blue occurrence: cut if connected to A or B.
-fourth blue occurrence: cut if connected to B or C.
-fifth blue occurrence: cut if connected to A or C.
-sixth blue occurrence: cut if connected to B.
-seventh blue occurrence: cut if connected to A or B.
-eighth blue occurrence: cut if connected to B.
-ninth blue occurrence: cut if connected to A.
+fourth blue occurrence: cut if connected to B.
+fifth blue occurrence: cut if connected to C.
+sixth blue occurrence: cut if connected to A or C.
+seventh blue occurrence: cut if connected to B.
+eighth blue occurrence: cut if connected to A or B.
+ninth blue occurrence: cut if connected to A or B.
 
 Black
-first black occurrence: cut if connected to B.
+first black occurrence: cut if connected to A or B.
 second black occurrence: cut if connected to B.
-third black occurrence: cut if connected to A or B.
-fourth black occurrence: cut if connected to A or C.
-fifth black occurrence: cut if connected to C.
-sixth black occurrence: cut if connected to B.
-seventh black occurrence: cut if connected to B or C.
-eighth black occurrence: cut if connected to A or B.
-ninth black occurrence: cut if connected to A, B or C.`;
+third black occurrence: cut if connected to A.
+fourth black occurrence: cut if connected to B.
+fifth black occurrence: cut if connected to A or B.
+sixth black occurrence: cut if connected to A, B or C.
+seventh black occurrence: cut if connected to A, B or C.
+eighth black occurrence: cut if connected to A or C.
+ninth black occurrence: cut if connected to C.`;
 
   const wireState = {
     initialized: false,

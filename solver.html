@@ -944,6 +944,11 @@
     <button class="nav-link" type="button" data-target="chessSection" onclick="showSection('chessSection')">Chess</button>
     <button class="nav-link" type="button" data-target="minesweeperSection" onclick="showSection('minesweeperSection')">Mines</button>
     <button class="nav-link" type="button" data-target="symbolsSection" onclick="showSection('symbolsSection')">Symbols</button>
+    <button class="nav-link" type="button" data-target="limboSection" onclick="showSection('limboSection')">Limbo</button>
+    <button class="nav-link" type="button" data-target="pipesSection" onclick="showSection('pipesSection')">Pipes</button>
+    <button class="nav-link" type="button" data-target="astrologySection" onclick="showSection('astrologySection')">Astrology</button>
+    <button class="nav-link" type="button" data-target="hangmanSection" onclick="showSection('hangmanSection')">Hangman</button>
+    <button class="nav-link" type="button" data-target="simonsSection" onclick="showSection('simonsSection')">Simon Says</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1876,6 +1881,7 @@
           </div>
           <div style="font-size:13px; color:#ccc; line-height:1.6;">
             <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> 12 LEDs arranged in two 3x2 grids (left and right). The lit LED pattern dictates the rotary knob direction.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Manual Picture:</strong> The table changes every game — paste the manual picture (UP / DOWN / LEFT / RIGHT panels) once with <kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>; it is read into the table and remembered for the game.</p>
             <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Click the LEDs on the screen to match the lit lights on the bomb.</p>
             <p style="margin:0;"><strong style="color:#81c784;">Result:</strong> Highlights the exact direction: <strong style="color:#f5c542;">UP</strong>, <strong style="color:#f5c542;">DOWN</strong>, <strong style="color:#f5c542;">LEFT</strong>, or <strong style="color:#f5c542;">RIGHT</strong>.</p>
           </div>
@@ -1962,7 +1968,78 @@
           <div style="font-size:13px; color:#ccc; line-height:1.6;">
             <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Traces interconnected circuit networks and determines terminal current flow.</p>
             <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Map input sockets and component bridges to determine safe conduction paths.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Colour Legend:</strong> The colour → Ω table changes every game. Paste its picture (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) on the Circuit tab, then pick each wire's colour instead of typing Ω. Fix a misread value in the legend boxes.</p>
             <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Check active switches and relay states before committing connection pins.</p>
+          </div>
+        </div>
+
+        <!-- Limbo -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="limbo gif keys shuffle swap glow colour color follow"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🗝️ Limbo</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Six keys in a ring; one glows, then pairs swap. The last frame reveals every key's colour.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Drag in the <strong>whole GIF</strong> (or its Discord link). The glowing key is followed through every swap and its final colour is the answer.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> If no glow is found, tap the start key on the board to re-run from it. A copied GIF often pastes as a still frame — drag it instead.</p>
+          </div>
+        </div>
+
+        <!-- Pipes -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="pipes pipe colour color buttons rotate turn network loops clockwise anticlockwise"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🟩 Pipes</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Each colour button turns every pipe of that colour 90°. Solved when all pipes form one network with no loops and no open ends.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste the <strong>helper's coloured</strong> picture (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>). You get how many times to press each colour, for both <strong>↻ clockwise</strong> and <strong>↺ anticlockwise</strong> bombs.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> The defuser's picture never updates — press the counts and don't re-check. Tap a tile to fix a misread colour.</p>
+          </div>
+        </div>
+
+        <!-- Astrology -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="astrology stars constellations sky map quadrant symbols star list buttons"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">✨ Astrology</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Count the stars; every constellation with that many stars is looked up on the sky map. Press the one button in the same quadrant as one of them.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Each Game:</strong> Paste the helper's wide <strong>sky map</strong> and the <strong>star list</strong> text (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd> anywhere on the tab). Both change every game — press <strong>New Game</strong> to forget them.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Each Bomb:</strong> Paste the defuser's screenshot. Stars are counted and the 4 symbols named; fix the count or a symbol by hand if one is marked unsure.</p>
+          </div>
+        </div>
+
+        <!-- Hangman -->
+        <div class="help-module-card" data-category="words" data-keywords="hangman word letters guess blanks stick figure word list manual"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🪢 Hangman</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Words</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Every letter guess draws a body part, right or wrong — so the solver picks the letter that narrows the manual's word list down fastest, not the most common one.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Guess the shown letter, then paste the defuser's screenshot (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) — new letters show where it is; nothing new = a miss. Once one word is left, guess the whole word.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Paste this bomb's manual text anywhere on the tab to load its word list. No screenshot? Tap the outcome button that matches what the blanks showed.</p>
+          </div>
+        </div>
+
+        <!-- Simon Says -->
+        <div class="help-module-card" data-category="signals" data-keywords="simon says flash colours colors gif serial vowel odd even disarmed"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔴 Simon Says</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Signals</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Each stage adds one flash. The manual is one fixed table; its row depends on the serial having a vowel and on an odd or even number of disarmed modules.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Type the bomb serial once, then paste each stage's GIF (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) — its last flash is the new colour. Press the ODD or EVEN sequence shown.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Drop several stage files at once — they're read in file-name order. Tap a colour on a stage to fix a misread.</p>
           </div>
         </div>
 
@@ -2486,6 +2563,11 @@
 
   <section id="chessSection" class="page-section"></section>
   <section id="minesweeperSection" class="page-section"></section>
+  <section id="limboSection" class="page-section"></section>
+  <section id="pipesSection" class="page-section"></section>
+  <section id="astrologySection" class="page-section"></section>
+  <section id="hangmanSection" class="page-section"></section>
+  <section id="simonsSection" class="page-section"></section>
 
   <section id="aboutSection" class="page-section">
     <div
@@ -2505,21 +2587,28 @@
   <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
   <script src="./search-module.js?v=20260918_v3"></script>
-  <script src="./knobs-module.js?v=20260918_v3"></script>
+  <script src="./knobs-manual.js?v=20261122_v1"></script>
+  <script src="./knobs-module.js?v=20261122_v4"></script>
   <script src="./memory-module.js?v=20260918_v3"></script>
   <script src="./password-module.js?v=20260918_v3"></script>
   <script src="./piano-module.js?v=20260918_v3"></script>
   <script src="./button-module.js?v=20260918_v3"></script>
   <script src="./whos-module.js?v=20260918_v3"></script>
-  <script src="./wires-module.js?v=20260918_v3"></script>
-  <script src="./circuit-module.js?v=20260918_v3"></script>
+  <script src="./wires-module.js?v=20261122_v4"></script>
+  <script src="./circuit-legend.js?v=20261122_v1"></script>
+  <script src="./circuit-module.js?v=20261122_v4"></script>
   <script src="./nqueen-module.js?v=20260918_v3"></script>
   <script src="./complex-wires-module.js?v=20260918_v3"></script>
   <script src="./chess-module.js?v=20260918_v3"></script>
   <script src="./minesweeper-module.js?v=20260918_v3"></script>
   <script src="./symbols-module.js?v=20260918_v1"></script>
   <script src="./multi-maze-module.js?v=20261011_v1"></script>
-  <script src="./dragdrop-helper.js?v=20261013_v1"></script>
+  <script src="./limbo-module.js?v=20261122_v1"></script>
+  <script src="./pipes-module.js?v=20261122_v1"></script>
+  <script src="./astrology-module.js?v=20261122_v1"></script>
+  <script src="./hangman-module.js?v=20261122_v1"></script>
+  <script src="./simons-module.js?v=20261122_v1"></script>
+  <script src="./dragdrop-helper.js?v=20261122_v2"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2710,7 +2799,7 @@
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
       if (document.getElementById('multiMazeView')?.style.display === 'block') return;
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active') || document.getElementById('astrologySection')?.classList.contains('active') || document.getElementById('hangmanSection')?.classList.contains('active') || document.getElementById('simonsSection')?.classList.contains('active')) return;
       
       let slot = pasteTargetSlot;
       if (slot !== 1 && slot !== 2) slot = 1;
@@ -2884,6 +2973,36 @@
           window.initSymbolsModule();
         }
         window.symbolsLoaded = true;
+      }
+      if (id === 'limboSection' && !window.limboLoaded) {
+        if (typeof window.initLimboModule === 'function') {
+          window.initLimboModule();
+        }
+        window.limboLoaded = true;
+      }
+      if (id === 'pipesSection' && !window.pipesLoaded) {
+        if (typeof window.initPipesModule === 'function') {
+          window.initPipesModule();
+        }
+        window.pipesLoaded = true;
+      }
+      if (id === 'astrologySection' && !window.astrologyLoaded) {
+        if (typeof window.initAstrologyModule === 'function') {
+          window.initAstrologyModule();
+        }
+        window.astrologyLoaded = true;
+      }
+      if (id === 'hangmanSection' && !window.hangmanLoaded) {
+        if (typeof window.initHangmanModule === 'function') {
+          window.initHangmanModule();
+        }
+        window.hangmanLoaded = true;
+      }
+      if (id === 'simonsSection' && !window.simonsLoaded) {
+        if (typeof window.initSimonsModule === 'function') {
+          window.initSimonsModule();
+        }
+        window.simonsLoaded = true;
       }
 
       if (window.BombDragDrop) {

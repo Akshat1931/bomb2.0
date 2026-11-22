@@ -1,58 +1,11 @@
 (function() {
-  const DEFAULT_CONFIGS = {
-    UP: [
-      "OXXXOO", "XXXXXO", "XOXXOX", "OXXOOO", "OOOXXO", "OXXXOX", "OOXOOO", "OOOOOX"
-    ],
-    DOWN: [
-      "XOOOOO", "XXXOOO", "XXXXOX", "XOOXOX", "OOXXOO", "XXXXXX", "OXXOXO", "XOOXXX"
-    ],
-    LEFT: [
-      "XXXOOX", "OXOXOO", "XXXOXX", "XXXOXO", "XXOXOO", "OXXOOX", "OOXXXO", "OOOXOX"
-    ],
-    RIGHT: [
-      "XXOXXO", "OOXXOX", "XOOOXX", "XOXOOO", "XOOXXO", "XXOOOX", "OOOXOO", "XXOOXX"
-    ]
-  };
-
-  const DEFAULT_MANUAL_TEXT = `UP:
-OXXXOO
-XXXXXO
-XOXXOX
-OXXOOO
-OOOXXO
-OXXXOX
-OOXOOO
-OOOOOX
-
-DOWN:
-XOOOOO
-XXXOOO
-XXXXOX
-XOOXOX
-OOXXOO
-XXXXXX
-OXXOXO
-XOOXXX
-
-LEFT:
-XXXOOX
-OXOXOO
-XXXOXX
-XXXOXO
-XXOXOO
-OXXOOX
-OOXXXO
-OOOXOX
-
-RIGHT:
-XXOXXO
-OOXXOX
-XOOOXX
-XOXOOO
-XOOXXO
-XXOOOX
-OOOXOO
-XXOOXX`;
+  // The table (8 patterns per direction) changes every game, so nothing is built in: last game's
+  // table could match by chance and give a confident wrong answer. It is read from the manual
+  // picture (knobs-manual.js) or pasted as text, and remembered for the game.
+  const MANUAL_KEY = 'ktane_knobs_manual'; // { text, at, picture }
+  const EMPTY_CONFIGS = () => ({ UP: [], DOWN: [], LEFT: [], RIGHT: [] });
+  function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function lsSet(k, v) { try { if (v) localStorage.setItem(k, JSON.stringify(v)); else localStorage.removeItem(k); } catch (e) {} }
 
   const knobsState = {
     initialized: false,
@@ -61,7 +14,9 @@ XXOOXX`;
       [false, false, false, false, false, false],
       [false, false, false, false, false, false]
     ],
-    configs: JSON.parse(JSON.stringify(DEFAULT_CONFIGS))
+    configs: EMPTY_CONFIGS(),
+    manual: lsGet(MANUAL_KEY),   // this game's manual
+    manualMsg: ''
   };
 
   // ── DYNAMIC STYLE INJECTION ───────────────────────────────
@@ -278,7 +233,12 @@ XXOOXX`;
 
     const styleEl = document.createElement('style');
     styleEl.id = 'knobsStyles';
-    styleEl.textContent = css;
+    const manualCss = `
+    .knobs-manual-drop { border: 2px dashed #35355c; border-radius: 10px; padding: 12px; text-align: center; color: #aaa; font-size: 13px; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; }
+    .knobs-manual-drop:hover, .knobs-manual-drop.dragover { border-color: #ffd875; color: #ffd875; background: rgba(255,216,117,0.05); }
+    .knobs-manual-state { font-size: 12px; text-align: left; margin-bottom: 8px; }
+    `;
+    styleEl.textContent = css + manualCss;
     document.head.appendChild(styleEl);
   }
 
@@ -291,11 +251,14 @@ XXOOXX`;
     renderKnobsUI();
     setupKnobsEvents();
 
-    // Pre-populate manual guide text area with default
+    // Restore this game's manual (if one was loaded)
     const manualInput = document.getElementById('knobsManualInput');
-    if (manualInput) {
-      manualInput.value = DEFAULT_MANUAL_TEXT;
+    if (manualInput && knobsState.manual) {
+      manualInput.value = knobsState.manual.text;
+      handleKnobsManualInput(manualInput, true);
     }
+    setupKnobsManualPicture();
+    renderKnobsManualState();
 
     solveKnobs();
   }
@@ -366,10 +329,15 @@ XXOOXX`;
 
             <!-- Manual Input Card -->
             <div class="knobs-card">
-              <div class="knobs-card-title">3. Paste Knobs Manual Guide Text</div>
+              <div class="knobs-card-title">3. Knobs Manual (this game)</div>
               <div style="font-size:12px; color:#aaa; text-align:left; margin-bottom:8px;">
-                If the manual updates or changes, paste the dynamic directions here.
+                The manual changes every game. Paste its picture (UP / DOWN / LEFT / RIGHT panels) once — it fills the table below, which you can still edit or type.
               </div>
+              <div id="knobsManualDrop" class="knobs-manual-drop" onclick="document.getElementById('knobsManualFile').click()">
+                <input type="file" id="knobsManualFile" accept="image/*" style="display:none;" onchange="window.handleKnobsManualFile(this)">
+                📋 Paste / drop the <b>Knobs manual picture</b> <span style="color:#777;">(Ctrl+V or click)</span>
+              </div>
+              <div id="knobsManualState" class="knobs-manual-state"></div>
               <textarea id="knobsManualInput" class="knobs-textarea" rows="8" placeholder="UP:&#10;OXXXOO&#10;..." oninput="window.handleKnobsManualInput(this)"></textarea>
               
               <!-- Manual Parser Feedback -->
@@ -529,7 +497,7 @@ XXOOXX`;
     solveKnobs();
   }
 
-  function handleKnobsManualInput(textarea) {
+  function handleKnobsManualInput(textarea, restoring) {
     const text = textarea.value;
     const newConfigs = parseManualText(text);
     const statusBox = document.getElementById('knobsManualParseStatus');
@@ -537,12 +505,22 @@ XXOOXX`;
     let newManualFound = false;
     let manualDetails = [];
 
+    // the table is exactly what was pasted / read — no built-in rows fill the gaps
+    knobsState.configs = EMPTY_CONFIGS();
     for (const dir of ['UP', 'DOWN', 'LEFT', 'RIGHT']) {
       if (newConfigs[dir].length > 0) {
         knobsState.configs[dir] = newConfigs[dir];
         newManualFound = true;
         manualDetails.push(`${dir} (${newConfigs[dir].length}/8)`);
       }
+    }
+    if (!restoring) {
+      knobsState.manual = newManualFound
+        ? { text, at: Date.now(), picture: Boolean(knobsState.manual && knobsState.manual.picture && knobsState.manual.text === text) }
+        : null;
+      lsSet(MANUAL_KEY, knobsState.manual);
+      knobsState.manualMsg = '';
+      renderKnobsManualState();
     }
 
     if (statusBox) {
@@ -558,7 +536,7 @@ XXOOXX`;
         } else {
           statusBox.innerHTML = `<div class="knobs-status-item" style="color:#ffd875;">
             <span>ℹ️</span>
-            <span>Using fallback/default rules</span>
+            <span>No UP: / DOWN: / LEFT: / RIGHT: rows found — paste the manual picture</span>
           </div>`;
         }
       }
@@ -601,6 +579,16 @@ XXOOXX`;
       row2MatchEl.innerHTML = dir2 
         ? `Row 2 (Bottom): <span style="font-family:monospace; color:#ffd875; font-weight:bold;">${row2Str}</span> matches <strong style="color:#00ff66; text-transform:uppercase;">${dir2}</strong> (${litCount2} lit)`
         : `Row 2 (Bottom): <span style="font-family:monospace; color:#888;">${row2Str}</span> &rarr; <span style="color:#f44336; font-weight:bold;">No Match</span>`;
+    }
+
+    const haveManual = Object.values(knobsState.configs).some(c => c.length);
+    if (!haveManual) {
+      resultPanel.innerHTML = `
+        <div style="color:#ffd875; font-size:13px; text-align:center; padding:10px 0;">
+          Paste this game's Knobs manual picture first (card 3)
+        </div>
+      `;
+      return;
     }
 
     if (!dir1 || !dir2) {
@@ -728,7 +716,6 @@ XXOOXX`;
       [false, false, false, false, false, false],
       [false, false, false, false, false, false]
     ];
-    knobsState.configs = JSON.parse(JSON.stringify(DEFAULT_CONFIGS));
 
     for (let r = 0; r < 2; r++) {
       for (let c = 0; c < 6; c++) {
@@ -740,15 +727,103 @@ XXOOXX`;
     const activeInput = document.getElementById('knobsActiveInput');
     if (activeInput) activeInput.value = '';
 
-    const manualInput = document.getElementById('knobsManualInput');
-    if (manualInput) manualInput.value = DEFAULT_MANUAL_TEXT;
+    // the manual is kept: it is the same for every bomb this game ("forget" clears it)
 
     const activeStatus = document.getElementById('knobsActiveParseStatus');
     if (activeStatus) activeStatus.style.display = 'none';
 
-    const manualStatus = document.getElementById('knobsManualParseStatus');
-    if (manualStatus) manualStatus.style.display = 'none';
+    solveKnobs();
+  }
 
+  // ── MANUAL PICTURE ─────────────────────────────────────────
+  function renderKnobsManualState() {
+    const el = document.getElementById('knobsManualState');
+    if (!el) return;
+    const m = knobsState.manual;
+    let html = '';
+    if (m) {
+      const mins = Math.round((Date.now() - m.at) / 60000);
+      const ago = mins < 1 ? 'just now' : mins < 60 ? `${mins} min ago` : `${Math.round(mins / 60)} h ago`;
+      html = `<span style="color:#00ff66;">✓ Manual loaded</span> <span style="color:#888;">· ${m.picture ? 'read from the picture' : 'typed / pasted text — check it\'s this game\'s'} · ${ago} ·</span> <a href="#" style="color:#f44336;" onclick="window.forgetKnobsManual(); return false;">forget</a>`;
+    } else {
+      html = `<span style="color:#ffd875;">No manual yet — paste this game's manual picture.</span>`;
+    }
+    if (knobsState.manualMsg) html += `<div style="color:${knobsState.manualMsg.startsWith('⚠') ? '#f44336' : '#00ff66'}; margin-top:4px;">${knobsState.manualMsg}</div>`;
+    el.innerHTML = html;
+  }
+
+  function readKnobsManualFile(file) {
+    if (!window.KnobsManual) { knobsState.manualMsg = '⚠ Manual reader not loaded.'; renderKnobsManualState(); return; }
+    const img = new Image();
+    img.onload = () => {
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(img.src);
+      const man = window.KnobsManual.readKnobManual(ctx.getImageData(0, 0, W, H).data, W, H);
+      const marks = man.panels.reduce((n, pnl) => n + pnl.rows.join('').length, 0);
+      if (man.panels.length !== 4 || marks < 150) { // 4 panels × 48 X / O when read cleanly
+        knobsState.manualMsg = '⚠ That is not the Knobs manual picture (need the 4 panels of X / O).';
+        renderKnobsManualState();
+        return;
+      }
+      const text = window.KnobsManual.knobManualText(man.dirs);
+      const ta = document.getElementById('knobsManualInput');
+      if (ta) {
+        ta.value = text;
+        knobsState.manual = { text, at: Date.now(), picture: true };
+        handleKnobsManualInput(ta, true);
+        lsSet(MANUAL_KEY, knobsState.manual);
+      }
+      knobsState.manualMsg = man.ok ? '✓ Read 4 × 8 patterns from the picture'
+        : `⚠ Picture not read cleanly: ${man.problems.join('; ')} — fix the table by hand`;
+      renderKnobsManualState();
+    };
+    img.onerror = () => { knobsState.manualMsg = '⚠ Could not open that file as an image.'; renderKnobsManualState(); };
+    img.src = URL.createObjectURL(file);
+  }
+
+  function setupKnobsManualPicture() {
+    const dz = document.getElementById('knobsManualDrop');
+    if (dz) {
+      dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+      dz.addEventListener('drop', (e) => {
+        e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover');
+        if (window.BombDragDrop) window.BombDragDrop.handleDataTransfer(e.dataTransfer, (f) => { if (f) readKnobsManualFile(f); });
+        else { const f = [...(e.dataTransfer?.files || [])].find(x => x.type.startsWith('image/')); if (f) readKnobsManualFile(f); }
+      });
+    }
+    // Ctrl+V of the manual picture on this tab (Discord links go via dragdrop-helper.js)
+    document.addEventListener('paste', (e) => {
+      if (!document.getElementById('knobsSection')?.classList.contains('active')) return;
+      for (const item of (e.clipboardData?.items || [])) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const f = item.getAsFile(); if (f) readKnobsManualFile(f);
+          return;
+        }
+      }
+    });
+  }
+
+  function handleKnobsManualFile(input) {
+    const f = input.files && input.files[0];
+    if (f) readKnobsManualFile(f);
+    input.value = '';
+  }
+
+  function forgetKnobsManual() {
+    knobsState.manual = null;
+    knobsState.manualMsg = '';
+    knobsState.configs = EMPTY_CONFIGS();
+    lsSet(MANUAL_KEY, null);
+    const ta = document.getElementById('knobsManualInput');
+    if (ta) ta.value = '';
+    const st = document.getElementById('knobsManualParseStatus');
+    if (st) st.style.display = 'none';
+    renderKnobsManualState();
     solveKnobs();
   }
 
@@ -757,6 +832,8 @@ XXOOXX`;
   window.handleKnobsActiveInput = handleKnobsActiveInput;
   window.handleKnobsManualInput = handleKnobsManualInput;
   window.resetKnobsSolver = resetKnobsSolver;
+  window.handleKnobsManualFile = handleKnobsManualFile;
+  window.forgetKnobsManual = forgetKnobsManual;
   window.copyKnobsAnswer = copyKnobsAnswer;
   window.copyKnobsSingle = copyKnobsSingle;
 })();

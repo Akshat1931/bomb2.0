@@ -3,6 +3,8 @@
  * 6-node grid (A-F), 11 possible wire segments, all optional.
  * Click a wire → quick-entry bar appears below canvas → type Ω → Enter.
  * Click a node → set IN(+) / OUT(−).
+ * Colour legend: paste this game's legend picture (colour → Ω, read by
+ * circuit-legend.js), then give each wire its colour instead of typing Ω.
  * MNA solver.
  */
 (function () {
@@ -29,8 +31,90 @@
     termIN:  null,
     termOUT: null,
     selSeg:  null,      // currently selected segment id
-    palIdx:  0
+    palIdx:  0,
+    legend:  null,      // { values: { red:'4', … }, unsure: [colours], at } — this game's colour → Ω
+    chips:   null,      // last legend read, per colour (kept to learn corrected digits)
+    legendMsg: ''
   };
+
+  /* ── Colour legend (changes every game; read from its picture) ── */
+  const LEGEND_KEY = 'ktane_circuit_legend', DIGITS_KEY = 'ktane_circuit_digits';
+  const LCOLORS = ['red','orange','yellow','green','blue','violet','white','gray'];
+  const SWATCH  = { red:'#e53935', orange:'#fb8c00', yellow:'#fdd835', green:'#43a047',
+                    blue:'#1e88e5', violet:'#8e24aa', white:'#eceff1', gray:'#78909c' };
+  function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ if(v) localStorage.setItem(k,JSON.stringify(v)); else localStorage.removeItem(k); }catch(e){} }
+  S.legend = lsGet(LEGEND_KEY);
+
+  function segCol(seg){ return seg.color ? SWATCH[seg.color] : PAL[seg.colorIdx%PAL.length]; }
+  function legendOhms(c){
+    const v = S.legend && S.legend.values[c];
+    return (v===undefined||v===null||v==='') ? null : Number(v);
+  }
+  // wires given a colour follow the legend
+  function applyLegendToWires(){
+    Object.values(S.active).forEach(seg=>{
+      if(!seg.color) return;
+      const v=legendOhms(seg.color); if(v!==null) seg.r=v;
+    });
+  }
+  function storeLegend(values, unsure, at){
+    S.legend={ values, unsure:unsure||[], at:at||Date.now() };
+    lsSet(LEGEND_KEY,S.legend);
+    applyLegendToWires();
+  }
+
+  function readLegendFile(file){
+    if(!window.CircuitLegend){ S.legendMsg='⚠ Legend reader not loaded.'; renderLegend(); return; }
+    const img=new Image();
+    img.onload=()=>{
+      const W=img.naturalWidth, H=img.naturalHeight;
+      const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+      const g=cv.getContext('2d',{willReadFrequently:true}); g.drawImage(img,0,0);
+      const data=g.getImageData(0,0,W,H).data;
+      URL.revokeObjectURL(img.src);
+      const r=window.CircuitLegend.readLegend(data,W,H,lsGet(DIGITS_KEY)||{});
+      const valued=r.ok ? r.chips.filter(ch=>ch.value!==null).length : 0;
+      if(valued<3){ S.legendMsg='⚠ Could not read colour chips — is this the colour legend picture?'; renderLegend(); return; }
+      const values={}, unsure=[]; S.chips={};
+      r.chips.forEach(ch=>{
+        if(!ch.color) return;
+        S.chips[ch.color]={ ...ch, read:ch.value };
+        values[ch.color]=ch.value===null?'':ch.value;
+        if(!ch.sure) unsure.push(ch.color);
+      });
+      const dupes=r.chips.map(ch=>ch.color).filter((c,i,a)=>a.indexOf(c)!==i);
+      storeLegend(values,unsure);
+      S.legendMsg=`✓ Read ${Object.keys(values).length} colours`
+        +(unsure.length?` · check ${unsure.join(', ')} against the picture`:'')
+        +(dupes.length?` · ⚠ ${dupes.join(', ')} seen twice`:'');
+      renderLegend(); refreshChips(); draw(); updateAnswer();
+    };
+    img.onerror=()=>{ S.legendMsg='⚠ Could not open that file as an image.'; renderLegend(); };
+    img.src=URL.createObjectURL(file);
+  }
+
+  function renderLegend(){
+    const st=document.getElementById('cktLegendState');
+    const body=document.getElementById('cktLegendBody');
+    if(!st||!body) return;
+    const L=S.legend;
+    if(L){
+      const m=Math.round((Date.now()-L.at)/60000);
+      st.innerHTML=`read ${m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' h ago'} · <a href="#" onclick="window._cktLegendForget();return false;" style="color:#ef9a9a;">forget</a>`;
+      body.innerHTML=`<div class="ckt-lgrid">${LCOLORS.map(c=>`
+        <label class="ckt-lchip${L.unsure.includes(c)?' unsure':''}" title="${L.unsure.includes(c)?'Not sure about this value — check it against the picture':''}">
+          <span class="ckt-sw" style="background:${SWATCH[c]};"></span>${c}
+          <input type="text" inputmode="numeric" value="${L.values[c]===undefined?'':L.values[c]}" placeholder="?"
+            oninput="window._cktLegendSet('${c}',this.value)" onchange="window._cktLegendLearn('${c}')">Ω
+        </label>`).join('')}</div>`;
+    } else {
+      st.textContent='not read yet';
+      body.innerHTML='';
+    }
+    const msg=document.getElementById('cktLegendMsg');
+    if(msg){ msg.textContent=S.legendMsg; msg.style.color=S.legendMsg.startsWith('⚠')?'#ef9a9a':'#81c784'; }
+  }
 
   /* ── MNA Solver ──────────────────────────────────────── */
   function solve() {
@@ -100,7 +184,7 @@
     Object.entries(S.active).forEach(([id,seg])=>{
       const [na,nb]=id.split('-');
       const p1=NODES[na], p2=NODES[nb];
-      const col=PAL[seg.colorIdx%PAL.length];
+      const col=segCol(seg);
       const isSel=S.selSeg===id;
 
       // Selection halo
@@ -174,7 +258,7 @@
     S.selSeg=id;
     const bar=document.getElementById('cktQuickBar'); if(!bar) return;
     const seg=S.active[id];
-    const col=PAL[seg.colorIdx%PAL.length];
+    const col=segCol(seg);
     bar.style.display='flex';
     bar.innerHTML=`
       <span style="display:inline-flex;align-items:center;gap:7px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:#ffd875;">
@@ -191,6 +275,12 @@
               font:700 12px 'Outfit',sans-serif;border-radius:8px;cursor:pointer;">✓ Done</button>
       <button id="cktQRemBtn" style="padding:6px 12px;background:transparent;border:1px solid #c62828;color:#ef9a9a;
               font-size:12px;border-radius:8px;cursor:pointer;">✕ Remove</button>
+      <div class="ckt-colrow">
+        <span style="color:#546e7a;font-size:12px;">or its colour${S.legend?'':' (paste the legend first)'}:</span>
+        ${LCOLORS.map(c=>{ const v=legendOhms(c); return `<button type="button" class="ckt-colbtn${seg.color===c?' on':''}"
+          style="--c:${SWATCH[c]};" title="${c}${v!==null?' = '+v+' Ω':' — not in the legend yet'}"
+          onclick="window._cktSetColor('${c}')"><span></span>${v!==null?v+'Ω':'?'}</button>`; }).join('')}
+      </div>
     `;
 
     const inp=document.getElementById('cktQI');
@@ -198,7 +288,7 @@
 
     // Live update as they type
     inp.addEventListener('input',()=>{
-      const v=parseFloat(inp.value); if(S.active[id]) S.active[id].r=isNaN(v)?0:Math.max(0,v);
+      const v=parseFloat(inp.value); if(S.active[id]){ S.active[id].r=isNaN(v)?0:Math.max(0,v); S.active[id].color=null; }
       draw(); updateAnswer();
     });
     inp.addEventListener('keydown',e=>{
@@ -241,11 +331,11 @@
     const entries=Object.entries(S.active);
     if(!entries.length){ el.innerHTML='<span style="color:#37474f;font-size:12px;font-style:italic;">No wires active yet</span>'; return; }
     el.innerHTML=entries.map(([id,seg])=>{
-      const col=PAL[seg.colorIdx%PAL.length];
+      const col=segCol(seg);
       return `<span class="ckt-chip" onclick="window._cktEditChip('${id}')"
         style="border-color:${col};background:${col}18;color:${col};">
         <span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block;margin-right:4px;"></span>
-        ${id}: ${seg.r===0?'wire':seg.r+'Ω'}
+        ${id}: ${seg.color?seg.color+' ':''}${seg.r===0?'wire':seg.r+'Ω'}
         <span style="opacity:0.5;margin-left:4px;">✎</span>
       </span>`;
     }).join('');
@@ -338,6 +428,33 @@
     else                   S.termIN=n;
     syncTermButtons(); draw(); updateAnswer();
   };
+  window._cktSetColor=function(c){
+    const seg=S.selSeg&&S.active[S.selSeg]; if(!seg) return;
+    seg.color=c;
+    const v=legendOhms(c); if(v!==null) seg.r=v;
+    showQuickEdit(S.selSeg); refreshChips(); draw(); updateAnswer();
+  };
+  window._cktLegendSet=function(c,v){
+    const clean=String(v).replace(/\D/g,'');
+    const L=S.legend||{ values:{}, unsure:[], at:Date.now() };
+    storeLegend({ ...L.values, [c]: clean?String(Number(clean)):'' }, L.unsure.filter(x=>x!==c), L.at);
+    refreshChips(); draw(); updateAnswer();
+  };
+  // a corrected value teaches the reader that digit's shape
+  window._cktLegendLearn=function(c){
+    const ch=S.chips&&S.chips[c], typed=legendOhms(c);
+    if(ch&&typed!==null&&window.CircuitLegend) lsSet(DIGITS_KEY, window.CircuitLegend.learnDigits(lsGet(DIGITS_KEY)||{}, ch, String(typed)));
+    renderLegend();
+  };
+  window._cktLegendForget=function(){
+    S.legend=null; S.chips=null; S.legendMsg='Legend forgotten — paste this game\'s legend picture.';
+    lsSet(LEGEND_KEY,null); renderLegend();
+  };
+  window._cktLegendFile=function(input){
+    const f=input.files&&input.files[0]; if(f) readLegendFile(f);
+    input.value='';
+  };
+
   window._cktClear=function(){
     S.active={}; S.palIdx=0; S.termIN=null; S.termOUT=null; S.selSeg=null;
     hideQuickEdit(); syncTermButtons(); refreshChips(); draw(); updateAnswer();
@@ -368,6 +485,22 @@
         border:1px solid transparent;border-radius:20px;font:700 11px 'Outfit',sans-serif;
         cursor:pointer;transition:all .15s;user-select:none;}
       .ckt-chip:hover{filter:brightness(1.3);}
+      .ckt-drop{border:2px dashed #2a2a45;border-radius:10px;padding:12px;text-align:center;color:#90a4ae;
+        font-size:13px;cursor:pointer;transition:all .15s;margin-bottom:10px;}
+      .ckt-drop:hover,.ckt-drop.dragover{border-color:#ffd875;color:#ffd875;background:rgba(255,216,117,.05);}
+      .ckt-lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;}
+      .ckt-lchip{display:flex;align-items:center;gap:6px;background:#060610;border:1px solid #1a1a30;border-radius:8px;
+        padding:5px 8px;font:600 12px 'Outfit',sans-serif;color:#b0bec5;text-transform:capitalize;}
+      .ckt-lchip.unsure{border-color:#c62828;}
+      .ckt-lchip input{width:42px;margin-left:auto;background:#0d0d20;border:1px solid #2a2a45;color:#00e676;
+        font:700 13px monospace;text-align:center;border-radius:6px;padding:3px;outline:none;}
+      .ckt-sw{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.4);}
+      #cktLegendMsg{font-size:12px;margin-top:8px;min-height:1em;}
+      .ckt-colrow{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+      .ckt-colbtn{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;background:#060610;border:1px solid #2a2a45;
+        color:#b0bec5;border-radius:16px;font:700 11px 'Outfit',sans-serif;cursor:pointer;}
+      .ckt-colbtn span{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block;}
+      .ckt-colbtn.on,.ckt-colbtn:hover{border-color:var(--c);color:#fff;}
     </style>`);
   }
 
@@ -388,6 +521,17 @@
       <!-- Answer -->
       <div id="cktAnswer">
         <span style="color:#263238;font-size:13px;">Click nodes for IN/OUT · click wires to add them</span>
+      </div>
+
+      <!-- Colour legend (this game) -->
+      <div class="ckt-panel">
+        <div class="ckt-pt">Colour Legend (Ω) <span id="cktLegendState" style="font-size:10px;color:#37474f;font-weight:400;text-transform:none;"></span></div>
+        <div id="cktLegendDrop" class="ckt-drop" onclick="document.getElementById('cktLegendFile').click()">
+          <input type="file" id="cktLegendFile" accept="image/*" style="display:none;" onchange="window._cktLegendFile(this)">
+          📋 Paste / drop this game's <b>colour legend</b> picture <span style="color:#546e7a;">(Ctrl+V or click)</span>
+        </div>
+        <div id="cktLegendBody"></div>
+        <div id="cktLegendMsg"></div>
       </div>
 
       <!-- Terminals -->
@@ -411,7 +555,35 @@
     </div>`;
 
     document.getElementById('cktCanvas').addEventListener('click',handleClick);
+    setupLegendInputs();
+    renderLegend();
     draw(); updateAnswer();
+  }
+
+  function setupLegendInputs(){
+    const dz=document.getElementById('cktLegendDrop');
+    if(dz){
+      dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+      dz.addEventListener('drop',e=>{
+        e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover');
+        if(window.BombDragDrop) window.BombDragDrop.handleDataTransfer(e.dataTransfer,f=>{ if(f) readLegendFile(f); });
+        else { const f=[...(e.dataTransfer?.files||[])].find(x=>x.type.startsWith('image/')); if(f) readLegendFile(f); }
+      });
+    }
+    if(S.pasteBound) return;
+    S.pasteBound=true;
+    // Ctrl+V of the legend picture on this tab (Discord links go via dragdrop-helper.js)
+    document.addEventListener('paste',e=>{
+      if(!document.getElementById('circuitSection')?.classList.contains('active')) return;
+      for(const item of (e.clipboardData?.items||[])){
+        if(item.type.startsWith('image/')){
+          e.preventDefault();
+          const f=item.getAsFile(); if(f) readLegendFile(f);
+          return;
+        }
+      }
+    });
   }
 
   window.initCircuitModule=function(){ buildUI(); };
