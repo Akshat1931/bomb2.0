@@ -291,6 +291,11 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'pipesSection': {
+          const input = document.getElementById('pipesFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     });
   }
