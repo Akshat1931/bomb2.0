@@ -311,6 +311,11 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'simonsSection': {
+          const input = document.getElementById('simonsFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     });
   }
