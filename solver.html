@@ -949,6 +949,7 @@
     <button class="nav-link" type="button" data-target="astrologySection" onclick="showSection('astrologySection')">Astrology</button>
     <button class="nav-link" type="button" data-target="hangmanSection" onclick="showSection('hangmanSection')">Hangman</button>
     <button class="nav-link" type="button" data-target="simonsSection" onclick="showSection('simonsSection')">Simon Says</button>
+    <button class="nav-link" type="button" data-target="rubiksSection" onclick="showSection('rubiksSection')">Rubik's Cube</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1959,17 +1960,17 @@
         </div>
 
         <!-- 14. Circuit Solver -->
-        <div class="help-module-card" data-category="wires" data-keywords="circuit solver wiring paths connections terminals pins"
+        <div class="help-module-card" data-category="wires" data-keywords="circuit solver resistance resistors ohms legend terminals screenshot"
           style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
             <h3 style="color:#f5c542; margin:0; font-size:16px;">🔌 Circuit Solver</h3>
             <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Wires</span>
           </div>
           <div style="font-size:13px; color:#ccc; line-height:1.6;">
-            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Traces interconnected circuit networks and determines terminal current flow.</p>
-            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Map input sockets and component bridges to determine safe conduction paths.</p>
-            <p style="margin:0 0 8px;"><strong style="color:#fff;">Colour Legend:</strong> The colour → Ω table changes every game. Paste its picture (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) on the Circuit tab, then pick each wire's colour instead of typing Ω. Fix a misread value in the legend boxes.</p>
-            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Check active switches and relay states before committing connection pins.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A network of coloured resistors between two orange terminals — the answer is the total resistance (Ω) between them.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste the Circuit screenshot: every resistor, wire and terminal is read from the picture and the circuit is solved exactly (series, parallel, shorted corners, bridges). The answer is copied for you.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Colour Legend:</strong> The colour → Ω table changes every game. Paste its picture (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) on the Circuit tab once per game — same drop zone as the circuit. Fix a misread value in the legend boxes; the reader learns that digit.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Glance at the boxed resistors under "What was read" — if a colour is wrong, fix it in the table and the answer updates.</p>
           </div>
         </div>
 
@@ -2040,6 +2041,20 @@
             <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Each stage adds one flash. The manual is one fixed table; its row depends on the serial having a vowel and on an odd or even number of disarmed modules.</p>
             <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Type the bomb serial once, then paste each stage's GIF (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) — its last flash is the new colour. Press the ODD or EVEN sequence shown.</p>
             <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Drop several stage files at once — they're read in file-name order. Tap a colour on a stage to fix a misread.</p>
+          </div>
+        </div>
+
+        <!-- Rubik's Cube -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="rubik rubiks cube moves solve stickers faces turns"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🧊 Rubik's Cube</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A scrambled cube showing three faces (top, front-left, front-right). Enter the moves that solve it.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste the cube screenshot (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>) — the 27 stickers are read and the shortest move sequence (up to 10 moves) is found and copied.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> If a sticker was misread, click it in the sticker net to cycle its colour — it re-solves instantly.</p>
           </div>
         </div>
 
@@ -2234,19 +2249,19 @@
         <div id="wireSummaryList"></div>
       </div>
 
-      <!-- Dynamic Guidebook Rules Textarea -->
-      <div style="background:#131328; padding:18px; border-radius:12px; border:1px solid #222244;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <label for="wireRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules
-            (Editable)</label>
+      <!-- Manual table: built in from the image manual, nothing to paste -->
+      <details style="background:#131328; padding:14px 18px; border-radius:12px; border:1px solid #222244;">
+        <summary style="color:#f5c542; font-size:14px; font-weight:600; cursor:pointer;">📖 Manual table — built in from the image manual (22 Nov), nothing to paste</summary>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0;">
+          <p style="color:#8a8ea3; font-size:12px; margin:0;">The Red / Blue / Black occurrence table is the same picture every game and is already loaded.
+            Only edit it if you spot a wrong rule. Occurrence counts add up across all 5 stages.</p>
           <button id="wireResetRulesBtn" type="button" class="upload-btn"
-            style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
+            style="margin-top:0; padding:4px 12px; font-size:12px; white-space:nowrap;">Restore built-in table</button>
         </div>
-        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules,
-          paste the new occurrence rules below. Occurrence counts auto-accumulate across all 5 panels.</p>
+        <label for="wireRulesInput" style="display:none;">Wire Sequences manual table</label>
         <textarea id="wireRulesInput" rows="10"
           style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
-      </div>
+      </details>
 
       <div id="wireStatus" style="margin-top:16px; font-size:13px; color:#aaa; text-align:center;"></div>
     </div>
@@ -2568,6 +2583,7 @@
   <section id="astrologySection" class="page-section"></section>
   <section id="hangmanSection" class="page-section"></section>
   <section id="simonsSection" class="page-section"></section>
+  <section id="rubiksSection" class="page-section"></section>
 
   <section id="aboutSection" class="page-section">
     <div
@@ -2595,11 +2611,10 @@
   <script src="./button-module.js?v=20260918_v3"></script>
   <script src="./whos-module.js?v=20260918_v3"></script>
   <script src="./wires-module.js?v=20261122_v4"></script>
-  <script src="./circuit-legend.js?v=20261122_v1"></script>
-  <script src="./circuit-module.js?v=20261122_v4"></script>
+  <script src="./circuit-module.js?v=20261122_v5"></script>
   <script src="./nqueen-module.js?v=20260918_v3"></script>
   <script src="./complex-wires-module.js?v=20260918_v3"></script>
-  <script src="./chess-module.js?v=20260918_v3"></script>
+  <script src="./chess-module.js?v=20261122_v4"></script>
   <script src="./minesweeper-module.js?v=20260918_v3"></script>
   <script src="./symbols-module.js?v=20260918_v1"></script>
   <script src="./multi-maze-module.js?v=20261011_v1"></script>
@@ -2608,7 +2623,8 @@
   <script src="./astrology-module.js?v=20261122_v1"></script>
   <script src="./hangman-module.js?v=20261122_v1"></script>
   <script src="./simons-module.js?v=20261122_v1"></script>
-  <script src="./dragdrop-helper.js?v=20261122_v2"></script>
+  <script src="./rubiks-module.js?v=20261122_v1"></script>
+  <script src="./dragdrop-helper.js?v=20261122_v3"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2799,7 +2815,7 @@
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
       if (document.getElementById('multiMazeView')?.style.display === 'block') return;
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active') || document.getElementById('astrologySection')?.classList.contains('active') || document.getElementById('hangmanSection')?.classList.contains('active') || document.getElementById('simonsSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active') || document.getElementById('astrologySection')?.classList.contains('active') || document.getElementById('hangmanSection')?.classList.contains('active') || document.getElementById('simonsSection')?.classList.contains('active') || document.getElementById('rubiksSection')?.classList.contains('active')) return;
       
       let slot = pasteTargetSlot;
       if (slot !== 1 && slot !== 2) slot = 1;
@@ -3003,6 +3019,12 @@
           window.initSimonsModule();
         }
         window.simonsLoaded = true;
+      }
+      if (id === 'rubiksSection' && !window.rubiksLoaded) {
+        if (typeof window.initRubiksModule === 'function') {
+          window.initRubiksModule();
+        }
+        window.rubiksLoaded = true;
       }
 
       if (window.BombDragDrop) {

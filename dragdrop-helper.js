@@ -292,7 +292,7 @@
           break;
         }
         case 'circuitSection': {
-          const input = document.getElementById('cktLegendFile');
+          const input = document.getElementById('cktFileInput');
           if (file && input) feedFileToInput(input, file);
           break;
         }
@@ -318,6 +318,11 @@
         }
         case 'simonsSection': {
           const input = document.getElementById('simonsFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'rubiksSection': {
+          const input = document.getElementById('rubiksFileInput');
           if (file && input) feedFileToInput(input, file);
           break;
         }

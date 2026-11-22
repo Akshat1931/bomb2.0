@@ -322,7 +322,7 @@
 
     renderBoardGrid();
     updateFenDisplay();
-    calculateBestMoveForWhite(chessState.currentFen);
+    solvePosition();
   }
 
   function computeSan(from, to, movingPieceCode, isCapture, promo) {
@@ -351,140 +351,373 @@
     return san;
   }
 
-  // ── STOCKFISH INTEGRATION ─────────────────────────────────
-  async function calculateBestMoveForWhite(fen) {
-    const moveBanner = document.getElementById('chessBestMoveBanner');
-    const moveText = document.getElementById('chessMoveText');
-    const evalText = document.getElementById('chessEvalText');
-    const statusText = document.getElementById('chessEngineStatus');
+  // ── STOCKFISH (from bomb_boomed/src/modules/chess/chessEngine.js) ──
+  // Stockfish runs in the browser (worker), so every legal move can be scored: the module asks for
+  // White's or Black's best move OR blunder, so all four are shown. If the engine can't load, the
+  // old chess-api.com / /api/stockfish lookup still gives the best moves (no blunders).
+  const ENGINE_URLS = ['https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js'];
+  const CHESSJS_URL = 'https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js';
+  const SIDE_NAME = { w: 'White', b: 'Black' };
+  const SIDE_ICON = { w: '♔', b: '♚' };
 
-    if (moveBanner) moveBanner.style.display = 'block';
-    if (moveText) moveText.innerHTML = `<span style="color:#ffd875; animation: blinker 1.5s linear infinite;">🧠 Stockfish calculating best move for White...</span>`;
-    if (evalText) evalText.textContent = '';
-    if (statusText) statusText.textContent = 'Engine analyzing position...';
+  let worker = null;
+  let engineReady = null;
+  let searchSeq = 0;
+  let solveSeq = 0;
+  const SUPERSEDED = Symbol('superseded');
+  let pendingResolve = null;
 
-    let moveInfo = null;
+  function setEngineStatus(text) {
+    const el = document.getElementById('chessEngineStatus');
+    if (el) el.textContent = text;
+  }
 
-    // 1. Primary: Direct high-speed chess-api.com (Supports CORS with Access-Control-Allow-Origin: *)
+  // chess.js only turns uci into SAN (Qxf7#); without it the old hand-made SAN is used
+  function loadChessJs() {
+    if (window.Chess || document.getElementById('chessJsScript')) return;
+    const s = document.createElement('script');
+    s.id = 'chessJsScript';
+    s.src = CHESSJS_URL;
+    document.head.appendChild(s);
+  }
+
+  function startEngine() {
+    if (engineReady) return engineReady;
+    engineReady = (async () => {
+      setEngineStatus('Loading Stockfish…');
+      for (const url of ENGINE_URLS) {
+        try {
+          const source = await (await fetch(url)).text();
+          worker = new Worker(URL.createObjectURL(new Blob([source], { type: 'application/javascript' })));
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('timeout')), 15000);
+            worker.onmessage = (event) => {
+              if (String(event.data).includes('readyok')) { clearTimeout(timeout); resolve(); }
+            };
+            worker.onerror = reject;
+            worker.postMessage('uci');
+            worker.postMessage('isready');
+          });
+          setEngineStatus('Stockfish ready ✓');
+          return true;
+        } catch (e) {
+          if (worker) { try { worker.terminate(); } catch (e2) {} }
+          worker = null;
+        }
+      }
+      setEngineStatus('⚠ Stockfish failed to load — using the online engine (best moves only)');
+      return false;
+    })();
+    return engineReady;
+  }
+
+  /** One search: every engine line goes to onLine(line, stop); resolves to the bestmove (uci), null or SUPERSEDED. */
+  async function search(fen, milliseconds, multiPV, onLine) {
+    if (!worker && engineReady) await engineReady;
+    if (!worker) return null;
+
+    const mySeq = ++searchSeq;
+    let stoppedPrevious = false;
+    if (pendingResolve) {
+      const prev = pendingResolve;
+      pendingResolve = null;
+      prev(SUPERSEDED);
+      worker.postMessage('stop');
+      stoppedPrevious = true;
+    }
+
+    return new Promise((resolve) => {
+      // After 'stop' the old search still prints its bestmove; UCI processes commands in
+      // order, so everything before the 'readyok' answering our 'isready' belongs to it.
+      let waitingForBarrier = stoppedPrevious;
+      let stopSent = false;
+      const stop = () => { if (!stopSent) { stopSent = true; worker.postMessage('stop'); } };
+      const finish = (val) => {
+        clearTimeout(timer);
+        if (pendingResolve === finish) pendingResolve = null;
+        resolve(val);
+      };
+      pendingResolve = finish;
+      const timer = setTimeout(() => finish(null), milliseconds + 2000);
+
+      worker.onmessage = (event) => {
+        if (mySeq !== searchSeq) return;
+        const line = String(event.data);
+        if (waitingForBarrier) {
+          if (line.includes('readyok')) waitingForBarrier = false;
+          return;
+        }
+        if (line.startsWith('bestmove')) { finish(line.split(' ')[1]); return; }
+        if (onLine) onLine(line, stop);
+      };
+      if (stoppedPrevious) worker.postMessage('isready');
+      worker.postMessage('ucinewgame');
+      worker.postMessage(`setoption name MultiPV value ${multiPV}`);
+      worker.postMessage('position fen ' + fen);
+      worker.postMessage('go movetime ' + milliseconds);
+    });
+  }
+
+  /** Best move (uci), null when there's no engine, or SUPERSEDED. */
+  function askEngine(fen, milliseconds, onInfo) {
+    return search(fen, milliseconds, 1, (line, stop) => {
+      if (!line.startsWith('info') || !line.includes(' score ')) return;
+      const depth = (line.match(/ depth (\d+)/) || [])[1] || '';
+      const cp = (line.match(/score cp (-?\d+)/) || [])[1] || '';
+      const mate = (line.match(/score mate (-?\d+)/) || [])[1] || '';
+      if (onInfo) onInfo({ depth, cp, mate });
+      // a forced mate proven well past its length can't be beaten by thinking longer
+      if (mate && +mate > 0 && +depth >= Math.min(12, +mate * 2 + 2)) stop();
+    });
+  }
+
+  /** A move's score from the side that plays it: centipawns, or ±(100000 − moves) for a forced mate. */
+  const moveValue = (m) => (m.mate != null ? (m.mate > 0 ? 100000 - m.mate : -100000 - m.mate) : m.cp);
+
+  /** Score EVERY legal move (MultiPV) → [{ uci, cp, mate, depth, value }] worst first, [] (no move), null or SUPERSEDED. */
+  async function scoreAllMoves(fen, milliseconds, onInfo) {
+    const slots = new Map();
+    const best = await search(fen, milliseconds, 256, (text) => {
+      if (!text.startsWith('info') || !text.includes(' multipv ')) return;
+      const idx = +((text.match(/ multipv (\d+)/) || [])[1] || 0);
+      const uci = (text.match(/ pv (\S+)/) || [])[1];
+      const cp = text.match(/score cp (-?\d+)/), mate = text.match(/score mate (-?\d+)/);
+      if (!idx || !uci || (!cp && !mate)) return;
+      const m = { uci, depth: +((text.match(/ depth (\d+)/) || [])[1] || 0), cp: cp ? +cp[1] : null, mate: mate ? +mate[1] : null };
+      slots.set(idx, m);
+      if (onInfo) onInfo({ depth: m.depth });
+    });
+    if (best === SUPERSEDED || best === null) return best;
+    const byMove = new Map();
+    [...slots.keys()].sort((a, b) => a - b).forEach((k) => { const m = slots.get(k); byMove.set(m.uci, { ...m, value: moveValue(m) }); });
+    return [...byMove.values()].sort((a, b) => a.value - b.value);
+  }
+
+  /** Board (64 squares, a8 first, '' empty) → FEN with `side` to move. */
+  function toFen(board, side) {
+    const ranks = [];
+    for (let row = 0; row < 8; row++) {
+      let text = '', empty = 0;
+      for (let col = 0; col < 8; col++) {
+        const piece = board[row * 8 + col];
+        if (!piece) { empty++; continue; }
+        if (empty) text += empty;
+        empty = 0;
+        text += piece;
+      }
+      if (empty) text += empty;
+      ranks.push(text);
+    }
+    return ranks.join('/') + (side === 'b' ? ' b' : ' w') + ' - - 0 1';
+  }
+
+  /** Is the king of `color` attacked? The side NOT to move can never be in check. */
+  function kingInCheck(board, color) {
+    const white = color === 'w';
+    const kingSq = board.indexOf(white ? 'K' : 'k');
+    if (kingSq < 0) return false;
+    const kr = Math.floor(kingSq / 8), kc = kingSq % 8;
+    const enemy = (ch) => Boolean(ch) && (white ? ch === ch.toLowerCase() : ch === ch.toUpperCase());
+    const at = (r, c) => (r >= 0 && r < 8 && c >= 0 && c < 8 ? board[r * 8 + c] : null);
+    const is = (ch, type) => enemy(ch) && ch.toLowerCase() === type;
+    const pr = white ? kr - 1 : kr + 1;
+    if (is(at(pr, kc - 1), 'p') || is(at(pr, kc + 1), 'p')) return true;
+    for (const [dr, dc] of [[1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1]]) {
+      if (is(at(kr + dr, kc + dc), 'n')) return true;
+    }
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if ((dr || dc) && is(at(kr + dr, kc + dc), 'k')) return true;
+    }
+    const slide = (dirs, types) => dirs.some(([dr, dc]) => {
+      for (let r = kr + dr, c = kc + dc; r >= 0 && r < 8 && c >= 0 && c < 8; r += dr, c += dc) {
+        const ch = board[r * 8 + c];
+        if (!ch) continue;
+        return enemy(ch) && types.includes(ch.toLowerCase());
+      }
+      return false;
+    });
+    return slide([[1, 0], [-1, 0], [0, 1], [0, -1]], 'rq') || slide([[1, 1], [1, -1], [-1, 1], [-1, -1]], 'bq');
+  }
+
+  /** uci → SAN: chess.js when loaded, else the hand-made SAN from the board. */
+  function toSan(fen, uci, board) {
+    if (window.Chess) {
+      try {
+        const m = new window.Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+        if (m) return m.san;
+      } catch (e) {}
+    }
+    const from = uci.slice(0, 2), to = uci.slice(2, 4);
+    const piece = board[SQR_NAMES.indexOf(from)] || '';
+    let isCapture = Boolean(board[SQR_NAMES.indexOf(to)]);
+    // en passant: a pawn moving diagonally onto an empty square
+    if (!isCapture && piece.toLowerCase() === 'p' && from[0] !== to[0]) isCapture = true;
+    return computeSan(from, to, piece, isCapture, uci[4] || '');
+  }
+
+  /** A score as words, from the side that moves: "+1.5", "gets mated in 1". */
+  const describe = (m) => (m.mate != null
+    ? (m.mate < 0 ? `gets mated in ${-m.mate}` : `mates in ${m.mate}`)
+    : `${m.cp >= 0 ? '+' : ''}${(m.cp / 100).toFixed(1)}`);
+
+  /** Every move scored (worst first) → the blunder: the worst move, plus any scored exactly as badly. */
+  function blunderOf(fen, list, board) {
+    if (list === null) return { bad: 'engine unavailable / timed out' };
+    if (!list.length) return { bad: 'no legal move' };
+    const worst = list[0], best = list[list.length - 1];
+    const ties = list.filter((m) => m.value === worst.value);
+    return {
+      san: toSan(fen, worst.uci, board), uci: worst.uci,
+      also: ties.slice(1).map((m) => toSan(fen, m.uci, board)),
+      what: describe(worst), bestWhat: describe(best), count: list.length
+    };
+  }
+
+  // Old lookup (kept as the fallback): chess-api.com, then the /api/stockfish proxy. Best move only.
+  async function onlineBestMove(fen) {
     try {
       const res = await fetch('https://chess-api.com/v1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fen: fen, depth: 12 })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fen, depth: 12 })
       });
       if (res.ok) {
         const data = await res.json();
-        if (data && data.from && data.to) {
-          moveInfo = {
-            from: data.from.toLowerCase(),
-            to: data.to.toLowerCase(),
-            uci: (data.move || (data.from + data.to)).toLowerCase(),
-            san: data.san || '',
-            evaluation: data.eval !== undefined ? data.eval : null,
-            mate: data.mate || null,
-            continuation: Array.isArray(data.continuationArr) ? data.continuationArr.slice(0, 5).join(' ') : ''
-          };
+        if (data && data.from && data.to) return (data.move || (data.from + data.to)).toLowerCase();
+      }
+    } catch (e) {}
+    try {
+      const res = await fetch(`/api/stockfish?fen=${encodeURIComponent(fen)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.bestmove) {
+          const parts = data.bestmove.split(' ');
+          const uci = parts[1] || parts[0];
+          if (uci && uci.length >= 4) return uci.toLowerCase();
         }
       }
-    } catch (e1) {
-      console.warn('chess-api.com direct failed, trying proxy:', e1);
-    }
+    } catch (e) {}
+    return null;
+  }
 
-    // 2. Secondary: Internal Vercel API proxy (/api/stockfish)
-    if (!moveInfo) {
-      try {
-        const res = await fetch(`/api/stockfish?fen=${encodeURIComponent(fen)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.bestmove) {
-            const parts = data.bestmove.split(' ');
-            const uciMove = parts[1] || parts[0];
-            if (uciMove && uciMove.length >= 4) {
-              moveInfo = {
-                from: uciMove.substring(0, 2).toLowerCase(),
-                to: uciMove.substring(2, 4).toLowerCase(),
-                uci: uciMove.toLowerCase(),
-                san: data.san || '',
-                evaluation: data.evaluation !== undefined ? data.evaluation : null,
-                mate: data.mate || null,
-                continuation: data.continuation || ''
-              };
-            }
-          }
-        }
-      } catch (e2) {
-        console.warn('Internal stockfish proxy failed:', e2);
-      }
-    }
+  // ── SOLVE: best move + blunder for BOTH sides ──────────────
+  // chessState.answers = { best: { w, b }, blunder: { w, b } }, each { san, uci, … } | { bad, impossible? }
+  async function solvePosition() {
+    const mySolve = ++solveSeq;
+    const board = chessState.mergedTiles.map((t) => (t && t !== 's' ? t : ''));
+    const ans = { best: {}, blunder: {} };
+    chessState.answers = ans;
+    chessState.bestMove = null;
 
-    // 3. Render results
-    if (moveInfo && moveInfo.from && moveInfo.to) {
-      const from = moveInfo.from;
-      const to = moveInfo.to;
-      const promo = moveInfo.uci.length > 4 ? moveInfo.uci[4].toUpperCase() : '';
-
-      const fromIdx = SQR_NAMES.indexOf(from);
-      const movingPieceCode = fromIdx !== -1 ? chessState.mergedTiles[fromIdx] : '';
-      const pieceName = PIECE_NAMES[movingPieceCode] || 'White Piece';
-
-      const targetIdx = SQR_NAMES.indexOf(to);
-      const targetPieceCode = targetIdx !== -1 ? chessState.mergedTiles[targetIdx] : '';
-      const isCapture = targetPieceCode && targetPieceCode !== 's';
-
-      const displaySan = moveInfo.san || computeSan(from, to, movingPieceCode, isCapture, promo);
-
-      chessState.bestMove = {
-        from: from,
-        to: to,
-        uci: moveInfo.uci,
-        san: displaySan,
-        piece: movingPieceCode,
-        isCapture: isCapture
-      };
-
-      const evalScore = moveInfo.evaluation !== null && moveInfo.evaluation !== undefined
-        ? (moveInfo.evaluation > 0 ? `+${moveInfo.evaluation}` : `${moveInfo.evaluation}`)
-        : (moveInfo.mate ? `Mate in ${Math.abs(moveInfo.mate)}` : '');
-
-      if (moveText) {
-        moveText.innerHTML = `
-          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
-            <div style="background:rgba(0, 255, 102, 0.1); border:2px solid #00ff66; border-radius:14px; padding:10px 24px; box-shadow:0 0 20px rgba(0,255,102,0.2);">
-              <div style="font-size:11px; font-weight:800; color:#ffd875; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:2px;">ALGEBRAIC NOTATION ANSWER</div>
-              <div style="font-size:52px; font-weight:900; color:#00ff66; font-family:'Outfit', monospace, sans-serif; line-height:1; letter-spacing:1px;" id="chessAnswerSanText">${displaySan}</div>
-            </div>
-            <button onclick="navigator.clipboard.writeText('${displaySan}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='📋 Copy Move', 1500);" style="background:#1e204a; border:1.5px solid #00ff66; color:#00ff66; font-weight:800; padding:10px 18px; border-radius:10px; cursor:pointer; font-size:14px; transition:all 0.15s;">📋 Copy Move</button>
-          </div>
-          <div style="font-size:16px; color:#cbd5e1; font-weight:600; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span>Move <strong style="color:#ffd875;">${pieceName.replace('White ', '')}</strong>:</span>
-            <span style="background:#2a2618; border:1px solid #ffd875; color:#ffd875; padding:2px 8px; border-radius:6px; font-weight:800;">${from.toUpperCase()}</span>
-            <span>➔</span>
-            <span style="background:#133324; border:1px solid #00ff66; color:#00ff66; padding:2px 8px; border-radius:6px; font-weight:800;">${to.toUpperCase()}</span>
-            ${isCapture ? '<span style="color:#f87171; font-weight:800; margin-left:4px;">(Captures piece on ' + to.toUpperCase() + ')</span>' : ''}
-            ${promo ? `<span style="color:#a78bfa; font-weight:800; margin-left:4px;">(Promote to ${promo})</span>` : ''}
-          </div>
-        `;
-      }
-
-      if (evalText) {
-        evalText.innerHTML = `
-          <div style="margin-top:10px; font-size:13px; color:#94a3b8;">
-            <span>Evaluation: <strong style="color:${parseFloat(evalScore) >= 0 ? '#00ff66' : '#ff5f57'}; font-size:14px;">${evalScore}</strong></span>
-            ${moveInfo.continuation ? `<span style="margin-left:16px; color:#64748b;">Engine Line: ${moveInfo.continuation}</span>` : ''}
-          </div>
-        `;
-      }
-
-      highlightMoveOnBoard(from, to);
-      if (statusText) statusText.textContent = `✓ Best move: ${displaySan} (${from.toUpperCase()} ➔ ${to.toUpperCase()})`;
+    const wKings = board.filter((p) => p === 'K').length;
+    const bKings = board.filter((p) => p === 'k').length;
+    if (!board.some(Boolean)) { renderAnswers(); setEngineStatus(worker ? 'Stockfish ready ✓' : 'Engine idle'); return; }
+    if (wKings !== 1 || bKings !== 1) {
+      setEngineStatus(`⚠️ ${wKings !== 1 ? 'White King (♔) missing/extra. ' : ''}${bKings !== 1 ? 'Black King (♚) missing/extra.' : ''}`);
+      renderAnswers();
       return;
     }
 
-    // If both failed
-    if (moveText) {
-      moveText.innerHTML = `<span style="color:#ff5f57;">Could not reach Stockfish engine. Check your connection or retry recalculation.</span>`;
+    const sides = ['w', 'b'];
+    for (const s of sides) {
+      const other = s === 'w' ? 'b' : 'w';
+      if (kingInCheck(board, other)) {
+        ans.best[s] = ans.blunder[s] = { bad: `${SIDE_NAME[other]} is in check, so it can't be ${SIDE_NAME[s]}'s move`, impossible: true };
+      }
     }
-    if (statusText) statusText.textContent = 'Engine query failed.';
+    const todo = sides.filter((s) => !ans.best[s]);
+    renderAnswers();
+    if (!todo.length) { setEngineStatus('⚠️ Both kings are in check — a piece was misread, check the board'); return; }
+
+    loadChessJs();
+    const haveEngine = await startEngine();
+    if (mySolve !== solveSeq) return;
+
+    // 1. best moves
+    for (const s of todo) {
+      const fen = toFen(board, s);
+      setEngineStatus(`Thinking (${SIDE_NAME[s]} to move)…`);
+      let uci;
+      if (haveEngine) {
+        uci = await askEngine(fen, 2500, ({ depth, cp, mate }) => {
+          const e = mate ? `Mate in ${mate}` : `Eval ${(Number(cp) / 100).toFixed(2)}`;
+          setEngineStatus(`Thinking (${SIDE_NAME[s]} to move)… depth ${depth} (${e})`);
+        });
+      } else {
+        uci = await onlineBestMove(fen);
+      }
+      if (uci === SUPERSEDED || mySolve !== solveSeq) return;
+      ans.best[s] = uci && uci !== '(none)'
+        ? { san: toSan(fen, uci, board), uci }
+        : { bad: uci === null ? 'engine unavailable / timed out' : 'no legal move' };
+      renderAnswers();
+    }
+
+    if (!haveEngine) {
+      todo.forEach((s) => { ans.blunder[s] = { bad: 'needs the in-browser engine (failed to load)' }; });
+      renderAnswers();
+      setEngineStatus('⚠ Online engine: best moves only');
+      return;
+    }
+
+    // 2. blunders: score every legal move and take the worst
+    for (const s of todo) {
+      const fen = toFen(board, s);
+      setEngineStatus(`Scoring every ${SIDE_NAME[s]} move for the blunder…`);
+      const list = await scoreAllMoves(fen, 2000, ({ depth }) => {
+        setEngineStatus(`Scoring every ${SIDE_NAME[s]} move for the blunder… depth ${depth}`);
+      });
+      if (list === SUPERSEDED || mySolve !== solveSeq) return;
+      ans.blunder[s] = blunderOf(fen, list, board);
+      renderAnswers();
+    }
+    const possible = sides.filter((s) => !ans.best[s].impossible);
+    setEngineStatus(possible.length === 1 ? `Ready ✓ — only ${SIDE_NAME[possible[0]]} can be to move` : 'Ready ✓ — copy the answer the module asks for');
+  }
+
+  // Four answer cards, in this order: Black's blunder, White's blunder, Black's best, White's best
+  const CARDS = [
+    { kind: 'blunder', s: 'b', label: "♚ BLACK'S BLUNDER" },
+    { kind: 'blunder', s: 'w', label: "♔ WHITE'S BLUNDER" },
+    { kind: 'best', s: 'b', label: '♚ BLACK TO MOVE (BEST)' },
+    { kind: 'best', s: 'w', label: '♔ WHITE TO MOVE (BEST)' }
+  ];
+
+  function renderAnswers() {
+    const box = document.getElementById('chessMoveText');
+    if (!box) return;
+    const ans = chessState.answers || { best: {}, blunder: {} };
+    const hasBoard = chessState.mergedTiles.some((t) => t && t !== 's');
+    box.innerHTML = `<div class="chess-ans-grid">${CARDS.map((c, i) => {
+      const a = ans[c.kind][c.s];
+      const big = a && a.san ? a.san : !a ? (hasBoard ? '…' : '— — —') : a.impossible ? 'NOT POSSIBLE' : '—';
+      let sub = '';
+      if (a && a.san && c.kind === 'blunder') sub = `${a.what} · best move ${a.bestWhat}`;
+      else if (a && a.san && a.uci) sub = `${a.uci.slice(0, 2).toUpperCase()} ➔ ${a.uci.slice(2, 4).toUpperCase()}`;
+      else if (a && !a.san) sub = a.bad;
+      const ties = a && a.also && a.also.length
+        ? `<div class="chess-ans-ties">just as bad: ${a.also.slice(0, 8).join(', ')}${a.also.length > 8 ? ` +${a.also.length - 8} more` : ''}</div>` : '';
+      return `<div class="chess-ans ${c.kind}${a && a.san ? ' ready' : ''}${a && a.impossible ? ' impossible' : ''}" data-card="${i}" title="${a && a.san ? 'Click to copy and show it on the board' : ''}">
+        <div class="chess-ans-label">${c.label}</div>
+        <div class="chess-ans-move">${big}</div>
+        <div class="chess-ans-sub">${sub}</div>${ties}
+      </div>`;
+    }).join('')}</div>`;
+    box.querySelectorAll('.chess-ans.ready').forEach((el) => {
+      el.onclick = () => {
+        const c = CARDS[+el.dataset.card];
+        const a = ans[c.kind][c.s];
+        if (!a || !a.san) return;
+        try { navigator.clipboard.writeText(a.san).catch(() => {}); } catch (e) {}
+        chessState.bestMove = { from: a.uci.slice(0, 2), to: a.uci.slice(2, 4), uci: a.uci, san: a.san };
+        highlightMoveOnBoard(chessState.bestMove.from, chessState.bestMove.to);
+        const sub = el.querySelector('.chess-ans-sub');
+        const was = sub.textContent;
+        sub.textContent = '✓ Copied!';
+        setTimeout(() => { sub.textContent = was; }, 1200);
+      };
+    });
+    const banner = document.getElementById('chessBestMoveBanner');
+    if (banner) banner.style.display = 'block';
   }
 
   function highlightMoveOnBoard(from, to) {
@@ -723,6 +956,27 @@
       margin-top: 14px;
       box-shadow: 0 0 20px rgba(0, 255, 102, 0.25);
     }
+    .chess-ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .chess-ans {
+      background: #0a1210; border: 1.5px solid #1f3b2c; border-radius: 12px;
+      padding: 10px 12px; min-width: 0; text-align: center;
+    }
+    .chess-ans.blunder { border-color: #5a2323; background: #140b0b; }
+    .chess-ans.ready { cursor: pointer; }
+    .chess-ans.best.ready { border-color: #00ff66; }
+    .chess-ans.blunder.ready { border-color: #ff5f57; }
+    .chess-ans.ready:hover { filter: brightness(1.25); }
+    .chess-ans.impossible { opacity: 0.45; }
+    .chess-ans-label { font-size: 10.5px; font-weight: 800; color: #ffd875; letter-spacing: 1.2px; }
+    .chess-ans-move {
+      font-family: 'Outfit', monospace, sans-serif; font-size: 34px; font-weight: 900;
+      line-height: 1.15; color: #00ff66; overflow-wrap: anywhere; margin: 4px 0 2px;
+    }
+    .chess-ans.blunder .chess-ans-move { color: #ff7b72; }
+    .chess-ans.impossible .chess-ans-move { font-size: 16px; color: #94a3b8; }
+    .chess-ans-sub { font-size: 11.5px; color: #94a3b8; min-height: 1em; }
+    .chess-ans-ties { font-size: 11px; color: #cbd5e1; margin-top: 4px; }
+    @media (max-width: 420px) { .chess-ans-move { font-size: 26px; } }
     .chess-fen-box {
       width: 100%;
       background: #070714;
@@ -777,7 +1031,7 @@
             <h2 style="font-family:'Outfit',sans-serif; color:#ffd875; font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px;">
               <span>♟️</span> Chess Module Solver
             </h2>
-            <div style="font-size:12px; color:#888;">Upload Black & White module screenshots ➔ Auto-merge position ➔ Stockfish finds best move for White</div>
+            <div style="font-size:12px; color:#888;">Upload Black & White module screenshots ➔ Auto-merge position ➔ Stockfish finds the best move AND the blunder for both White and Black</div>
           </div>
           <button type="button" class="chess-btn chess-btn-ghost" onclick="resetChessModule()">Reset All</button>
         </div>
@@ -828,7 +1082,7 @@
               <div style="font-size:12px; font-weight:700; color:#aaa;">Combined Position FEN:</div>
               <input type="text" id="chessFenInput" class="chess-fen-box" value="${chessState.currentFen}" onchange="handleManualFenChange(this.value)">
               <div style="display:flex; gap:8px; margin-top:8px;">
-                <button type="button" class="chess-btn chess-btn-primary" style="flex:1;" onclick="calculateBestMoveForWhite(document.getElementById('chessFenInput').value)">Recalculate Move</button>
+                <button type="button" class="chess-btn chess-btn-primary" style="flex:1;" onclick="handleManualFenChange(document.getElementById('chessFenInput').value)">Recalculate Moves</button>
                 <button type="button" class="chess-btn chess-btn-ghost" onclick="copyChessFen()">Copy FEN</button>
               </div>
             </div>
@@ -840,12 +1094,12 @@
           <div class="chess-card">
             <div class="chess-card-title">
               <span>2. Merged Board & Solution</span>
-              <span id="chessEngineStatus" style="font-size:11px; color:#00ff66;">Engine ready</span>
+              <span id="chessEngineStatus" style="font-size:11px; color:#00ff66;">Engine idle</span>
             </div>
 
             <!-- Best Move Highlight Banner -->
             <div id="chessBestMoveBanner" class="chess-best-move-card">
-              <div id="chessMoveText">Awaiting board images or FEN...</div>
+              <div id="chessMoveText">Awaiting board images or FEN... (4 answers: Black's blunder · White's blunder · Black's best · White's best)</div>
               <div id="chessEvalText" style="font-size:12px; margin-top:6px; color:#ddd;"></div>
             </div>
 
@@ -908,7 +1162,7 @@
 
     renderBoardGrid();
     updateFenDisplay();
-    calculateBestMoveForWhite(chessState.currentFen);
+    solvePosition();
   }
 
   function updateFenDisplay() {
@@ -1006,8 +1260,25 @@
   };
 
   window.handleManualFenChange = function(newFen) {
-    chessState.currentFen = newFen;
-    calculateBestMoveForWhite(newFen);
+    // the placement is what matters: both sides are solved whatever side the FEN names
+    const rows = String(newFen || '').trim().split(/\s+/)[0].split('/');
+    if (rows.length !== 8) { updateStatusMessage('⚠️ That FEN needs 8 ranks.', '#ff5f57'); return; }
+    const tiles = [];
+    rows.forEach((row) => {
+      const out = [];
+      for (const ch of row) {
+        if (/\d/.test(ch)) for (let k = 0; k < +ch; k++) out.push('s');
+        else if (/[prnbqk]/i.test(ch)) out.push(ch);
+      }
+      while (out.length < 8) out.push('s');
+      tiles.push(...out.slice(0, 8));
+    });
+    chessState.mergedTiles = tiles;
+    const [regFen] = parseFenFromArray(tiles);
+    chessState.currentFen = regFen + ' w - - 0 1';
+    renderBoardGrid();
+    updateFenDisplay();
+    solvePosition();
   };
 
   window.copyChessFen = function() {
@@ -1024,9 +1295,12 @@
     chessState.mergedTiles = new Array(64).fill('s');
     chessState.currentFen = '8/8/8/8/8/8/8/8 w - - 0 1';
     chessState.bestMove = null;
+    chessState.answers = null;
+    solveSeq++; // drop any search still running
     renderBoardGrid();
     updateFenDisplay();
     document.getElementById('chessBestMoveBanner').style.display = 'none';
+    setEngineStatus(worker ? 'Stockfish ready ✓' : 'Engine idle');
     updateStatusMessage("Ready. Upload or paste screenshots.");
   };
 
@@ -1034,6 +1308,8 @@
     injectStyles();
     renderUI();
     loadChessModels();
+    loadChessJs();
+    startEngine(); // warm up Stockfish while the screenshots are pasted
     chessState.initialized = true;
   };
 
