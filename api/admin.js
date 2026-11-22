@@ -84,7 +84,9 @@ function getExpiryInfo(u) {
 
   if (s === 'trial') {
     const trialStart = u.trial_start ? new Date(u.trial_start).getTime() : Date.now();
-    const remaining = Math.max(0, (30 * 60 * 1000) - (Date.now() - trialStart));
+    const TRIAL_MS = Infinity; // same as api/auth/status.js: no time limit
+    if (!Number.isFinite(TRIAL_MS)) return `<span style="color:#ffd875;font-weight:700;">⏱️ No time limit</span>`;
+    const remaining = Math.max(0, TRIAL_MS - (Date.now() - trialStart));
     if (remaining <= 0) {
       return `<span style="color:#fb8c00;font-weight:600;">🔒 30m Trial Finished</span>`;
     }

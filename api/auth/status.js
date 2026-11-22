@@ -11,7 +11,7 @@
 const { verify, parseCookies } = require('../../lib/session');
 const { getUser }              = require('../../lib/supabase');
 
-const TRIAL_MS = 30 * 60 * 1000; // 30 minutes — complimentary trial length
+const TRIAL_MS = Infinity; // no time limit: a logged-in trial user keeps access (was 30 minutes)
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -108,7 +108,9 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       status:       remaining_ms > 0 ? 'trial' : 'expired',
-      remaining_ms: remaining_ms,
+      // JSON has no Infinity (it would arrive as null): send a large number and say there's no limit
+      remaining_ms: Number.isFinite(remaining_ms) ? remaining_ms : 100 * 365 * 24 * 60 * 60 * 1000,
+      unlimited:    !Number.isFinite(TRIAL_MS),
       username:     user.username,
       discord_id:   user.discord_id,
       avatar:       user.avatar,

@@ -333,7 +333,7 @@ const TRIAL_SNIPPET = `
       noticeHtml = [
         '<div class="g-interact-notice">',
           '<span style="font-size:16px;">⚡</span>',
-          '<div><strong>Action Required:</strong> Sign in with Discord to use interactive solver controls. Your 30-minute free trial starts immediately!</div>',
+          '<div><strong>Action Required:</strong> Sign in with Discord to use interactive solver controls. Access starts immediately!</div>',
         '</div>'
       ].join('');
     }
@@ -344,11 +344,11 @@ const TRIAL_SNIPPET = `
       '<div class="g-badge">⚡ Tactical Defusal Suite</div>',
       '<div class="g-logo">' + DISCORD_SVG + '</div>',
       '<h2 class="g-title">Connect with Discord</h2>',
-      '<p class="g-desc">Sign in with Discord to activate your <strong>30-minute complimentary trial</strong> and unlock real-time solvers, OCR vision, and interactive timing.</p>',
+      '<p class="g-desc">Sign in with Discord to unlock real-time solvers, OCR vision, and interactive timing.</p>',
       noticeHtml,
       '<div class="g-feature-grid">',
         '<div class="g-feature-item">',
-          '<div class="g-feature-title">⚡ 30m Free Trial</div>',
+          '<div class="g-feature-title">⚡ Full Access</div>',
           '<div class="g-feature-desc">Instant activation upon sign-in</div>',
         '</div>',
         '<div class="g-feature-item">',
@@ -406,7 +406,7 @@ const TRIAL_SNIPPET = `
     HUD_AVATAR.style.display = 'none';
     HUD_NAME.innerHTML = '<span style="color:#ffd875;display:inline-flex;align-items:center;gap:4px;"><span>⚡</span> Preview Mode</span>';
     HUD_BADGE.className = '';
-    HUD_BADGE.innerHTML = '<button id="__hudConnectBtn" type="button" class="hud-guest-btn">' + DISCORD_SVG + ' Connect Discord (30m Trial)</button>';
+    HUD_BADGE.innerHTML = '<button id="__hudConnectBtn" type="button" class="hud-guest-btn">' + DISCORD_SVG + ' Connect Discord</button>';
     HUD_LOGOUT.style.display = 'none';
 
     var connectBtn = document.getElementById('__hudConnectBtn');
@@ -569,6 +569,11 @@ const TRIAL_SNIPPET = `
     HUD_LOGOUT.style.display = 'inline';
 
     trialEndEpoch = Date.now() + data.remaining_ms;
+    if (data.unlimited) { // no time limit: no countdown
+      clearInterval(timerInterval);
+      HUD_BADGE.textContent = 'FULL ACCESS';
+      return;
+    }
 
     function updateTick() {
       var remaining = trialEndEpoch - Date.now();
