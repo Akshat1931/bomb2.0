@@ -301,6 +301,11 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'hangmanSection': {
+          const input = document.getElementById('hangmanFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     });
   }
