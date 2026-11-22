@@ -286,6 +286,11 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'limboSection': {
+          const input = document.getElementById('limboFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     });
   }
