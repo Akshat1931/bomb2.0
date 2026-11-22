@@ -199,8 +199,8 @@ ninth black occurrence: cut if connected to C.`;
     const fileInput = document.getElementById('wireFileInput');
     if (fileInput) {
       fileInput.addEventListener('change', (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (file) processWireImage(file);
+        const files = [...(e.target.files || [])];
+        if (files.length) processWireImage(files);
         e.target.value = '';
       });
     }
@@ -214,6 +214,8 @@ ninth black occurrence: cut if connected to C.`;
         e.preventDefault();
         e.stopPropagation();
         dropzone.classList.remove('active');
+        const many = [...(e.dataTransfer?.files || [])].filter(f => f.type.startsWith('image/'));
+        if (many.length > 1) { processWireImage(many); return; } // several stages at once
         if (window.BombDragDrop) {
           window.BombDragDrop.handleDataTransfer(e.dataTransfer, (file) => {
             if (file) processWireImage(file);
@@ -465,98 +467,140 @@ ninth black occurrence: cut if connected to C.`;
     }
   }
 
-  // ── DYNAMIC WIRE RULES PARSER ──────────────────────────────────
+  // ── bomb_boomed/src/modules/wireseq/wireseqRules.js ─────────
+  const WS_ORD = {first:1,second:2,third:3,fourth:4,fifth:5,sixth:6,seventh:7,eighth:8,ninth:9};
 
-  function parseWireRulesText(text) {
-    const rules = { red: [], blue: [], black: [] };
-    let currentColor = null;
-
-    const ordMap = {
-      '1st': 0, 'first': 0, '2nd': 1, 'second': 1, '3rd': 2, 'third': 2,
-      '4th': 3, 'fourth': 3, '5th': 4, 'fifth': 4, '6th': 5, 'sixth': 5,
-      '7th': 6, 'seventh': 6, '8th': 7, 'eighth': 7, '9th': 8, 'ninth': 8
-    };
-
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-    for (const line of lines) {
-      const lower = line.toLowerCase();
-
-      if (lower.startsWith('red')) { currentColor = 'red'; continue; }
-      if (lower.startsWith('blue')) { currentColor = 'blue'; continue; }
-      if (lower.startsWith('black')) { currentColor = 'black'; continue; }
-
-      const occMatch = lower.match(/(1st|2nd|3rd|4th|5th|6th|7th|8th|9th|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth)/i);
-      if (!occMatch) continue;
-
-      let col = currentColor;
-      if (lower.includes('red')) col = 'red';
-      else if (lower.includes('blue')) col = 'blue';
-      else if (lower.includes('black')) col = 'black';
-
-      if (!col || !rules[col]) continue;
-
-      const idx = ordMap[occMatch[1].toLowerCase()];
-      if (idx === undefined) continue;
-
-      const targets = [];
-      if (/\ba\b/i.test(line) || lower.includes('to a') || lower.includes('a or')) targets.push('A');
-      if (/\bb\b/i.test(line) || lower.includes('to b') || lower.includes('b or') || lower.includes('or b')) targets.push('B');
-      if (/\bc\b/i.test(line) || lower.includes('to c') || lower.includes('or c')) targets.push('C');
-
-      rules[col][idx] = [...new Set(targets)];
+  function wsParseManual(text) {
+    const out = {};
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.trim().replace(/^[*\u2022\-]+/, '').trim().toLowerCase();
+      const m = line.match(/^(\w+)\s+(red|blue|black)\s+occurrence:.*connected to\s+(.+?)\.?$/);
+      if (!m || !(m[1] in WS_ORD)) continue;
+      const letters = new Set((m[3].match(/\b[abc]\b/g) || []).map(s => s.toUpperCase()));
+      (out[m[2]] = out[m[2]] || {})[WS_ORD[m[1]]] = letters;
     }
+    return out;
+  }
 
-    return rules;
+  /**
+   * Solve every stage in order. Occurrence counts carry across stages, so fixing an
+   * earlier stage automatically re-flows all later ones.
+   */
+  function wsSolveAll(stages, rules) {
+    const counts = { red: 0, blue: 0, black: 0 };
+    return stages.map(stage => stage.map((w, i) => {
+      if (!w.c || !w.d) return { i, state: 'empty' };
+      counts[w.c]++;
+      const n = counts[w.c];
+      const rule = rules[w.c] && rules[w.c][n];
+      if (!rule) return { i, w, n, state: 'norule' };
+      return { i, w, n, state: rule.has(w.d) ? 'cut' : 'skip' };
+    }));
+  }
+
+  /**
+   * Screenshot reader: follows each possible wire curve from slots 1-3 to A-C and picks
+   * the colour/destination with the best coverage; reads the stage from the pager dots.
+   * img = ImageData-like {data,width,height}. Ported from the original app.
+   */
+  function wsReadImage(img) {
+    const { data: d, width: W, height: H } = img;
+    const px = (x, y) => { const i = (y * W + x) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+    const lum = [];
+    for (let y = Math.floor(H * 0.35); y <= Math.floor(H * 0.65); y += 3) {
+      for (let x = Math.floor(W * 0.35); x <= Math.floor(W * 0.65); x += 3) {
+        const [r, g, b] = px(x, y), av = (r + g + b) / 3, ch = Math.max(r, g, b) - Math.min(r, g, b);
+        if (av >= 15 && av <= 75 && ch < 20) lum.push(av);
+      }
+    }
+    lum.sort((a, b) => a - b);
+    const darkMed = lum.length ? lum[Math.floor(lum.length / 2)] : 40;
+    const kind = (r, g, b) => {
+      const av = (r + g + b) / 3, ch = Math.max(r, g, b) - Math.min(r, g, b);
+      if (r > 105 && r - g > 25 && r - b > 25) return 'red';
+      if (b > 85 && b - r > 18 && b - g > 10) return 'blue';
+      if (av < darkMed - 6 && av < 50 && ch < 22) return 'black';
+      return null;
+    };
+    const LX = 0.234 * W, RX = 0.764 * W;
+    const Y = [0.3136, 0.507, 0.702].map(f => f * H);
+    const tol = Math.max(2, Math.round(W / 160));
+    const bez = t => t * t * (3 - 2 * t);
+    const stage = [];
+    for (let p = 0; p < 3; p++) {
+      const best = { c: null, d: null, f: 0 };
+      for (let dst = 0; dst < 3; dst++) {
+        const hit = { red: 0, blue: 0, black: 0 };
+        const N = 60; let tot = 0;
+        for (let k = 4; k <= N - 4; k++) {
+          const t = k / N, x = LX + (RX - LX) * t, y = Y[p] + (Y[dst] - Y[p]) * bez(t);
+          tot++;
+          const seen = {};
+          for (let dy = -tol; dy <= tol; dy++) for (let dx = -1; dx <= 1; dx++) {
+            const X = Math.round(x + dx), YY = Math.round(y + dy);
+            if (X < 0 || X >= W || YY < 0 || YY >= H) continue;
+            const kd = kind(...px(X, YY)); if (kd) seen[kd] = 1;
+          }
+          for (const kd in seen) hit[kd]++;
+        }
+        for (const kd of ['red', 'blue', 'black']) {
+          const f = hit[kd] / tot;
+          if (f > best.f) Object.assign(best, { c: kd, d: 'ABC'[dst], f });
+        }
+      }
+      stage.push(best.f >= 0.55 ? { c: best.c, d: best.d } : { c: null, d: null });
+    }
+    // Stage number from the 5 pager dots (the lit one is orange). Orange pixels are binned to the
+    // nearest dot position instead of averaged: one global centroid mixed stray wire / reflection
+    // pixels with the dot and pulled stage 1 towards stage 3 (fix from the standalone wireseq.html).
+    const dotXs = [0.40, 0.45, 0.50, 0.55, 0.60];
+    const bins = [0, 0, 0, 0, 0];
+    for (let y = Math.floor(H * 0.77); y <= Math.floor(H * 0.88); y++) {
+      for (let x = Math.floor(W * 0.33); x <= Math.floor(W * 0.67); x++) {
+        const [r, g, b] = px(x, y);
+        if (r > 200 && g > 140 && g < 215 && b < 150 && r - b > 70) {
+          const xf = x / W;
+          let bd = Infinity, bi = -1;
+          for (let s = 0; s < 5; s++) { const dd = Math.abs(xf - dotXs[s]); if (dd < 0.024 && dd < bd) { bd = dd; bi = s; } }
+          if (bi >= 0) bins[bi]++;
+        }
+      }
+    }
+    let stageNo = null, maxCount = 0;
+    bins.forEach((n, s) => { if (n > maxCount) { maxCount = n; stageNo = s + 1; } });
+    if (maxCount < 6) stageNo = null;
+    return { wires: stage, stageNo };
+  }
+
+  // his rules box text → { red: { 1: Set(['A','B','C']), … }, … }
+  function parseWireRulesText(text) {
+    return wsParseManual(text);
   }
 
   // ── EVALUATOR (ACROSS ALL 5 STAGES) ───────────────────────────
 
   function evaluateWireSequences() {
-    const occCounts = { red: 0, blue: 0, black: 0 };
-    const allResults = [];
-
     const ordinalNames = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'];
-
-    for (let sIdx = 0; sIdx < 5; sIdx++) {
-      const stageNum = sIdx + 1;
-      const stageWires = wireState.stages[sIdx];
-      const stageRes = [];
-
-      for (let slot = 0; slot < 3; slot++) {
-        const wire = stageWires[slot];
-        if (wire.color === 'none' || wire.to === 'none') {
-          stageRes.push({
-            slot: slot + 1,
-            hasWire: false
-          });
-          continue;
-        }
-
-        const color = wire.color;
-        occCounts[color] = (occCounts[color] || 0) + 1;
-        const occNum = occCounts[color];
-        const occIndex = occNum - 1;
-
-        const ruleTargets = wireState.parsedRules?.[color]?.[occIndex] || [];
-        const shouldCut = ruleTargets.includes(wire.to);
-        const ordName = ordinalNames[occIndex] || `${occNum}th`;
-
-        stageRes.push({
-          slot: slot + 1,
+    const stages = wireState.stages.map(st => st.map(w => ({
+      c: w.color !== 'none' ? w.color : null,
+      d: w.to !== 'none' ? w.to : null
+    })));
+    const perStage = wsSolveAll(stages, wireState.parsedRules || {});
+    const allResults = perStage.map((rs, sIdx) => ({
+      stageNum: sIdx + 1,
+      wires: rs.map(r => r.state === 'empty'
+        ? { slot: r.i + 1, hasWire: false }
+        : {
+          slot: r.i + 1,
           hasWire: true,
-          color: color,
-          to: wire.to,
-          occNum: occNum,
-          ordName: ordName,
-          shouldCut: shouldCut,
-          ruleTargets: ruleTargets
-        });
-      }
-
-      allResults.push({ stageNum: stageNum, wires: stageRes });
-    }
-
+          color: r.w.c,
+          to: r.w.d,
+          occNum: r.n,
+          ordName: ordinalNames[r.n - 1] || `${r.n}th`,
+          shouldCut: r.state === 'cut',
+          noRule: r.state === 'norule'
+        })
+    }));
     renderWireResultsUI(allResults);
   }
 
@@ -578,11 +622,11 @@ ninth black occurrence: cut if connected to C.`;
           Wire ${w.slot}: <em style="color:#888;">No wire connected</em>
         </div>`;
         } else {
-          const cutColor = w.shouldCut ? '#4caf50' : '#f44336';
-          const cutBadge = w.shouldCut ? '✂️ CUT WIRE' : '⛔ LEAVE WIRE';
+          const cutColor = w.shouldCut ? '#4caf50' : w.noRule ? '#ff9800' : '#f44336';
+          const cutBadge = w.shouldCut ? '✂️ CUT WIRE' : w.noRule ? '⚠ NO RULE' : '⛔ LEAVE WIRE';
           const colorUpper = w.color.toUpperCase();
 
-          activeActions.push(`Wire ${w.slot} (${colorUpper} -> ${w.to}): ${w.shouldCut ? 'CUT' : 'LEAVE'}`);
+          activeActions.push(w);
 
           html += `<div style="padding:12px; border-radius:10px; background:${w.shouldCut ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.12)'}; margin-bottom:10px; border:1px solid ${cutColor}; display:flex; justify-content:space-between; align-items:center;">
           <div>
@@ -600,10 +644,14 @@ ninth black occurrence: cut if connected to C.`;
     if (summaryList) summaryList.innerHTML = html;
 
     if (actionText) {
+      // the answer, as bomb_boomed copies it: "Wire 1 Wire 3", or NONE
+      const cuts = activeActions.filter(w => w.shouldCut).map(w => `Wire ${w.slot}`);
       if (activeActions.length > 0) {
-        actionText.textContent = activeActions.join(' | ');
+        actionText.textContent = cuts.length ? `✂️ CUT: ${cuts.join(' ')}` : 'NONE TO CUT';
+        wireState.answer = cuts.length ? cuts.join(' ') : 'NONE';
       } else {
         actionText.textContent = "No wires connected on this stage";
+        wireState.answer = '';
       }
     }
 
@@ -615,22 +663,51 @@ ninth black occurrence: cut if connected to C.`;
 
   // ── IMAGE RECOGNITION FOR WIRE SEQUENCES ───────────────────────
 
-  function processWireImage(file) {
-    if (!file) return;
+  // One or more screenshots (read in file-name order). Each goes to the stage its pager dots show;
+  // when the dots can't be read, to this stage if it's still empty, else the next empty one.
+  function processWireImage(fileOrFiles) {
+    const list = (Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles])
+      .filter(f => f && (!f.type || f.type.startsWith('image/')))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+    if (!list.length) return;
 
     const status = document.getElementById('wireStatus');
     if (status) { status.textContent = 'Tracing wire sequences in image...'; status.style.color = '#aaa'; }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    const loadOne = (file) => new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => {
-        renderWireCanvas(img);
-        analyzeWireImage(img);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+    (async () => {
+      const traces = [];
+      let hint = fallbackWireStage();
+      for (const f of list) {
+        const img = await loadOne(f);
+        if (!img) continue;
+        try {
+          const t = analyzeWireImage(img, hint);
+          traces.push(t);
+          hint = Math.min(4, t.stageIdx + 1);
+          URL.revokeObjectURL(img.src);
+        } catch (e) {}
+      }
+      if (!traces.length) {
+        if (status) { status.textContent = 'Could not read that image — enter the wires by hand.'; status.style.color = '#f44336'; }
+        return;
+      }
+      applyWireTraces(traces);
+    })();
+  }
+
+  function fallbackWireStage() {
+    const isEmpty = (st) => st.every(w => w.color === 'none' && w.to === 'none');
+    const a = wireState.activeStage - 1;
+    if (isEmpty(wireState.stages[a])) return a;
+    for (let i = a + 1; i < 5; i++) if (isEmpty(wireState.stages[i])) return i;
+    return Math.min(4, a + 1);
   }
 
   function renderWireCanvas(img) {
@@ -650,131 +727,34 @@ ninth black occurrence: cut if connected to C.`;
     ctx.drawImage(img, x, y, w, h);
   }
 
-  function analyzeWireImage(img) {
-    const c = document.createElement('canvas');
-    c.width = img.width;
-    c.height = img.height;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0);
+  function analyzeWireImage(img, stageHint) {
+    const sc = img.naturalWidth > 800 ? 800 / img.naturalWidth : 1;
+    const W = Math.max(1, Math.round(img.naturalWidth * sc)), H = Math.max(1, Math.round(img.naturalHeight * sc));
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, W, H);
+    const res = wsReadImage(g.getImageData(0, 0, W, H));
+    const fromDots = res.stageNo >= 1 && res.stageNo <= 5; // ignore a misread dot count
+    const stageIdx = Math.max(0, Math.min(4, fromDots ? res.stageNo - 1 : stageHint));
+    return { img, stageIdx, fromDots, wires: res.wires };
+  }
 
-    const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+  function applyWireTraces(traces) {
+    traces.forEach(t => {
+      wireState.stages[t.stageIdx] = t.wires.map(w => ({ color: w.c || 'none', to: w.d || 'none' }));
+    });
+    const last = traces[traces.length - 1];
+    renderWireCanvas(last.img);
+    setWireActiveStage(last.stageIdx + 1); // show the stage just read: its answer is what's needed now
 
-    // 1. Calculate median panel background brightness for robust contrast comparison
-    const brList = [];
-    for (let y = Math.floor(img.height * 0.35); y <= Math.floor(img.height * 0.65); y += 3) {
-      for (let x = Math.floor(img.width * 0.35); x <= Math.floor(img.width * 0.65); x += 3) {
-        const idx = (y * img.width + x) * 4;
-        const r = imgData[idx];
-        const g = imgData[idx + 1];
-        const b = imgData[idx + 2];
-        const br = (r + g + b) / 3;
-        const diff = Math.max(r, g, b) - Math.min(r, g, b);
-        if (br >= 15 && br <= 75 && diff < 20) {
-          brList.push(br);
-        }
-      }
-    }
-    brList.sort((a, b) => a - b);
-    const bgBr = brList.length > 0 ? brList[Math.floor(brList.length / 2)] : 40;
-
-    // 2. Define geometry for Left (1, 2, 3) and Right (A, B, C) sockets
-    const leftX = Math.floor(img.width * 0.22);
-    const rightX = Math.floor(img.width * 0.78);
-    const topY = Math.floor(img.height * 0.22);
-    const botY = Math.floor(img.height * 0.78);
-
-    const panelW = rightX - leftX;
-    const panelH = botY - topY;
-
-    const x_left_socket = Math.floor(leftX + panelW * 0.10);
-    const x_right_socket = Math.floor(leftX + panelW * 0.90);
-
-    const slotHeights = [
-      Math.floor(topY + panelH * 0.15), // Slot 1 (Top)
-      Math.floor(topY + panelH * 0.50), // Slot 2 (Mid)
-      Math.floor(topY + panelH * 0.85)  // Slot 3 (Bot)
-    ];
-
-    const targetHeights = {
-      'A': Math.floor(topY + panelH * 0.15),
-      'B': Math.floor(topY + panelH * 0.50),
-      'C': Math.floor(topY + panelH * 0.85)
-    };
-
-    const sIdx = wireState.activeStage - 1;
-
-    for (let slot = 0; slot < 3; slot++) {
-      const sy = slotHeights[slot];
-
-      let bestMatch = { color: 'none', to: 'none', matchScore: 0 };
-      const targets = ['A', 'B', 'C'];
-
-      for (const target of targets) {
-        const ty = targetHeights[target];
-
-        let redPts = 0, bluePts = 0, blackPts = 0, totalPts = 0;
-
-        // Sample 35 points along the ray line from (x_left_socket, sy) to (x_right_socket, ty)
-        const numSteps = 35;
-        for (let step = 4; step <= numSteps - 4; step++) {
-          const t = step / numSteps;
-          const px = Math.floor(x_left_socket + (x_right_socket - x_left_socket) * t);
-          const py = Math.floor(sy + (ty - sy) * t);
-
-          // Check 3x3 neighborhood around (px, py) along line
-          for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              const nx = px + dx;
-              const ny = py + dy;
-              if (nx < 0 || nx >= img.width || ny < 0 || ny >= img.height) continue;
-
-              const idx = (ny * img.width + nx) * 4;
-              const r = imgData[idx];
-              const g = imgData[idx + 1];
-              const b = imgData[idx + 2];
-              const br = (r + g + b) / 3;
-
-              totalPts++;
-
-              // Red wire (vibrant red rubber)
-              if (r > 105 && (r - g > 25) && (r - b > 25)) {
-                redPts++;
-              }
-              // Blue wire (vibrant blue rubber)
-              else if (b > 85 && (b - r > 18) && (b - g > 10)) {
-                bluePts++;
-              }
-              // Black wire (dark rubber tube distinctly lower than background)
-              else if (br < bgBr - 6 && br < 50 && (Math.max(r, g, b) - Math.min(r, g, b) < 22)) {
-                blackPts++;
-              }
-            }
-          }
-        }
-
-        const minScore = Math.max(5, Math.floor(totalPts * 0.08));
-
-        if (redPts > minScore && redPts > bestMatch.matchScore) {
-          bestMatch = { color: 'red', to: target, matchScore: redPts };
-        }
-        if (bluePts > minScore && bluePts > bestMatch.matchScore) {
-          bestMatch = { color: 'blue', to: target, matchScore: bluePts };
-        }
-        if (blackPts > minScore && blackPts > bestMatch.matchScore) {
-          bestMatch = { color: 'black', to: target, matchScore: blackPts };
-        }
-      }
-
-      wireState.stages[sIdx][slot] = { color: bestMatch.color, to: bestMatch.to };
-    }
-
-    updateWireStageControlsUI();
-    evaluateWireSequences();
-
+    const found = last.wires.filter(w => w.c).length;
+    const desc = last.wires.map((w, i) => `${i + 1} ${w.c ? w.c[0].toUpperCase() + w.c.slice(1) + '→' + w.d : '—'}`).join(', ');
     const status = document.getElementById('wireStatus');
     if (status) {
-      status.textContent = `Stage ${wireState.activeStage} wires analyzed successfully!`;
-      status.style.color = '#4caf50';
+      status.textContent = traces.length > 1
+        ? `Read ${traces.length} screenshots (stages ${traces.map(t => t.stageIdx + 1).join(', ')}). Check each stage above.`
+        : `Stage ${last.stageIdx + 1}${last.fromDots ? '' : ' (stage dots not read — used the next empty stage)'}: ${desc}`;
+      status.style.color = found > 0 ? '#4caf50' : '#f44336';
     }
   }
 
