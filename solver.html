@@ -2076,6 +2076,25 @@
         style="color:#f5c542; text-align:center; margin-top:0; margin-bottom:16px; font-family:'Outfit', sans-serif; font-size:26px;">
         Wire Sequences Solver</h2>
 
+      <!-- This game's manual: the Red / Blue / Black table picture (it changes every game) -->
+      <div id="wireManualCard" style="background:#131328; padding:14px 18px; border-radius:12px; border:1px solid #222244; margin-bottom:18px;">
+        <div style="color:#f5c542; font-size:14px; font-weight:600; margin-bottom:8px;">📖 1. This game's manual picture (Red / Blue / Black table)</div>
+        <div id="wireManualDrop" onclick="document.getElementById('wireManualFile').click()"
+          style="border:2px dashed #3a3a5e; border-radius:10px; padding:12px; text-align:center; color:#aaa; font-size:13px; cursor:pointer; background:#0f0f22; transition:all 0.15s;">
+          <input type="file" id="wireManualFile" accept="image/*" style="display:none;">
+          📋 Paste / drop the <b>manual picture</b> here <span style="color:#777;">(or Ctrl+V anywhere on this tab — it tells the manual and stage screenshots apart)</span>
+        </div>
+        <div id="wireManualState" style="font-size:12.5px; margin-top:8px;"></div>
+        <div id="wireManualGrid" style="margin-top:8px;"></div>
+        <details style="margin-top:8px;">
+          <summary style="color:#8a8ea3; font-size:12px; cursor:pointer;">✎ Fix the table by hand</summary>
+          <label for="wireRulesInput" style="display:none;">Wire Sequences manual table</label>
+          <textarea id="wireRulesInput" rows="10" spellcheck="false" placeholder="Paste the manual picture above — or type lines like&#10;first red occurrence: cut if connected to A or C."
+            style="width:100%; margin-top:8px; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
+          <button id="wireResetRulesBtn" type="button" class="upload-btn" style="margin-top:6px; padding:4px 12px; font-size:12px;">Forget this manual</button>
+        </details>
+      </div>
+
       <!-- Stage Selector Tabs -->
       <div
         style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
@@ -2099,7 +2118,7 @@
         <div id="wireDropzone" class="morse-dropzone" onclick="document.getElementById('wireFileInput').click()"
           style="width:100%; max-width:500px; padding:16px; border:2px dashed #3a3a5e; border-radius:12px; text-align:center; cursor:pointer; background:#121226; transition:all 0.2s;">
           <span style="font-size:32px;">🧵</span>
-          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;">Drag & Drop stage screenshot(s) — the stage is read from the dots — click to
+          <p style="font-size:13px; color:#aaa; margin-top:6px; margin-bottom:0;"><b style="color:#f5c542;">2.</b> Drag & Drop stage screenshot(s) — the stage is read from the dots — click to
             Upload, or press <strong>Ctrl+V</strong> to paste stage screenshot</p>
         </div>
         <input id="wireFileInput" type="file" accept="image/*" multiple hidden>
@@ -2249,19 +2268,6 @@
         <div id="wireSummaryList"></div>
       </div>
 
-      <!-- Manual table: built in from the image manual, nothing to paste -->
-      <details style="background:#131328; padding:14px 18px; border-radius:12px; border:1px solid #222244;">
-        <summary style="color:#f5c542; font-size:14px; font-weight:600; cursor:pointer;">📖 Manual table — built in from the image manual (22 Nov), nothing to paste</summary>
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0;">
-          <p style="color:#8a8ea3; font-size:12px; margin:0;">The Red / Blue / Black occurrence table is the same picture every game and is already loaded.
-            Only edit it if you spot a wrong rule. Occurrence counts add up across all 5 stages.</p>
-          <button id="wireResetRulesBtn" type="button" class="upload-btn"
-            style="margin-top:0; padding:4px 12px; font-size:12px; white-space:nowrap;">Restore built-in table</button>
-        </div>
-        <label for="wireRulesInput" style="display:none;">Wire Sequences manual table</label>
-        <textarea id="wireRulesInput" rows="10"
-          style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
-      </details>
 
       <div id="wireStatus" style="margin-top:16px; font-size:13px; color:#aaa; text-align:center;"></div>
     </div>
@@ -2604,13 +2610,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
   <script src="./search-module.js?v=20260918_v3"></script>
   <script src="./knobs-manual.js?v=20261122_v1"></script>
-  <script src="./knobs-module.js?v=20261122_v5"></script>
+  <script src="./knobs-module.js?v=20261122_v6"></script>
   <script src="./memory-module.js?v=20260918_v3"></script>
   <script src="./password-module.js?v=20260918_v3"></script>
   <script src="./piano-module.js?v=20260918_v3"></script>
   <script src="./button-module.js?v=20260918_v3"></script>
   <script src="./whos-module.js?v=20260918_v3"></script>
-  <script src="./wires-module.js?v=20261122_v5"></script>
+  <script src="./wires-module.js?v=20261122_v6"></script>
   <script src="./circuit-module.js?v=20261122_v5"></script>
   <script src="./nqueen-module.js?v=20260918_v3"></script>
   <script src="./complex-wires-module.js?v=20260918_v3"></script>
@@ -2622,7 +2628,7 @@
   <script src="./pipes-module.js?v=20261122_v1"></script>
   <script src="./astrology-module.js?v=20261122_v1"></script>
   <script src="./hangman-module.js?v=20261122_v1"></script>
-  <script src="./simons-module.js?v=20261122_v1"></script>
+  <script src="./simons-module.js?v=20261122_v2"></script>
   <script src="./rubiks-module.js?v=20261122_v1"></script>
   <script src="./dragdrop-helper.js?v=20261122_v3"></script>
   <script>

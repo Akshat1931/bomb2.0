@@ -256,6 +256,28 @@
   };
   window.simonsModuleState = state;
 
+  // The table is built in from the 22 Nov manual picture. Manuals have changed between games (Wire
+  // Sequences did), so it can be edited here — click a cell — and the edit is remembered.
+  const TABLE_KEY = 'ktane_simon_table';
+  const BUILT_IN = JSON.stringify(SIMON_TABLE);
+  try {
+    const saved = JSON.parse(localStorage.getItem(TABLE_KEY) || 'null');
+    if (saved) for (const v of ['noVowel', 'vowel']) for (const p of ['odd', 'even']) Object.assign(SIMON_TABLE[v][p], saved[v][p]);
+  } catch (e) {}
+  const tableEdited = () => JSON.stringify(SIMON_TABLE) !== BUILT_IN;
+  window.cycleSimonTable = function (v, p, c) {
+    const order = ['R', 'B', 'Y', 'G'];
+    SIMON_TABLE[v][p][c] = order[(order.indexOf(SIMON_TABLE[v][p][c]) + 1) % 4];
+    try { if (tableEdited()) localStorage.setItem(TABLE_KEY, JSON.stringify(SIMON_TABLE)); else localStorage.removeItem(TABLE_KEY); } catch (e) {}
+    update();
+  };
+  window.resetSimonTable = function () {
+    const b = JSON.parse(BUILT_IN);
+    for (const v of ['noVowel', 'vowel']) for (const p of ['odd', 'even']) Object.assign(SIMON_TABLE[v][p], b[v][p]);
+    try { localStorage.removeItem(TABLE_KEY); } catch (e) {}
+    update();
+  };
+
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const cleanSerial = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -420,8 +442,9 @@
             <div class="si-answers" id="simonsAnswers"></div>
             <div id="simonsWarn"></div>
             <div class="si-log" id="simonsLog"></div>
-            <details class="si-details">
-              <summary>Manual table (universal)</summary>
+            <details class="si-details" id="simonsTableBox">
+              <summary id="simonsTableSum">Manual table</summary>
+              <div style="font-size:12px; color:#8a8ea3; margin:6px 0;">Check it against this game's Simon manual picture — <b>click a cell</b> to change it if it differs (remembered).</div>
               <div id="simonsTable"></div>
             </details>
           </div>
@@ -525,8 +548,9 @@
     $('simonsTable').innerHTML = `<table class="si-table"><thead><tr><th>Serial / disarmed</th>${['R', 'B', 'Y', 'G'].map(c => `<th>${SINAMES[c]} flash</th>`).join('')}</tr></thead><tbody>${
       [['noVowel', 'odd'], ['noVowel', 'even'], ['vowel', 'odd'], ['vowel', 'even']].map(([v, p]) => {
         const cls = !a.hasSerial ? '' : (v === 'vowel') === a.vowel ? 'on' : 'off';
-        return `<tr class="${cls}"><td>${v === 'vowel' ? 'Vowel' : 'No vowel'} · ${p === 'odd' ? 'Odd' : 'Even'}</td>${['R', 'B', 'Y', 'G'].map(c => `<td>${chip(SIMON_TABLE[v][p][c], true)}</td>`).join('')}</tr>`;
-      }).join('')}</tbody></table>`;
+        return `<tr class="${cls}"><td>${v === 'vowel' ? 'Vowel' : 'No vowel'} · ${p === 'odd' ? 'Odd' : 'Even'}</td>${['R', 'B', 'Y', 'G'].map(c => `<td style="cursor:pointer;" title="Click to change" onclick="window.cycleSimonTable('${v}','${p}','${c}')">${chip(SIMON_TABLE[v][p][c], true)}</td>`).join('')}</tr>`;
+      }).join('')}</tbody></table>${tableEdited() ? '<button type="button" class="si-btn" style="margin-top:6px;" onclick="window.resetSimonTable()">Reset to the built-in (22 Nov) table</button>' : ''}`;
+    $('simonsTableSum').textContent = tableEdited() ? 'Manual table — EDITED for this game' : 'Manual table — built in from the 22 Nov manual (click to check / edit)';
   }
 
   window.handleSimonsFiles = function (input) {
