@@ -296,6 +296,11 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'astrologySection': {
+          const input = document.getElementById('astrologyFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     });
   }

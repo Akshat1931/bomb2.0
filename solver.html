@@ -946,6 +946,7 @@
     <button class="nav-link" type="button" data-target="symbolsSection" onclick="showSection('symbolsSection')">Symbols</button>
     <button class="nav-link" type="button" data-target="limboSection" onclick="showSection('limboSection')">Limbo</button>
     <button class="nav-link" type="button" data-target="pipesSection" onclick="showSection('pipesSection')">Pipes</button>
+    <button class="nav-link" type="button" data-target="astrologySection" onclick="showSection('astrologySection')">Astrology</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1996,6 +1997,20 @@
           </div>
         </div>
 
+        <!-- Astrology -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="astrology stars constellations sky map quadrant symbols star list buttons"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">✨ Astrology</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Count the stars; every constellation with that many stars is looked up on the sky map. Press the one button in the same quadrant as one of them.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Each Game:</strong> Paste the helper's wide <strong>sky map</strong> and the <strong>star list</strong> text (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd> anywhere on the tab). Both change every game — press <strong>New Game</strong> to forget them.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Each Bomb:</strong> Paste the defuser's screenshot. Stars are counted and the 4 symbols named; fix the count or a symbol by hand if one is marked unsure.</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- No Results Message -->
@@ -2518,6 +2533,7 @@
   <section id="minesweeperSection" class="page-section"></section>
   <section id="limboSection" class="page-section"></section>
   <section id="pipesSection" class="page-section"></section>
+  <section id="astrologySection" class="page-section"></section>
 
   <section id="aboutSection" class="page-section">
     <div
@@ -2553,6 +2569,7 @@
   <script src="./multi-maze-module.js?v=20261011_v1"></script>
   <script src="./limbo-module.js?v=20261122_v1"></script>
   <script src="./pipes-module.js?v=20261122_v1"></script>
+  <script src="./astrology-module.js?v=20261122_v1"></script>
   <script src="./dragdrop-helper.js?v=20261013_v1"></script>
   <script>
     let img1 = null, img2 = null;
@@ -2744,7 +2761,7 @@
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
       if (document.getElementById('multiMazeView')?.style.display === 'block') return;
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active') || document.getElementById('astrologySection')?.classList.contains('active')) return;
       
       let slot = pasteTargetSlot;
       if (slot !== 1 && slot !== 2) slot = 1;
@@ -2930,6 +2947,12 @@
           window.initPipesModule();
         }
         window.pipesLoaded = true;
+      }
+      if (id === 'astrologySection' && !window.astrologyLoaded) {
+        if (typeof window.initAstrologyModule === 'function') {
+          window.initAstrologyModule();
+        }
+        window.astrologyLoaded = true;
       }
 
       if (window.BombDragDrop) {
