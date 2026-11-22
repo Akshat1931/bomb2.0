@@ -38,6 +38,10 @@
     { key: '1x2',  label: '2 Mazes (Horizontal 1×2)', rows: 1, cols: 2 }
   ];
 
+  // The bot takes WASD (W up, A left, S down, D right); the solver works in U/D/L/R.
+  const toWasd = (moves) => (moves || '').replace(/[UDLR]/g, m => ({ U: 'W', L: 'A', D: 'S', R: 'D' })[m]);
+  window.mazeToWasd = toWasd;
+
   // Helper: format move characters to human readable e.g. "UP 2, RIGHT 3"
   function formatMovesReadable(movesStr) {
     if (!movesStr) return '';
@@ -686,7 +690,7 @@
     }
 
     const movesReadable = isSolved ? formatMovesReadable(slot.solveResult.moves) : '';
-    const movesCode = isSolved ? slot.solveResult.moves : '';
+    const movesCode = isSolved ? toWasd(slot.solveResult.moves) : '';
 
     card.style.cssText = `
       background: #14142b;
@@ -732,13 +736,13 @@
         </div>
       </div>
 
-      <!-- Solution Section (LRUD Code Only) -->
+      <!-- Solution Section (WASD code for the bot) -->
       ${isSolved ? `
         <div style="background:#0e0e22; border:1px solid #1e3a2b; border-radius:8px; padding:10px; margin-top:8px;">
           <!-- Code output -->
           <div style="margin-bottom:8px;">
             <div style="font-size:10px; color:#8c8fae; text-transform:uppercase; font-weight:700; margin-bottom:4px;">
-              Code (${movesCode.length} steps)
+              WASD code (${movesCode.length} steps)
             </div>
             <div style="color:#4ade80; font-family:monospace; font-size:15px; font-weight:800; letter-spacing:1px; word-break:break-all; line-height:1.4; background:#14142b; padding:8px 10px; border-radius:6px; border:1px solid #28382c;">
               ${movesCode}
@@ -863,11 +867,11 @@
     e.target.value = '';
   };
 
-  // Copy single slot code (LRUD combination)
+  // Copy single slot code (WASD)
   window.multiMazeCopySlotCode = function (idx, btnEl) {
     const slot = slotsData[idx];
     if (!slot || !slot.solveResult) return;
-    navigator.clipboard.writeText(slot.solveResult.moves).then(() => {
+    navigator.clipboard.writeText(toWasd(slot.solveResult.moves)).then(() => {
       const origText = btnEl.innerHTML;
       btnEl.innerHTML = '<span>✓ Copied!</span>';
       btnEl.style.background = '#16a34a';
@@ -883,7 +887,7 @@
     const answers = [];
     slotsData.forEach((slot, idx) => {
       if (slot.status === 'solved' && slot.solveResult) {
-        answers.push(`Maze ${idx + 1}: ${slot.solveResult.moves}`);
+        answers.push(`Maze ${idx + 1}: ${toWasd(slot.solveResult.moves)}`);
       }
     });
 

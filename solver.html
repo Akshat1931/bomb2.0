@@ -2623,7 +2623,7 @@
   <script src="./chess-module.js?v=20261122_v4"></script>
   <script src="./minesweeper-module.js?v=20260918_v3"></script>
   <script src="./symbols-module.js?v=20260918_v1"></script>
-  <script src="./multi-maze-module.js?v=20261011_v1"></script>
+  <script src="./multi-maze-module.js?v=20261122_v2"></script>
   <script src="./limbo-module.js?v=20261122_v1"></script>
   <script src="./pipes-module.js?v=20261122_v1"></script>
   <script src="./astrology-module.js?v=20261122_v1"></script>
@@ -3874,7 +3874,8 @@
       lastSolveData = { dotImage: res.dotImage, mazeCanvas: res.mazeCanvas, wallData: res.wallData, path: res.path };
 
       const el = document.getElementById('ans');
-      el.textContent = res.moves;
+      // the bot takes WASD (W up, A left, S down, D right)
+      el.textContent = res.moves.replace(/[UDLR]/g, m => ({ U: 'W', L: 'A', D: 'S', R: 'D' })[m]);
       el.style.display = 'block';
 
       const totalMs = Math.round(performance.now() - t0);
