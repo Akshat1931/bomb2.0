@@ -1,4 +1,4 @@
-// GENERATED from bomb_boomed (2026-11-23 17:07) by scripts/build-conso-logic.mjs — do not edit here.
+// GENERATED from bomb_boomed (2026-11-23 17:43) by scripts/build-conso-logic.mjs — do not edit here.
 // window.BombLogic.<module>.<function>: the same image readers and solvers as bomb_boomed.
 var __BombLogic = (() => {
   var __defProp = Object.defineProperty;
@@ -3281,10 +3281,14 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
         }
         const bw = maxX - minX + 1, bh = maxY - minY + 1;
         if (n > 500 && bw >= 30 && bh >= 30 && bw <= W2 * 0.6 && bh <= H * 0.6) {
-          tiles.push({ x: minX, y: minY, bw, bh, cx: sx / n, cy: sy / n });
+          tiles.push({ x: minX, y: minY, bw, bh, n, cx: sx / n, cy: sy / n });
         }
       }
     }
+    const inside = (a, b) => a !== b && a.x >= b.x && a.y >= b.y && a.x + a.bw <= b.x + b.bw && a.y + a.bh <= b.y + b.bh;
+    const keys = tiles.filter((t) => !tiles.some((o) => inside(t, o)));
+    tiles.length = 0;
+    tiles.push(...keys.sort((a, b) => b.n - a.n).slice(0, 4));
     if (tiles.length >= 4) {
       tiles.sort((a, b) => {
         const at2 = a.cy < H * 0.5, bt = b.cy < H * 0.5;
