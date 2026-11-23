@@ -177,7 +177,7 @@ function applyPastedFacts(text) {
   if (pf.serial) {
     buttonState.serial = pf.serial;
     const s = $('buttonSerialInput');
-    if (s) s.value = pf.serial;
+    if (s) { s.value = pf.serial; s.dispatchEvent(new Event('input', { bubbles: true })); } // the serial bar follows
     updateSerialDetailsUI(pf.serial);
   }
   Object.entries(FACT_INPUTS).forEach(([k, id]) => {
