@@ -111,8 +111,13 @@
     img.src = src;
   }
 
+  // DataTransfers a module has already taken (its own paste / drop handler called handleDataTransfer):
+  // the page-wide paste fallback below leaves those alone, so a picture is never read twice
+  const claimed = new WeakSet();
+
   function handleDataTransfer(dataTransfer, callback) {
     if (!dataTransfer) return;
+    claimed.add(dataTransfer);
 
     // 1. Check dataTransfer.files
     const files = dataTransfer.files;
@@ -204,10 +209,18 @@
   }
 
   function routeDropToActiveModule(dataTransfer) {
+    handleDataTransfer(dataTransfer, deliverToActiveModule);
+  }
+
+  // An image link pasted on the page background: fetch it and hand it to the open module
+  function routeUrlToActiveModule(url) {
+    fetchImageBlob(url, deliverToActiveModule, (err) => console.warn('Could not load pasted URL:', err));
+  }
+
+  function deliverToActiveModule(file, img) {
     const secId = getActiveSection();
     if (!secId) return;
-
-    handleDataTransfer(dataTransfer, (file, img) => {
+    {
       if (!file && !img) return;
 
       switch (secId) {
@@ -341,13 +354,18 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'searchSection': {
+          const input = document.getElementById('srFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
         case 'rubiksSection': {
           const input = document.getElementById('rubiksFileInput');
           if (file && input) feedFileToInput(input, file);
           break;
         }
       }
-    });
+    }
   }
 
   // ── ATTACH TO SPECIFIC DROPZONES ─────────────────────────────────
@@ -479,13 +497,19 @@
   window.addEventListener(
     'paste',
     function (e) {
-      // If clipboard contains plain text with image/Discord URL, route to active module
-      const textPlain = e.clipboardData?.getData('text/plain');
-      const textHtml = e.clipboardData?.getData('text/html');
+      // If clipboard contains plain text with image/Discord URL, route to active module —
+      // unless the module's own paste handler took it in this same event (most do: it was then
+      // fetched and read twice, so e.g. Mines counted one paste as two rounds). Their handlers can
+      // run after this one, so look once the event is over; the URL is read now, while it can be.
+      const dt = e.clipboardData;
+      const textPlain = dt?.getData('text/plain');
+      const textHtml = dt?.getData('text/html');
       const url = extractImageUrl(textPlain) || extractImageUrl(textHtml);
-      if (url) {
-        routeDropToActiveModule(e.clipboardData);
-      }
+      if (!url) return;
+      setTimeout(() => {
+        if (e.defaultPrevented || (dt && claimed.has(dt))) return;
+        routeUrlToActiveModule(url);
+      }, 0);
     },
     false
   );
