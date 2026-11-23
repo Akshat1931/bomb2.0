@@ -29,11 +29,12 @@
         border: 1px solid var(--border, #1e1e32); border-radius: 999px; color: #fff; font-family: monospace;
         font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
       .serial-bar input:focus { outline: none; border-color: var(--accent, #ffd875); }
+      .serial-bar input::placeholder { text-transform: none; letter-spacing: 0; font-weight: 500; font-family: 'Inter', sans-serif; font-size: 12px; }
       .serial-bar-facts { font-size: 11px; font-weight: 700; color: var(--text-dim, #94a3b8); white-space: nowrap; }
       .serial-bar-clear { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border, #1e1e32);
         background: transparent; color: var(--text-dim, #94a3b8); cursor: pointer; font-size: 12px; line-height: 1; }
       .serial-bar-clear:hover { color: var(--red, #ff5f57); border-color: var(--red, #ff5f57); }
-      @media (max-width: 480px) { .serial-bar input { width: 96px; } .serial-bar-facts { font-size: 10px; } }
+      @media (max-width: 480px) { .serial-bar input { width: 108px; } .serial-bar-facts { font-size: 10px; } }
     `;
     const style = document.createElement('style');
     style.textContent = css;
@@ -88,7 +89,7 @@
     bar.title = 'The serial number is the same on every bomb this game — The Button, Complex Wires, Venn and Simon Says read it from here';
     bar.innerHTML = `
       <span class="serial-bar-label">SERIAL</span>
-      <input id="serialBarInput" type="text" placeholder="type once per game" spellcheck="false" autocomplete="off" autocapitalize="characters">
+      <input id="serialBarInput" type="text" placeholder="once per game" spellcheck="false" autocomplete="off" autocapitalize="characters">
       <span id="serialBarFacts" class="serial-bar-facts"></span>
       <button id="serialBarClear" type="button" class="serial-bar-clear" title="Clear the serial (new game)">✕</button>`;
     header.appendChild(bar);

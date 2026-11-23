@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KTaNE Solver Deck</title>
   <!-- Vercel Web Analytics -->
   <script defer src="/_vercel/insights/script.js"></script>
@@ -906,6 +907,36 @@
     .button-answer { cursor: pointer; }
     .button-rule-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #1f1f3a; font-family: monospace; }
     .sym-puzzle-on { border-color: #3ddc84 !important; color: #3ddc84 !important; }
+
+    /* ── Phones: one column that fits the screen ─────────────────────
+       A grid column of 1fr can't shrink below its widest content, so on a phone a long
+       title or row of buttons pushed the whole card off the right edge (Switches, Knobs,
+       Wire Sequences, Complex Wires, Chess). minmax(0, 1fr) + min-width: 0 lets it shrink. */
+    @media (max-width: 600px) {
+      body { padding: 20px 16px; gap: 16px; }
+      body .switches-grid, body .knobs-layout, body .chess-layout,
+      body #complexWiresSection .cw-grid-2 { grid-template-columns: minmax(0, 1fr); }
+      body .switches-grid > *, body .knobs-layout > *, body .chess-layout > *,
+      body #complexWiresSection .cw-grid-2 > *, body .knobs-col-left, body .knobs-col-right { min-width: 0; max-width: 100%; }
+      .page-section select, .page-section input, .page-section textarea { max-width: 100%; }
+      .page-section img, .page-section canvas { max-width: 100%; }
+      #wireQuickInput { min-width: 0; }
+      #wireQuickApplyBtn { padding: 8px 12px !important; }
+      #complexWiresSection .cw-rule-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+      #complexWiresSection .cw-panel-title { flex-wrap: wrap; gap: 6px; }
+      .switches-panel-title, .chess-card-title, .knobs-card-title { flex-wrap: wrap; gap: 6px; }
+      #switchesAddForm { flex-wrap: wrap; }
+      #switchesAddForm input { flex: 1 1 100% !important; min-width: 0; }
+      body .sr-layout { grid-template-columns: minmax(0, 1fr); }
+      body .sr-shell { padding: 14px; }
+      body .sr-card { padding: 12px; }
+      /* the 27 tabs: one row that scrolls sideways and stays at the top, instead of ~300 px of pills */
+      .topnav { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; border-radius: 14px;
+        position: sticky; top: 0; z-index: 50; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+        scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      .topnav::-webkit-scrollbar { display: none; }
+      .nav-link { flex: 0 0 auto; white-space: nowrap; padding: 7px 12px; }
+    }
   </style>
 </head>
 
@@ -1772,7 +1803,7 @@
       </div>
 
       <!-- Grid of 14 Module Guide Cards -->
-      <div id="helpCardsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px;">
+      <div id="helpCardsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap:18px;">
 
         <!-- 1. Wire Sequences -->
         <div class="help-module-card" data-category="wires" data-keywords="wire sequences wires sequence red blue black 1ra 2rb 3bc 1blackc stage panel occurrence"
@@ -2537,8 +2568,8 @@
             <label style="font-size:12px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
               Serial Number:
             </label>
-            <div style="display:flex; gap:8px;">
-              <input id="cwSerialInput" type="text" placeholder="e.g. 4B2Z96" style="flex:1; background:#070714; border:1px solid var(--border); color:#fff; font-family:monospace; font-size:15px; font-weight:700; padding:8px 12px; border-radius:8px; text-transform:uppercase;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input id="cwSerialInput" type="text" placeholder="e.g. 4B2Z96" style="flex:1 1 140px; min-width:0; background:#070714; border:1px solid var(--border); color:#fff; font-family:monospace; font-size:15px; font-weight:700; padding:8px 12px; border-radius:8px; text-transform:uppercase;">
               <button id="cwSerialEvenBtn" class="cw-mini-btn" type="button" style="padding:8px 12px; font-size:12px;">Last Digit: EVEN</button>
               <button id="cwSerialOddBtn" class="cw-mini-btn active" type="button" style="padding:8px 12px; font-size:12px;">Last Digit: ODD</button>
             </div>
@@ -2890,6 +2921,12 @@
       window.scrollTo(0, 0);
       document.querySelectorAll('.page-section').forEach(section => section.classList.toggle('active', section.id === id));
       document.querySelectorAll('.nav-link').forEach(button => button.classList.toggle('active', button.dataset.target === id));
+      // phones: the tabs are one sideways-scrolling row — keep the open one in view
+      const activeTab = document.querySelector('.nav-link.active');
+      if (activeTab && activeTab.parentElement.scrollWidth > activeTab.parentElement.clientWidth) {
+        const nav = activeTab.parentElement;
+        nav.scrollLeft = activeTab.offsetLeft - (nav.clientWidth - activeTab.offsetWidth) / 2;
+      }
 
       if (id === 'vennSection' && !window.vennLoaded) {
         if (typeof window.initVennModule === 'function') {
@@ -3950,7 +3987,7 @@
     }
   </script>
   <!-- one serial per game, shared by The Button, Complex Wires, Venn and Simon Says (after showSection) -->
-  <script src="./serial-bar.js?v=20261123_v1"></script>
+  <script src="./serial-bar.js?v=20261123_v2"></script>
 </body>
 
 </html>
