@@ -2,7 +2,8 @@
  * Search Solver Module for Keep Talking and Nobody Explains
  * 
  * Features:
- * 1. Computer Vision 5x5 Grid Scanner (non-destructive grayscale inverted composite).
+ * 1. 5x5 grid reader and word finder: bomb_boomed's (bomb-logic.js) — letter shapes, then OCR
+ *    for unclear cells; every word from the list found in the grid is given (Copy All).
  * 2. Automatic Stage Detection from indicator lights on the right (Stage 1, 2, 3).
  * 3. Pre-populated & Editable Word Lists (Search #1, Search #2, custom stage words).
  * 4. Multi-word detection across all 8 directions, listing all matching words.
@@ -10,23 +11,8 @@
  */
 
 (function() {
-  const DEFAULT_WORDS_TEXT = `Search #1, Stage 1:
-RAFT LOAD TASK POND VENT POET PART DESK SIZE LOOK SEAT USED REEL NORM MESS PACE BODY FEEL FAIR LOFT
-
-Search #1, Stage 2:
-HOOK BALL IRON MUST DOVE CELL VERB DICE MOON WARN WINK BOOK FISH MEET VERY WHAT THAT LOSE SNOW FAIR
-
-Search #1, Stage 3:
-HOST GOOD RACE WORD MISS RUST LEAN LOST NICE ACID ROPE EASY TILE STEW GOAL TYPE YOUR PICK EPIC HARP
-
-Search #2, Stage 1:
-KEEP TILE REST CUBE MAZE CELL SURF PAST BANK CAST SLAM BODY BOLD FREE SENT SOAK KISS ITEM HAWK PORT
-
-Search #2, Stage 2:
-GAME BELT OVER YEAR FEEL PLAN SWIM LIST JUST COLD RELY CAKE FELT TENT FEED ACID WIFE NEAT RACE ATOM
-
-Search #2, Stage 3:
-NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK VENT FEEL FOAM SENT`;
+  // bomb_boomed's word list (this game's manual): every word found in the grid is given
+  const DEFAULT_WORDS_TEXT = `PALM SINK WITH SEND OKAY USER LOSS RAID DIRT LEAF WIFE YELL TELL FLAT PARK SOUP VAST BEST TORN CLAY STEM SLIP RIDE ICON CORN DOVE BIRD PLOT FOOT DESK CAPE POET LAVA JOKE MOVE JOIN FINE VEIL GAME PINE TOLD COLD BOLD GOLD HOLD SOLD FOLD MOLD`;
 
   const DIRS = [
     { dr: -1, dc: 0, name: 'Up', arrow: '↑' },
@@ -147,189 +133,6 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     return activeStage;
   }
 
-  // ── PRECOMPUTED 16x16 LETTER BITMASK TEMPLATES (A-Z) ─────
-  const LETTER_TEMPLATES = {
-    "A": [0, 896, 896, 1984, 1984, 1984, 4064, 3552, 3808, 8176, 8176, 8176, 6264, 14392, 12312, 0],
-    "B": [0, 16368, 16368, 4088, 3640, 3640, 4080, 4080, 3640, 3640, 3640, 3644, 3640, 4088, 4032, 0],
-    "C": [0, 384, 4080, 8176, 7736, 15384, 15360, 15360, 15360, 15360, 15360, 7736, 8184, 4080, 384, 0],
-    "D": [0, 8128, 16368, 8176, 3644, 3644, 3612, 3612, 3612, 3612, 3612, 3644, 3836, 4080, 4080, 0],
-    "E": [0, 8176, 8176, 8176, 1792, 1792, 2016, 2016, 1792, 1792, 1792, 1792, 2032, 2032, 2032, 0],
-    "F": [0, 8176, 8176, 8176, 1792, 1792, 1792, 2016, 2016, 2016, 1792, 1792, 1536, 1536, 1536, 0],
-    "G": [0, 384, 2040, 4088, 7736, 7192, 7168, 15360, 15484, 7288, 7224, 7736, 8184, 4088, 480, 0],
-    "H": [0, 15900, 15932, 7740, 7740, 7740, 8188, 8188, 8188, 7740, 7740, 7740, 7740, 7224, 7224, 0],
-    "I": [0, 2016, 2016, 2016, 992, 992, 992, 992, 992, 992, 992, 992, 992, 992, 2016, 0],
-    "J": [0, 448, 448, 448, 192, 192, 192, 192, 192, 192, 192, 192, 448, 384, 768, 0],
-    "K": [0, 15480, 15480, 15984, 3680, 3776, 4032, 4032, 4032, 4064, 3808, 3696, 3184, 3128, 0, 0],
-    "L": [0, 3840, 7936, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 4088, 4088, 0],
-    "M": [0, 31758, 31758, 31774, 32286, 32318, 32574, 32766, 32766, 32766, 30702, 29678, 29646, 29134, 0, 0],
-    "N": [0, 15420, 15932, 7992, 7960, 8088, 8152, 7160, 6648, 6392, 6392, 6264, 6264, 6200, 4120, 0],
-    "O": [0, 384, 4080, 8184, 7224, 15416, 14396, 14364, 14364, 14396, 15416, 7224, 8184, 4080, 384, 0],
-    "P": [0, 8176, 8176, 2040, 1848, 1848, 1848, 2040, 2032, 2032, 1920, 1792, 1792, 1536, 1024, 0],
-    "Q": [0, 960, 2016, 3696, 7288, 7224, 7224, 7224, 7224, 3696, 4080, 2016, 480, 240, 48, 0],
-    "R": [0, 16128, 16320, 8160, 7392, 7392, 8160, 8160, 8128, 8128, 7648, 7392, 7408, 7288, 56, 0],
-    "S": [0, 288, 2016, 4080, 3696, 3632, 3840, 4032, 2016, 1008, 496, 2160, 7280, 4080, 2016, 0],
-    "T": [0, 8184, 16376, 16376, 960, 960, 960, 960, 960, 960, 960, 960, 960, 960, 960, 0],
-    "U": [0, 15932, 15932, 7736, 7192, 7192, 7192, 7192, 7192, 7704, 7736, 7736, 4080, 2016, 384, 0],
-    "V": [0, 15900, 32316, 15900, 7704, 7736, 3632, 3952, 3952, 2032, 2016, 992, 960, 448, 384, 0],
-    "W": [0, 0, 30862, 30926, 14812, 15868, 7676, 8184, 8184, 3960, 3960, 3640, 1592, 0, 0, 0],
-    "X": [0, 15932, 15932, 7736, 3888, 2032, 2016, 960, 960, 2016, 2032, 1776, 3824, 7228, 14396, 0],
-    "Y": [0, 7964, 16156, 7964, 3864, 1848, 1968, 2016, 992, 992, 480, 480, 480, 480, 448, 0],
-    "Z": [0, 8176, 8176, 8176, 480, 480, 960, 960, 1920, 1920, 3840, 3840, 8176, 8176, 8176, 0]
-  };
-
-  const PRECOMPUTED_TEMPLATES = {};
-  for (const [ch, rows] of Object.entries(LETTER_TEMPLATES)) {
-    const vec = new Float32Array(256);
-    let sum = 0;
-    for (let r = 0; r < 16; r++) {
-      const val = rows[r];
-      for (let c = 0; c < 16; c++) {
-        if (val & (1 << (15 - c))) {
-          vec[r * 16 + c] = 1.0;
-          sum += 1.0;
-        }
-      }
-    }
-    const mean = sum / 256;
-    let normSq = 0;
-    for (let i = 0; i < 256; i++) {
-      vec[i] -= mean;
-      normSq += vec[i] * vec[i];
-    }
-    const norm = Math.sqrt(normSq);
-    PRECOMPUTED_TEMPLATES[ch] = { vec, norm };
-  }
-
-  function classifyComponentPatch(imgData, W, x0, y0, bw, bh) {
-    const scale = Math.min(14 / bw, 14 / bh);
-    const nw = Math.max(1, Math.round(bw * scale));
-    const nh = Math.max(1, Math.round(bh * scale));
-    const ox = Math.floor((16 - nw) / 2);
-    const oy = Math.floor((16 - nh) / 2);
-
-    const normVec = new Float32Array(256);
-    let sum = 0;
-
-    for (let r = 0; r < nh; r++) {
-      const srcY = y0 + Math.min(bh - 1, Math.floor(r / scale));
-      for (let c = 0; c < nw; c++) {
-        const srcX = x0 + Math.min(bw - 1, Math.floor(c / scale));
-        const idx = (srcY * W + srcX) * 4;
-        if (imgData[idx] > 165 && imgData[idx + 1] > 165 && imgData[idx + 2] > 165) {
-          normVec[(oy + r) * 16 + (ox + c)] = 1.0;
-          sum += 1.0;
-        }
-      }
-    }
-
-    const mean = sum / 256;
-    let normSq = 0;
-    for (let i = 0; i < 256; i++) {
-      normVec[i] -= mean;
-      normSq += normVec[i] * normVec[i];
-    }
-    const norm = Math.sqrt(normSq);
-    if (norm === 0) return '';
-
-    let bestCh = '';
-    let bestScore = -999999;
-    for (const [ch, tmpl] of Object.entries(PRECOMPUTED_TEMPLATES)) {
-      if (tmpl.norm === 0) continue;
-      let dot = 0;
-      for (let i = 0; i < 256; i++) {
-        dot += normVec[i] * tmpl.vec[i];
-      }
-      const score = dot / (norm * tmpl.norm);
-      if (score > bestScore) {
-        bestScore = score;
-        bestCh = ch;
-      }
-    }
-
-    return bestCh;
-  }
-
-  // Connected Component Labeling using BFS (same high-reliability CV used in Complex Wires)
-  function extractGridComponents(srcCtx, W, H) {
-    const imgData = srcCtx.getImageData(0, 0, W, H).data;
-    const binary = new Uint8Array(W * H);
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const idx = (y * W + x) * 4;
-        if (imgData[idx] > 165 && imgData[idx + 1] > 165 && imgData[idx + 2] > 165) {
-          binary[y * W + x] = 1;
-        }
-      }
-    }
-
-    const visited = new Uint8Array(W * H);
-    const components = [];
-    const queue = new Int32Array(W * H * 2);
-
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const startIdx = y * W + x;
-        if (binary[startIdx] === 1 && visited[startIdx] === 0) {
-          let qHead = 0, qTail = 0;
-          queue[qTail++] = x;
-          queue[qTail++] = y;
-          visited[startIdx] = 1;
-
-          let minX = x, maxX = x, minY = y, maxY = y;
-          let area = 0, sumX = 0, sumY = 0;
-
-          while (qHead < qTail) {
-            const cx = queue[qHead++];
-            const cy = queue[qHead++];
-            area++;
-            sumX += cx;
-            sumY += cy;
-
-            if (cx < minX) minX = cx;
-            if (cx > maxX) maxX = cx;
-            if (cy < minY) minY = cy;
-            if (cy > maxY) maxY = cy;
-
-            const neighbors = [
-              cx - 1, cy,
-              cx + 1, cy,
-              cx, cy - 1,
-              cx, cy + 1
-            ];
-            for (let i = 0; i < 8; i += 2) {
-              const nx = neighbors[i];
-              const ny = neighbors[i + 1];
-              if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
-                const nIdx = ny * W + nx;
-                if (binary[nIdx] === 1 && visited[nIdx] === 0) {
-                  visited[nIdx] = 1;
-                  queue[qTail++] = nx;
-                  queue[qTail++] = ny;
-                }
-              }
-            }
-          }
-
-          const bw = maxX - minX + 1;
-          const bh = maxY - minY + 1;
-          if (area >= 12 && bh >= 7 && bh <= 55 && bw >= 3 && bw <= 55) {
-            components.push({
-              cx: sumX / area,
-              cy: sumY / area,
-              x: minX,
-              y: minY,
-              bw,
-              bh,
-              area
-            });
-          }
-        }
-      }
-    }
-
-    return { components, imgData };
-  }
-
   function drawPreviewCell(previewCanvas, r, c, char) {
     if (!previewCanvas) return;
     const pCtx = previewCanvas.getContext('2d');
@@ -348,10 +151,17 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     pCtx.fillText(char || '?', px + 19, py + 20);
   }
 
-  // ── INSTANT COMPUTER VISION GRID SCANNER (NO TESSERACT) ────
-  function runOcrOnSearchImage() {
+  // ── Reading the grid: bomb_boomed's (window.BombLogic.search, bomb-logic.js) ──
+  // 1. every cell's shape is matched against letters cut from real game screenshots (on a copy
+  //    scaled to the game's 440 px width); 2. Tesseract reads only the cells the shape isn't sure
+  //    about, and the shape vetoes OCR letters it clearly disagrees with.
+  async function runOcrOnSearchImage() {
     const statusEl = document.getElementById('searchOcrStatus');
     if (!searchState.image) return;
+    const S = window.BombLogic.search;
+    const say = (html) => { if (statusEl) statusEl.innerHTML = html; };
+    const runId = (searchState.runId = (searchState.runId || 0) + 1);
+    const stale = () => runId !== searchState.runId;
 
     // Detect stage from the 3 indicator lights on the right
     const detectedStage = detectStageFromImage(searchState.image);
@@ -359,170 +169,136 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
     searchState.stage = detectedStage;
     updateStageButtons();
 
-    try {
-      const img = searchState.image;
-      const W = img.width;
-      const H = img.height;
-
-      const srcCanvas = document.createElement('canvas');
-      srcCanvas.width = W;
-      srcCanvas.height = H;
-      const srcCtx = srcCanvas.getContext('2d');
-      srcCtx.drawImage(img, 0, 0);
-
-      // Create preview canvas showing recognized letters
-      const previewCanvas = document.getElementById('searchOcrPreviewCanvas');
-      const previewLabel = document.getElementById('searchOcrPreviewLabel');
-      if (previewCanvas) {
-        previewCanvas.width = 240;
-        previewCanvas.height = 240;
-        const pCtx = previewCanvas.getContext('2d');
-        pCtx.fillStyle = '#101426';
-        pCtx.fillRect(0, 0, 240, 240);
-        if (previewLabel) previewLabel.style.display = 'block';
-        previewCanvas.style.display = 'inline-block';
-      }
-
-      const { components, imgData } = extractGridComponents(srcCtx, W, H);
-      let readCount = 0;
-
-      if (components.length >= 25) {
-        let letters = components;
-        if (letters.length > 25) {
-          // If extra noise components detected, select the top 25 by area
-          letters.sort((a, b) => b.area - a.area);
-          letters = letters.slice(0, 25);
-        }
-
-        // Sort vertically into 5 rows (by cy)
-        letters.sort((a, b) => a.cy - b.cy);
-
-        for (let r = 0; r < 5; r++) {
-          // Sort each row horizontally into 5 columns (by cx)
-          const rowComps = letters.slice(r * 5, (r + 1) * 5);
-          rowComps.sort((a, b) => a.cx - b.cx);
-
-          for (let c = 0; c < 5; c++) {
-            const comp = rowComps[c];
-            const ch = classifyComponentPatch(imgData, W, comp.x, comp.y, comp.bw, comp.bh);
-            if (ch) {
-              searchState.grid[r][c] = ch;
-              readCount++;
-            }
-            drawPreviewCell(previewCanvas, r, c, searchState.grid[r][c] || '?');
-          }
-        }
-      } else {
-        // Fallback: geometric cell sampling if fewer than 25 components detected
-        const cellW = Math.max(10, Math.round(W * 0.08));
-        const cellH = Math.max(10, Math.round(H * 0.08));
-        for (let r = 0; r < 5; r++) {
-          for (let c = 0; c < 5; c++) {
-            const cx = Math.round(W * (0.267 + c * 0.0909));
-            const cy = Math.round(H * (0.365 + r * 0.0905));
-            const x0 = Math.max(0, cx - Math.floor(cellW / 2));
-            const y0 = Math.max(0, cy - Math.floor(cellH / 2));
-            const ch = classifyComponentPatch(imgData, W, x0, y0, cellW, cellH);
-            if (ch) {
-              searchState.grid[r][c] = ch;
-              readCount++;
-            }
-            drawPreviewCell(previewCanvas, r, c, searchState.grid[r][c] || '?');
-          }
-        }
-      }
-
-      updateGridInputs();
-
-      if (statusEl) {
-        if (readCount >= 20) {
-          statusEl.innerHTML = `<span style="color:#22c55e;">✓ Stage ${detectedStage} scanned successfully (${readCount}/25 letters detected)!</span>`;
-        } else {
-          statusEl.innerHTML = `<span style="color:#ffd875;">⚠️ Scanned ${readCount}/25 letters. Verify letters in the 5×5 grid.</span>`;
-        }
-      }
-
-      solveSearch();
-    } catch (err) {
-      console.error("Search Vision error:", err);
-      if (statusEl) {
-        statusEl.innerHTML = `<span style="color:#ff5f57;">⚠️ Error reading image. Please type letters into the grid.</span>`;
-      }
-      solveSearch();
+    const img = searchState.image;
+    const previewCanvas = document.getElementById('searchOcrPreviewCanvas');
+    const previewLabel = document.getElementById('searchOcrPreviewLabel');
+    if (previewCanvas) {
+      previewCanvas.width = 240;
+      previewCanvas.height = 240;
+      const pCtx = previewCanvas.getContext('2d');
+      pCtx.fillStyle = '#101426';
+      pCtx.fillRect(0, 0, 240, 240);
+      if (previewLabel) previewLabel.style.display = 'block';
+      previewCanvas.style.display = 'inline-block';
     }
+    const show = () => {
+      updateGridInputs();
+      for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) drawPreviewCell(previewCanvas, r, c, searchState.grid[r][c] || '?');
+      solveSearch();
+    };
+
+    // 1. shape match
+    const iw0 = img.naturalWidth || img.width, ih0 = img.naturalHeight || img.height;
+    const nW = 440, nH = Math.max(1, Math.round(440 * ih0 / iw0));
+    const nCanvas = document.createElement('canvas');
+    nCanvas.width = nW; nCanvas.height = nH;
+    const nCtx = nCanvas.getContext('2d', { willReadFrequently: true });
+    nCtx.imageSmoothingQuality = 'high';
+    nCtx.drawImage(img, 0, 0, nW, nH);
+    const nData = nCtx.getImageData(0, 0, nW, nH).data;
+    const shape = Array.from({ length: 5 }, (_, r) => Array.from({ length: 5 }, (_, c) => {
+      const f = S.cellFeature(nData, nW, nH, r, c);
+      return { f, m: S.matchGlyph(f, S.SEARCH_GLYPHS) };
+    }));
+    const unsure = shape.flat().filter(x => !x.m.sure).length;
+    searchState.grid = shape.map(row => row.map(x => (x.m.sure ? x.m.letter : '')));
+    show();
+    if (!unsure) {
+      say(`<span style="color:#22c55e;">✓ Stage ${detectedStage}: read all 25 letters by shape.</span>`);
+      return;
+    }
+
+    // 2. OCR for the unclear cells
+    say(`<span style="color:#ffd875;">Reading ${unsure} unclear cell${unsure > 1 ? 's' : ''} with OCR…</span>`);
+    let worker;
+    try {
+      worker = await S.ensureOCRWorker(m => {
+        if (m && m.status === 'loading language traineddata') say(`<span style="color:#ffd875;">📡 Downloading OCR model… ${Math.round((m.progress || 0) * 100)}%</span>`);
+      });
+    } catch (err) {
+      if (stale()) return;
+      // no OCR: the closest shape for the unclear cells, so only those need checking
+      searchState.grid = shape.map(row => row.map(x => x.m.letter || ''));
+      show();
+      say(`<span style="color:#ffd875;">⚠️ OCR unavailable (${err.message}). Unclear cells use the closest shape — check them.</span>`);
+      return;
+    }
+    if (stale()) return;
+
+    const MAXDIM = 1200;
+    const scl = Math.min(1, MAXDIM / Math.max(iw0, ih0));
+    const iw = Math.round(iw0 * scl), ih = Math.round(ih0 * scl);
+    const workCanvas = document.createElement('canvas');
+    workCanvas.width = iw; workCanvas.height = ih;
+    workCanvas.getContext('2d').drawImage(img, 0, 0, iw, ih);
+    const { rowCenters, colCenters, cellW, cellH } = S.getSearchGrid(iw, ih);
+    const UPSCALE = 8, CROP = 0.90, PAD_PX = 24;
+
+    const readOne = async (r, c) => {
+      const cW = Math.round(cellW * CROP), cH = Math.round(cellH * CROP);
+      const sx = Math.max(0, Math.round(colCenters[c] - cW / 2)), sy = Math.max(0, Math.round(rowCenters[r] - cH / 2));
+      const sw = Math.min(iw - sx, cW), sh = Math.min(ih - sy, cH);
+      if (sw < 4 || sh < 4) return;
+      const cellCanvas = document.createElement('canvas');
+      const cellCtx = cellCanvas.getContext('2d');
+      const padCanvas = document.createElement('canvas');
+      const padCtx = padCanvas.getContext('2d');
+      cellCanvas.width = sw * UPSCALE; cellCanvas.height = sh * UPSCALE;
+      cellCtx.imageSmoothingEnabled = true;
+      cellCtx.imageSmoothingQuality = 'high';
+      const readCell = async (mode) => {
+        cellCtx.drawImage(workCanvas, sx, sy, sw, sh, 0, 0, cellCanvas.width, cellCanvas.height);
+        S.preprocessCellCanvas(cellCtx, cellCanvas.width, cellCanvas.height, mode, 1);
+        padCanvas.width = cellCanvas.width + PAD_PX * 2;
+        padCanvas.height = cellCanvas.height + PAD_PX * 2;
+        padCtx.fillStyle = '#FFFFFF';
+        padCtx.fillRect(0, 0, padCanvas.width, padCanvas.height);
+        padCtx.drawImage(cellCanvas, PAD_PX, PAD_PX);
+        return S.recognizeCellConsensus(worker, padCanvas);
+      };
+      let rec = await readCell('otsu');
+      if (stale()) return;
+      if (rec.letter === '?' || rec.confidence < 30) {
+        const retry = await readCell('adaptive');
+        if (stale()) return;
+        if (retry.confidence > rec.confidence) rec = retry;
+      }
+      searchState.grid[r][c] = S.combineGlyphOcr(shape[r][c].f, shape[r][c].m, rec.letter, S.SEARCH_GLYPHS);
+      show();
+    };
+    const jobs = [];
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) if (!shape[r][c].m.sure) jobs.push(readOne(r, c));
+    await Promise.all(jobs);
+    if (stale()) return;
+    show();
+    const filled = searchState.grid.flat().filter(ch => ch && ch !== '?').length;
+    say(filled === 25
+      ? `<span style="color:#22c55e;">✓ Stage ${detectedStage}: ${25 - unsure} letters by shape, ${unsure} by OCR.</span>`
+      : `<span style="color:#ffd875;">⚠️ Read ${filled}/25 letters — fill in the empty cells.</span>`);
   }
 
-  // ── MULTI-WORD SEARCH ALGORITHM ───────────────────────────
+  // ── Finding the words: bomb_boomed's solver (3–5 letters, all 8 directions) ──
   function solveSearch() {
-    const grid = searchState.grid;
-    const activeStage = searchState.stage;
-    const matches = [];
-
-    // Filter words: prioritize active stage, but check all entries
-    const wordsToCheck = searchState.wordEntries;
-
-    for (const entry of wordsToCheck) {
-      const word = entry.word;
-      const L = word.length;
-      if (L < 3 || L > 5) continue;
-
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          if (grid[r][c] !== word[0]) continue;
-
-          for (const dir of DIRS) {
-            let matched = true;
-            const cells = [];
-
-            for (let i = 0; i < L; i++) {
-              const nr = r + dir.dr * i;
-              const nc = c + dir.dc * i;
-
-              if (nr < 0 || nr >= 5 || nc < 0 || nc >= 5 || grid[nr][nc] !== word[i]) {
-                matched = false;
-                break;
-              }
-              cells.push({ r: nr, c: nc });
-            }
-
-            if (matched) {
-              const startCoord = coord(r, c);
-              const endCoord = coord(r + dir.dr * (L - 1), c + dir.dc * (L - 1));
-
-              // Avoid duplicates
-              const alreadyFound = matches.some(m =>
-                m.word === word && m.startCoord === startCoord && m.dirName === dir.name
-              );
-
-              if (!alreadyFound) {
-                matches.push({
-                  word: word,
-                  label: entry.label,
-                  stage: entry.stage,
-                  isCurrentStage: entry.stage === activeStage,
-                  dirName: dir.name,
-                  arrow: dir.arrow,
-                  startCoord,
-                  endCoord,
-                  cells
-                });
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Sort matches: current stage matches first, then longer words
+    const S = window.BombLogic.search;
+    const words = searchState.wordEntries.map(e => e.word).join(' ');
+    const { foundMatches } = S.solveWordSearch(searchState.grid, words);
+    const matches = foundMatches.map(m => {
+      const [r0, c0] = m.path[0], [r1, c1] = m.path[m.path.length - 1];
+      const dir = DIRS.find(d => d.dr === Math.sign(r1 - r0) && d.dc === Math.sign(c1 - c0)) || DIRS[3];
+      const entry = searchState.wordEntries.find(e => e.word === m.word) || { label: '', stage: 1 };
+      return {
+        word: m.word, label: entry.label, stage: entry.stage, isCurrentStage: entry.stage === searchState.stage,
+        dirName: dir.name, arrow: dir.arrow, startCoord: coord(r0, c0), endCoord: coord(r1, c1),
+        cells: m.path.map(([r, c]) => ({ r, c }))
+      };
+    });
     matches.sort((a, b) => {
       if (a.isCurrentStage && !b.isCurrentStage) return -1;
       if (!a.isCurrentStage && b.isCurrentStage) return 1;
       return b.word.length - a.word.length;
     });
-
     searchState.foundWords = matches;
     searchState.selectedWordIndex = 0;
-
     renderAnswerCard();
     highlightSelectedWordOnGrid();
   }
@@ -956,6 +732,9 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
 
     const selectedIdx = Math.min(searchState.selectedWordIndex, matches.length - 1);
     const primary = matches[selectedIdx];
+    // every word found, once each (bomb_boomed copies them all, space-separated)
+    const uniq = [...new Set(matches.map(m => m.word))];
+    const allWords = uniq.join(' ');
 
     let html = `
       <div style="background:linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.06) 100%); border:2px solid #22c55e; border-radius:16px; padding:20px; box-shadow:0 0 30px rgba(34,197,94,0.2); margin-bottom:14px;">
@@ -977,9 +756,14 @@ NOON SWAN BODY COAT TYPO NUMB COOL PINE MEAL PUSH OKAY FLOW DUTY CLAY DICE PEAK 
               ➔ Ends at <strong style="color:#ffd875; text-decoration:underline;">${primary.endCoord}</strong>
             </div>
           </div>
-          <button class="sr-btn" style="background:#133824; border-color:#22c55e; color:#4ade80; font-weight:800; padding:10px 16px;" onclick="navigator.clipboard.writeText('${primary.word}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='📋 Copy Word', 1500);">
-            📋 Copy Word
-          </button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="sr-btn" style="background:#133824; border-color:#22c55e; color:#4ade80; font-weight:800; padding:10px 16px;" onclick="navigator.clipboard.writeText('${allWords}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='📋 Copy All (${uniq.length})', 1500);" title="${allWords}">
+              📋 Copy All (${uniq.length})
+            </button>
+            <button class="sr-btn" style="padding:10px 16px;" onclick="navigator.clipboard.writeText('${primary.word}'); this.textContent='✓ Copied!'; setTimeout(()=>this.textContent='📋 Copy Word', 1500);">
+              📋 Copy Word
+            </button>
+          </div>
         </div>
       </div>
     `;

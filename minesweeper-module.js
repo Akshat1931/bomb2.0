@@ -2,7 +2,8 @@
  * Minesweeper Module Solver for Keep Talking and Nobody Explains
  * 
  * Grid: 10 Columns (A–J), 8 Rows (1–8) = 80 cells total.
- * Constant: 16 Mines.
+ * Reading and solving: bomb_boomed's (bomb-logic.js). Each new screenshot is a round: only
+ * squares that are newly safe are given and copied (space-separated, e.g. "C2 C3 H1").
  * 
  * Features:
  * 1. Image OCR / Computer Vision to extract 10x8 grid state.
@@ -16,7 +17,6 @@
   const ROWS = ['1', '2', '3', '4', '5', '6', '7', '8'];
   const TOTAL_COLS = 10;
   const TOTAL_ROWS = 8;
-  const TOTAL_MINES = 16;
 
   const NUMBER_COLORS = {
     '1': '#3b82f6', // Blue
@@ -35,7 +35,8 @@
     grid: Array.from({ length: TOTAL_ROWS }, () => Array(TOTAL_COLS).fill('.')),
     safeCells: [],    // Array of string coords, e.g. ['C2', 'C3', 'H1']
     mineCells: [],    // Array of string coords, e.g. ['C1', 'H2']
-    probabilities: {}, // Coord -> percentage mine (0 to 100)
+    knownSafe: new Set(), // safe squares given in earlier rounds (already clicked)
+    round: 0,             // 1 = first screenshot; each new screenshot is a new round
     currentImage: null,
     history: []
   };
@@ -52,449 +53,21 @@
     return { r, c };
   }
 
-  // ── COMPUTER VISION GRID EXTRACTION ──────────────────────
-  function extractGridFromImage(img) {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
+  // ── Reading and solving: bomb_boomed's (window.BombLogic.mines, bomb-logic.js) ──
+  // The reader gives 8 × 10 cells { name: 'C2', state: '#' covered | 'F' flag | 0–8 }; the
+  // solver marks every cell that is certainly safe / a mine (constraints + exhaustive search per
+  // independent group, no guessing). Here the board is kept as '.' / 'F' / '0'–'8' for display and
+  // hand edits.
+  const MS = window.BombLogic.mines;
+  const toDisplay = (st) => (st === '#' ? '.' : st === 'F' ? 'F' : String(st));
+  const toCells = (grid) => grid.map((row, r) => row.map((v, c) => ({
+    r, c, name: coord(r, c), state: v === '.' ? '#' : v === 'F' ? 'F' : Number(v), isSafe: false, isMine: false
+  })));
+  const byColThenRow = (a, b) => (a[0] !== b[0] ? a[0].localeCompare(b[0]) : parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10));
 
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imgData.data;
-    const W = canvas.width;
-    const H = canvas.height;
-
-    // Detect grid bounding box:
-    // Look for grid pixels that have unrevealed background (#586473) or revealed (#e6ebf0)
-    let minX = W, maxX = 0, minY = H, maxY = 0;
-    let found = false;
-
-    // Exclude outer 4% and top 14% (header/title area)
-    const startY = Math.floor(H * 0.14);
-    const endY = Math.floor(H * 0.96);
-    const startX = Math.floor(W * 0.04);
-    const endX = Math.floor(W * 0.96);
-
-    for (let y = startY; y < endY; y += 2) {
-      for (let x = startX; x < endX; x += 2) {
-        const idx = (y * W + x) * 4;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-
-        // Unrevealed background ~ [88, 100, 115] or revealed ~ [230, 235, 240]
-        if ((r > 65 && g > 75 && b > 85) || (r > 180 && g > 180 && b > 180)) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-          found = true;
-        }
-      }
-    }
-
-    if (!found || maxX - minX < 100 || maxY - minY < 100) {
-      // Fallback to relative percentages of module standard
-      minX = Math.floor(W * 0.07);
-      maxX = Math.floor(W * 0.93);
-      minY = Math.floor(H * 0.17);
-      maxY = Math.floor(H * 0.93);
-    }
-
-    const cellW = (maxX - minX) / TOTAL_COLS;
-    const cellH = (maxY - minY) / TOTAL_ROWS;
-
-    const extracted = [];
-
-    for (let r = 0; r < TOTAL_ROWS; r++) {
-      const row = [];
-      for (let c = 0; c < TOTAL_COLS; c++) {
-        const cx = Math.floor(minX + (c + 0.5) * cellW);
-        const cy = Math.floor(minY + (r + 0.5) * cellH);
-
-        const pw = Math.max(2, Math.floor(cellW * 0.22));
-        const ph = Math.max(2, Math.floor(cellH * 0.22));
-
-        let sumR = 0, sumG = 0, sumB = 0;
-        let count = 0;
-        let minBrightness = 255;
-        let minPixel = [255, 255, 255];
-
-        for (let dy = -ph; dy <= ph; dy++) {
-          for (let dx = -pw; dx <= pw; dx++) {
-            const px = cx + dx;
-            const py = cy + dy;
-            if (px >= 0 && px < W && py >= 0 && py < H) {
-              const idx = (py * W + px) * 4;
-              const pr = data[idx];
-              const pg = data[idx + 1];
-              const pb = data[idx + 2];
-
-              sumR += pr;
-              sumG += pg;
-              sumB += pb;
-              count++;
-
-              const brightness = (pr + pg + pb) / 3;
-              if (brightness < minBrightness) {
-                minBrightness = brightness;
-                minPixel = [pr, pg, pb];
-              }
-            }
-          }
-        }
-
-        const avgR = count ? sumR / count : 0;
-        const avgG = count ? sumG / count : 0;
-        const avgB = count ? sumB / count : 0;
-
-        // Revealed cells have light gray background (~220-245)
-        if (avgR > 140 && avgG > 140) {
-          if (minBrightness > 185) {
-            row.push('0'); // Blank revealed cell
-          } else {
-            const [pr, pg, pb] = minPixel;
-            // 3: Bright Red vs 5: Maroon (Dark Red)
-            if (pr > pg + 30 && pr > pb + 30) {
-              if (pr >= 150) {
-                row.push('3');
-              } else {
-                row.push('5');
-              }
-            // 2: Green
-            } else if (pg > pr + 20 && pg > pb + 15) {
-              row.push('2');
-            // 4: Purple (Blue + Red, Green is low)
-            } else if (pb > pg + 25 && pr > pg + 15 && pb > pr) {
-              row.push('4');
-            // 1: Blue (Blue is highest, Green > Red)
-            } else if (pb > pr + 35 && pb > 85) {
-              row.push('1');
-            // 6: Teal
-            } else if (pg > 80 && pb > 80 && pr < 70) {
-              row.push('6');
-            } else {
-              row.push('?');
-            }
-          }
-        } else {
-          row.push('.'); // Unrevealed
-        }
-      }
-      extracted.push(row);
-    }
-
-    return extracted;
-  }
-
-  // ── EXACT CONSTRAINT SATISFACTION (CSP) SOLVER ────────────
   function solveMinesweeper(grid) {
-    const safeSet = new Set();
-    const mineSet = new Set();
-    const probabilities = {};
-
-    // 1. Gather all numbered revealed cells
-    const numberedCells = [];
-    for (let r = 0; r < TOTAL_ROWS; r++) {
-      for (let c = 0; c < TOTAL_COLS; c++) {
-        const val = grid[r][c];
-        if (val !== '.' && val !== '0' && val !== 'F' && val !== '?') {
-          numberedCells.push({ r, c, val: parseInt(val, 10) });
-        } else if (val === 'F') {
-          mineSet.add(coord(r, c));
-        }
-      }
-    }
-
-    // Helper: get neighbors
-    function getNeighbors(r, c) {
-      const nbrs = [];
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const nr = r + dr;
-          const nc = c + dc;
-          if (nr >= 0 && nr < TOTAL_ROWS && nc >= 0 && nc < TOTAL_COLS) {
-            nbrs.push({ r: nr, c: nc, id: coord(nr, nc) });
-          }
-        }
-      }
-      return nbrs;
-    }
-
-    // Direct deduction loop
-    let progress = true;
-    while (progress) {
-      progress = false;
-      for (const cell of numberedCells) {
-        const nbrs = getNeighbors(cell.r, cell.c);
-        const unknownNbrs = nbrs.filter(n => grid[n.r][n.c] === '.' && !mineSet.has(n.id) && !safeSet.has(n.id));
-        const confirmedMines = nbrs.filter(n => grid[n.r][n.c] === 'F' || mineSet.has(n.id));
-
-        const neededMines = cell.val - confirmedMines.length;
-
-        // If remaining needed == unknown count -> all are mines!
-        if (neededMines > 0 && neededMines === unknownNbrs.length) {
-          for (const u of unknownNbrs) {
-            if (!mineSet.has(u.id)) {
-              mineSet.add(u.id);
-              progress = true;
-            }
-          }
-        }
-
-        // If needed == 0 -> all unknown are safe!
-        if (neededMines === 0 && unknownNbrs.length > 0) {
-          for (const u of unknownNbrs) {
-            if (!safeSet.has(u.id)) {
-              safeSet.add(u.id);
-              progress = true;
-            }
-          }
-        }
-      }
-    }
-
-    // 2. Component-Based Backtracking CSP for boundary cells
-    const boundaryCellsMap = new Map(); // coord -> { r, c }
-    const constraints = [];
-
-    for (const cell of numberedCells) {
-      const nbrs = getNeighbors(cell.r, cell.c);
-      const unk = nbrs.filter(n => grid[n.r][n.c] === '.' && !safeSet.has(n.id) && !mineSet.has(n.id));
-      const confirmedMines = nbrs.filter(n => grid[n.r][n.c] === 'F' || mineSet.has(n.id)).length;
-      const remainingNeeded = cell.val - confirmedMines;
-
-      if (unk.length > 0) {
-        unk.forEach(n => boundaryCellsMap.set(n.id, { r: n.r, c: n.c }));
-        constraints.push({
-          variables: unk.map(n => n.id),
-          needed: remainingNeeded
-        });
-      }
-    }
-
-    const boundaryList = Array.from(boundaryCellsMap.keys());
-
-    if (boundaryList.length > 0 && boundaryList.length <= 30) {
-      // Connect variables into connected components
-      const adj = new Map();
-      boundaryList.forEach(id => adj.set(id, new Set()));
-
-      constraints.forEach(con => {
-        for (let i = 0; i < con.variables.length; i++) {
-          for (let j = i + 1; j < con.variables.length; j++) {
-            adj.get(con.variables[i]).add(con.variables[j]);
-            adj.get(con.variables[j]).add(con.variables[i]);
-          }
-        }
-      });
-
-      const visited = new Set();
-      const components = [];
-
-      boundaryList.forEach(id => {
-        if (!visited.has(id)) {
-          const comp = [];
-          const q = [id];
-          visited.add(id);
-          while (q.length > 0) {
-            const curr = q.shift();
-            comp.push(curr);
-            adj.get(curr).forEach(nxt => {
-              if (!visited.has(nxt)) {
-                visited.add(nxt);
-                q.push(nxt);
-              }
-            });
-          }
-          components.push(comp);
-        }
-      });
-
-      // 1. Solve each component locally
-      const compSolutions = [];
-
-      components.forEach(compVars => {
-        const compVarSet = new Set(compVars);
-        const compConstraints = constraints.filter(con =>
-          con.variables.some(v => compVarSet.has(v))
-        );
-
-        // Map constraint variables to component indices
-        const indexedConstraints = compConstraints.map(con => ({
-          indices: con.variables.map(v => compVars.indexOf(v)).filter(idx => idx !== -1),
-          needed: con.needed
-        }));
-
-        const rawSolutions = [];
-
-        function backtrack(idx, currentAssignment) {
-          if (idx === compVars.length) {
-            // Validate all constraints
-            for (const con of indexedConstraints) {
-              let s = 0;
-              for (const vIdx of con.indices) s += currentAssignment[vIdx];
-              if (s !== con.needed) return;
-            }
-            rawSolutions.push([...currentAssignment]);
-            return;
-          }
-
-          // Prune early
-          for (const con of indexedConstraints) {
-            let assignedSum = 0;
-            let unassignedCount = 0;
-            for (const vIdx of con.indices) {
-              if (vIdx < idx) {
-                assignedSum += currentAssignment[vIdx];
-              } else {
-                unassignedCount++;
-              }
-            }
-            if (assignedSum > con.needed) return;
-            if (assignedSum + unassignedCount < con.needed) return;
-          }
-
-          // Try 0 (Safe)
-          currentAssignment.push(0);
-          backtrack(idx + 1, currentAssignment);
-          currentAssignment.pop();
-
-          // Try 1 (Mine)
-          currentAssignment.push(1);
-          backtrack(idx + 1, currentAssignment);
-          currentAssignment.pop();
-        }
-
-        backtrack(0, []);
-        if (rawSolutions.length > 0) {
-          compSolutions.push({ vars: compVars, solutions: rawSolutions });
-        }
-      });
-
-      // 2. Global mine count filter across all components and off-boundary squares
-      const confirmedMineCount = mineSet.size;
-      const remainingMines = TOTAL_MINES - confirmedMineCount;
-
-      let totalBoundaryVarsCount = 0;
-      compSolutions.forEach(cs => totalBoundaryVarsCount += cs.vars.length);
-
-      let totalUnrevealedCount = 0;
-      for (let r = 0; r < TOTAL_ROWS; r++) {
-        for (let c = 0; c < TOTAL_COLS; c++) {
-          if (grid[r][c] === '.' && !mineSet.has(coord(r, c))) {
-            totalUnrevealedCount++;
-          }
-        }
-      }
-      const offBoundaryCount = Math.max(0, totalUnrevealedCount - totalBoundaryVarsCount);
-
-      let validGlobalCombos = [{ assignments: {}, totalMines: 0 }];
-
-      for (const comp of compSolutions) {
-        const nextCombos = [];
-        for (const prev of validGlobalCombos) {
-          for (const sol of comp.solutions) {
-            const solMines = sol.reduce((a, b) => a + b, 0);
-            const newTotal = prev.totalMines + solMines;
-            if (newTotal <= remainingMines && (remainingMines - newTotal) <= offBoundaryCount) {
-              const newAssignments = { ...prev.assignments };
-              comp.vars.forEach((v, i) => { newAssignments[v] = sol[i]; });
-              nextCombos.push({ assignments: newAssignments, totalMines: newTotal });
-            }
-          }
-        }
-        validGlobalCombos = nextCombos;
-      }
-
-      if (validGlobalCombos.length > 0) {
-        const allCompVars = [];
-        compSolutions.forEach(cs => allCompVars.push(...cs.vars));
-
-        for (const vId of allCompVars) {
-          let mineOccurrences = 0;
-          for (const combo of validGlobalCombos) {
-            if (combo.assignments[vId] === 1) mineOccurrences++;
-          }
-
-          if (mineOccurrences === 0) {
-            safeSet.add(vId);
-            mineSet.delete(vId);
-            probabilities[vId] = 0;
-          } else if (mineOccurrences === validGlobalCombos.length) {
-            mineSet.add(vId);
-            safeSet.delete(vId);
-            probabilities[vId] = 100;
-          } else {
-            probabilities[vId] = Math.round((mineOccurrences / validGlobalCombos.length) * 100);
-          }
-        }
-
-        // Check if all remaining mines are accounted for on the boundary
-        const maxRemainingForOff = Math.max(...validGlobalCombos.map(c => remainingMines - c.totalMines));
-        const minRemainingForOff = Math.min(...validGlobalCombos.map(c => remainingMines - c.totalMines));
-
-        if (maxRemainingForOff === 0) {
-          // All off-boundary cells are 100% Guaranteed SAFE!
-          for (let r = 0; r < TOTAL_ROWS; r++) {
-            for (let c = 0; c < TOTAL_COLS; c++) {
-              const id = coord(r, c);
-              if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
-                safeSet.add(id);
-                probabilities[id] = 0;
-              }
-            }
-          }
-        } else if (offBoundaryCount > 0 && minRemainingForOff === offBoundaryCount) {
-          // All off-boundary cells MUST be MINES!
-          for (let r = 0; r < TOTAL_ROWS; r++) {
-            for (let c = 0; c < TOTAL_COLS; c++) {
-              const id = coord(r, c);
-              if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
-                mineSet.add(id);
-                probabilities[id] = 100;
-              }
-            }
-          }
-        } else if (offBoundaryCount > 0) {
-          // Calculate average probability for off-boundary cells
-          const avgRemainingForOff = validGlobalCombos.reduce((sum, c) => sum + (remainingMines - c.totalMines), 0) / validGlobalCombos.length;
-          const offProb = Math.round((avgRemainingForOff / offBoundaryCount) * 100);
-          for (let r = 0; r < TOTAL_ROWS; r++) {
-            for (let c = 0; c < TOTAL_COLS; c++) {
-              const id = coord(r, c);
-              if (grid[r][c] === '.' && !allCompVars.includes(id) && !mineSet.has(id)) {
-                probabilities[id] = offProb;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Global mine count check: If all 16 mines are found, ALL remaining unrevealed are safe!
-    const totalFoundMines = mineSet.size;
-    if (totalFoundMines >= TOTAL_MINES) {
-      for (let r = 0; r < TOTAL_ROWS; r++) {
-        for (let c = 0; c < TOTAL_COLS; c++) {
-          const id = coord(r, c);
-          if (grid[r][c] === '.' && !mineSet.has(id)) {
-            safeSet.add(id);
-          }
-        }
-      }
-    }
-
-    const safeArray = Array.from(safeSet).sort();
-    const mineArray = Array.from(mineSet).sort();
-
-    return {
-      safe: safeArray,
-      mines: mineArray,
-      probabilities
-    };
+    const { safeList, mineList } = MS.solveMinesGrid(toCells(grid));
+    return { safe: safeList.slice().sort(byColThenRow), mines: mineList.slice().sort(byColThenRow) };
   }
 
   // ── UI INJECTION & RENDERING ──────────────────────────────
@@ -660,6 +233,7 @@
       color: #fca5a5 !important;
       box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
     }
+    .ms-cell-known { opacity: 0.45; }
     .ms-cell-safe {
       background: #064e3b !important;
       border: 2px solid #22c55e !important;
@@ -750,11 +324,12 @@
           <div class="ms-title">
             <span>💣</span> Minesweeper Module Solver
             <span style="font-size:13px; font-weight:600; color:#94a3b8; background:#181b36; padding:3px 10px; border-radius:99px; border:1px solid #282d58;">
-              10×8 Grid · 16 Mines
+              10×8 Grid
             </span>
           </div>
           <div style="display:flex; gap:10px;">
             <button class="ms-btn" onclick="window.clearMinesweeperBoard()">Reset Board</button>
+            <button class="ms-btn" onclick="window.newMinesweeperRound()" title="Forget earlier rounds: give every safe square again">↺ New round</button>
             <button class="ms-btn primary" onclick="window.recalculateMinesweeper()">⚡ Recalculate</button>
           </div>
         </div>
@@ -780,7 +355,7 @@
               <ol style="margin:6px 0 0; padding-left:18px;">
                 <li>Paste (<kbd>Ctrl+V</kbd>) the initial opening image.</li>
                 <li>Click the <strong style="color:#22c55e;">Green Safe Squares</strong> on your bomb.</li>
-                <li>Paste the updated screenshot to immediately get the next safe squares!</li>
+                <li>Paste the updated screenshot: only the <strong>new</strong> safe squares are given (earlier ones are dimmed).</li>
               </ol>
             </div>
 
@@ -790,7 +365,7 @@
                 <div class="ms-stat-lbl">Safe Squares</div>
               </div>
               <div class="ms-stat-box">
-                <div class="ms-stat-val" id="msStatMines" style="color:#ef4444;">0 / 16</div>
+                <div class="ms-stat-val" id="msStatMines" style="color:#ef4444;">0</div>
                 <div class="ms-stat-lbl">Mines Found</div>
               </div>
               <div class="ms-stat-box">
@@ -913,18 +488,13 @@
           ctx.drawImage(img, 0, 0);
         }
 
-        // Extract grid
-        const extracted = extractGridFromImage(img);
-
-        // Merge into current grid (preserving existing numbers/mines if new image didn't clear them)
-        for (let r = 0; r < TOTAL_ROWS; r++) {
-          for (let c = 0; c < TOTAL_COLS; c++) {
-            const ext = extracted[r][c];
-            if (ext !== '.' && ext !== '?') {
-              state.grid[r][c] = ext;
-            }
-          }
-        }
+        // Read the board; a new screenshot starts a new round: the safe squares given so far were
+        // clicked, so only squares that are newly safe are given (and copied) this time
+        const cells = MS.parseMinesBoardFromImage(img);
+        if (!cells || !cells.length) return;
+        state.grid = cells.map(row => row.map(cell => toDisplay(cell.state)));
+        if (state.round === 0) { state.round = 1; state.knownSafe = new Set(); }
+        else { state.safeCells.forEach(c => state.knownSafe.add(c)); state.round++; }
 
         updateSolve();
       };
@@ -935,9 +505,9 @@
 
   function updateSolve() {
     const result = solveMinesweeper(state.grid);
-    state.safeCells = result.safe;
+    state.allSafe = result.safe;
+    state.safeCells = result.safe.filter(c => !state.knownSafe.has(c)); // new this round
     state.mineCells = result.mines;
-    state.probabilities = result.probabilities;
 
     renderBoard();
     updateStats();
@@ -962,7 +532,7 @@
     const statUnknown = document.getElementById('msStatUnknown');
 
     if (statSafe) statSafe.textContent = state.safeCells.length;
-    if (statMines) statMines.textContent = `${state.mineCells.length} / ${TOTAL_MINES}`;
+    if (statMines) statMines.textContent = `${state.mineCells.length}`;
     if (statRevealed) statRevealed.textContent = revealedCount;
     if (statUnknown) statUnknown.textContent = unknownCount;
   }
@@ -974,33 +544,21 @@
 
     if (!summary || !tagList) return;
 
+    const roundTag = state.round > 1 ? ` <span style="font-size:13px; color:#94a3b8;">(round #${state.round})</span>` : '';
     if (state.safeCells.length > 0) {
-      summary.innerHTML = `<span>✓ ${state.safeCells.length} Safe Square${state.safeCells.length > 1 ? 's' : ''} to Click</span>`;
+      summary.innerHTML = `<span>✓ ${state.safeCells.length} New Safe Square${state.safeCells.length > 1 ? 's' : ''} to Click</span>${roundTag}`;
       tagList.innerHTML = state.safeCells.map(c => `
         <span class="ms-safe-tag">
           <span style="font-size:14px;">✓</span> ${c}
         </span>
       `).join('');
       if (copyBtn) copyBtn.style.display = 'inline-block';
-    } else if (state.mineCells.length >= TOTAL_MINES) {
-      summary.innerHTML = `<span style="color:#ffd875;">🎉 All 16 Mines Identified!</span>`;
-      tagList.innerHTML = `<span style="font-size:14px; color:#4ade80;">All remaining squares on the board are 100% SAFE to dig!</span>`;
+    } else if (state.round === 0) {
+      summary.innerHTML = 'Ready for input';
+      tagList.innerHTML = `<span style="font-size:13px; color:#94a3b8;">Upload or paste an image to calculate safe squares.</span>`;
     } else {
-      summary.innerHTML = `<span style="color:#ffd875;">No 100% Deterministic Safe Moves</span>`;
-      // Find lowest probability guess
-      let lowestProb = 100;
-      let lowestCoord = null;
-      for (const [cd, prob] of Object.entries(state.probabilities)) {
-        if (prob < lowestProb) {
-          lowestProb = prob;
-          lowestCoord = cd;
-        }
-      }
-      if (lowestCoord) {
-        tagList.innerHTML = `<span style="font-size:13px; color:#ffd875;">Safest Guess: <strong>${lowestCoord}</strong> (${lowestProb}% mine risk)</span>`;
-      } else {
-        tagList.innerHTML = `<span style="font-size:13px; color:#94a3b8;">Upload or paste an image to calculate safe squares.</span>`;
-      }
+      summary.innerHTML = `<span style="color:#ffd875;">No New Guaranteed Safe Squares</span>${roundTag}`;
+      tagList.innerHTML = `<span style="font-size:13px; color:#94a3b8;">Nothing more is certain from this board${state.allSafe && state.allSafe.length ? ` (${state.allSafe.length} known safe from earlier rounds)` : ''} — check the board below, or start a new round.</span>`;
     }
   }
 
@@ -1023,8 +581,8 @@
         const cd = coord(r, c);
         const val = state.grid[r][c];
         const isSafe = state.safeCells.includes(cd);
+        const isKnownSafe = !isSafe && val === '.' && (state.allSafe || []).includes(cd);
         const isMine = state.mineCells.includes(cd) || val === 'F';
-        const prob = state.probabilities[cd];
 
         let cellClass = 'ms-cell ';
         let content = '';
@@ -1033,14 +591,14 @@
         if (isSafe) {
           cellClass += 'ms-cell-safe ';
           content = '✓';
+        } else if (isKnownSafe) {
+          cellClass += 'ms-cell-safe ms-cell-known ';
+          content = '✓';
         } else if (isMine) {
           cellClass += 'ms-cell-mine ';
           content = '💣';
         } else if (val === '.') {
           cellClass += 'ms-cell-unrevealed ';
-          if (prob !== undefined && prob > 0 && prob < 100) {
-            content = `<span class="ms-prob-badge">${prob}%</span>`;
-          }
         } else if (val === '0') {
           cellClass += 'ms-cell-blank ';
           content = '';
@@ -1093,7 +651,7 @@
 
   window.copyMinesweeperSafeMoves = function() {
     if (!state.safeCells.length) return;
-    const text = state.safeCells.join(', ');
+    const text = state.safeCells.join(' ');
     navigator.clipboard.writeText(text);
 
     const btn = document.getElementById('msCopyBtn');
@@ -1108,7 +666,9 @@
     state.grid = Array.from({ length: TOTAL_ROWS }, () => Array(TOTAL_COLS).fill('.'));
     state.safeCells = [];
     state.mineCells = [];
-    state.probabilities = {};
+    state.allSafe = [];
+    state.knownSafe = new Set();
+    state.round = 0;
     state.currentImage = null;
 
     const previewWrap = document.getElementById('msPreviewWrapper');
@@ -1120,6 +680,13 @@
   };
 
   window.recalculateMinesweeper = function() {
+    updateSolve();
+  };
+
+  // forget earlier rounds: every safe square on the board counts as new again
+  window.newMinesweeperRound = function() {
+    state.knownSafe = new Set();
+    if (state.round > 0) state.round = 1;
     updateSolve();
   };
 

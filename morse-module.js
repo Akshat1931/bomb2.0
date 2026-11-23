@@ -5,27 +5,7 @@
  */
 
 (function() {
-const MORSE_WORDS = [
-  { word: "beats", freq: "3.600" },
-  { word: "bombs", freq: "3.565" },
-  { word: "break", freq: "3.572" },
-  { word: "brick", freq: "3.575" },
-  { word: "flick", freq: "3.555" },
-  { word: "halls", freq: "3.515" },
-  { word: "leaks", freq: "3.542" },
-  { word: "shell", freq: "3.505" },
-  { word: "sting", freq: "3.592" },
-  { word: "trick", freq: "3.532" }
-];
-
-const MORSE_CODE_MAP = {
-  '.-': 'a', '-...': 'b', '-.-.': 'c', '-..': 'd', '.': 'e',
-  '..-.': 'f', '--.': 'g', '....': 'h', '..': 'i', '.---': 'j',
-  '-.-': 'k', '.-..': 'l', '--': 'm', '-.': 'n', '---': 'o',
-  '.--.': 'p', '--.-': 'q', '.-.': 'r', '...': 's', '-': 't',
-  '..-': 'u', '...-': 'v', '.--': 'w', '-..-': 'x', '-.--': 'y',
-  '--..': 'z'
-};
+// The word list and Morse table come from bomb_boomed's decoder (window.BombLogic.morse).
 
 const morseState = {
   initialized: false,
@@ -410,6 +390,45 @@ function injectMorseStyles() {
   .morse-word-item.no-match {
     opacity: 0.35;
   }
+  .morse-dirs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .morse-dir {
+    background: #0a0a1a;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    min-width: 0;
+    cursor: pointer;
+  }
+  .morse-dir.best { border-color: #4caf50; box-shadow: 0 0 0 1px #4caf50 inset; }
+  .morse-dir-note { font-size: 11px; color: #888; margin-top: 6px; min-height: 14px; }
+  .morse-dir-word {
+    font-family: monospace;
+    font-weight: bold;
+    color: #00d2ff;
+    font-size: 26px;
+    min-height: 34px;
+    word-break: break-all;
+  }
+  .morse-dir-code {
+    font-family: monospace;
+    color: #f5c542;
+    font-size: 13px;
+    min-height: 18px;
+    word-break: break-all;
+    margin-top: 4px;
+  }
+  .morse-dir-freq {
+    font-size: 28px;
+    font-weight: bold;
+    color: #444;
+    margin-top: 8px;
+  }
   `;
   const styleEl = document.createElement('style');
   styleEl.textContent = css;
@@ -533,10 +552,8 @@ function handleMorseFileLoad(file) {
   morseState.lastStateChangeTime = 0;
   morseState.ignoreFirstTransition = false;
   morseState.decodedLetters = "";
-  document.getElementById('morseDecodedString').textContent = "";
-  document.getElementById('morseReconstructedWord').textContent = "";
-  document.getElementById('morseFrequencyOutput').textContent = "---";
-  document.getElementById('morseFrequencyOutput').style.color = '#444';
+  morseState.offline = false;
+  clearMorseOutputs();
   renderMorseWordList();
 
   const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
@@ -544,6 +561,7 @@ function handleMorseFileLoad(file) {
     morseState.sourceType = 'gif';
     const reader = new FileReader();
     reader.onload = (e) => {
+      decodeMorseGifFile(file);
       try {
         const gif = parseGif(e.target.result);
         morseState.sourceEl = gif;
@@ -680,8 +698,7 @@ function handleMorseCanvasClick(e) {
   morseState.brightnessTimeline = [];
   morseState.stateSegments = [];
   morseState.decodedLetters = "";
-  document.getElementById('morseDecodedString').textContent = "";
-  document.getElementById('morseReconstructedWord').textContent = "";
+  clearMorseOutputs();
 
   setMorseStatus(`Manual tracking coordinate set to (${Math.round(x)}, ${Math.round(y)})`, '#00d2ff');
 }
@@ -836,19 +853,11 @@ function triggerAutoTrack() {
     morseState.lastStateChangeTime = 0; // set to 0 so first frame initializes state
     morseState.ignoreFirstTransition = false;
 
-    const decodedStrEl = document.getElementById('morseDecodedString');
-    if (decodedStrEl) decodedStrEl.textContent = "---";
-
-    const reconWordEl = document.getElementById('morseReconstructedWord');
-    if (reconWordEl) reconWordEl.textContent = "---";
-
-    const freqOutEl = document.getElementById('morseFrequencyOutput');
-    if (freqOutEl) {
-      freqOutEl.textContent = "---";
-      freqOutEl.style.color = '#444';
+    // a GIF's readings come from its frames, not from the replay: keep them
+    if (!(morseState.offline && morseState.readings)) {
+      clearMorseOutputs();
+      renderMorseWordList();
     }
-
-    renderMorseWordList();
 
     setMorseStatus("Auto-tracking blinking light (GIF)...", '#f5c542');
     setTimeout(() => {
@@ -998,107 +1007,109 @@ function processBrightnessSignal(val) {
   }
 }
 
-function decodeMorseFromSegments() {
-  if (morseState.stateSegments.length < 2) return;
+// ── Decoding: bomb_boomed's decoder (window.BombLogic.morse, from bomb-logic.js) ──
+// A GIF is decoded from its frames and frame delays (exact timing, the light's colour read too);
+// a video falls back to the live brightness timing below, fed to the same decoder.
+const MORSE_SIDES = [['Fwd', 'forward', 'FORWARD'], ['Bwd', 'backward', 'BACKWARD'], ['Swp', 'swapped', 'SWAPPED']];
 
-  const onSegments = morseState.stateSegments.filter(s => s.type === 'ON' && s.duration > 80);
-  if (onSegments.length === 0) return;
-
-  const onDurations = onSegments.map(s => s.duration);
-  const unitTime = Math.min(...onDurations);
-
-  const unitThresh = unitTime * 2.2;
-  const spaceThresh = unitTime * 5.0;
-
-  let currentLetterSymbols = "";
-  let lettersDecoded = [];
-
-  for (let seg of morseState.stateSegments) {
-    if (seg.type === 'ON') {
-      if (seg.duration < unitThresh) {
-        currentLetterSymbols += ".";
-      } else {
-        currentLetterSymbols += "-";
-      }
-    } else {
-      if (seg.duration >= unitThresh && seg.duration < spaceThresh) {
-        if (currentLetterSymbols) {
-          const char = MORSE_CODE_MAP[currentLetterSymbols] || '?';
-          lettersDecoded.push(char);
-          currentLetterSymbols = "";
-        }
-      } else if (seg.duration >= spaceThresh) {
-        if (currentLetterSymbols) {
-          const char = MORSE_CODE_MAP[currentLetterSymbols] || '?';
-          lettersDecoded.push(char);
-          currentLetterSymbols = "";
-        }
-        if (lettersDecoded.length > 0 && lettersDecoded[lettersDecoded.length - 1] !== ' ') {
-          lettersDecoded.push(' ');
-        }
-      }
-    }
-  }
-
-  if (currentLetterSymbols) {
-    const char = MORSE_CODE_MAP[currentLetterSymbols] || '?';
-    lettersDecoded.push(char);
-  }
-
-  const decodedWord = lettersDecoded.join('').trim().toLowerCase();
-  const cleanWord = decodedWord.replace(/\?/g, '');
-  if (cleanWord && cleanWord !== morseState.decodedLetters) {
-    morseState.decodedLetters = cleanWord;
-    document.getElementById('morseDecodedString').textContent = lettersDecoded.join('');
-    matchMorseWord(cleanWord);
+async function decodeMorseGifFile(file) {
+  const L = window.BombLogic && window.BombLogic.morse;
+  if (!L) return;
+  try {
+    const frames = await L.parseGIFFrames(file);
+    if (!frames || !frames.length) throw new Error('no frames');
+    morseState.offline = true;
+    showMorseReadings(L.framesToRLE(frames), L.lightIsRed(frames));
+  } catch (err) {
+    morseState.offline = false; // the live reading below still runs
+    setMorseStatus(`Couldn't read the GIF's frames (${err.message}) — reading it live instead.`, '#ff9800');
   }
 }
 
-function matchMorseWord(str) {
-  const parts = str.split(' ');
-  const activeLetters = parts.reduce((a, b) => a.length > b.length ? a : b, "");
+// video: live ON / OFF segments → the decoder's pulses
+function decodeMorseFromSegments() {
+  if (morseState.offline || morseState.stateSegments.length < 2) return;
+  const rle = morseState.stateSegments.map(s => ({ is_on: s.type === 'ON', duration: s.duration }));
+  const key = rle.map(r => (r.is_on ? '+' : '-') + Math.round(r.duration / 40)).join('');
+  if (key === morseState.decodedLetters) return;
+  morseState.decodedLetters = key;
+  showMorseReadings(rle, false);
+}
 
-  document.getElementById('morseReconstructedWord').textContent = activeLetters.toUpperCase();
-
-  let matches = [];
-
-  if (activeLetters.length >= 2) {
-    MORSE_WORDS.forEach(mw => {
-      const doubleWord = mw.word + mw.word;
-      if (doubleWord.includes(activeLetters)) {
-        matches.push(mw);
-      }
-    });
-  } else {
-    matches = [...MORSE_WORDS];
-  }
-
-  const container = document.getElementById('morseWordListContainer');
-  if (!container) return;
-
-  const items = container.querySelectorAll('.morse-word-item');
-  items.forEach(item => {
-    const word = item.dataset.word;
-    item.className = 'morse-word-item';
-
-    if (activeLetters.length >= 2) {
-      const isMatch = matches.some(m => m.word === word);
-      item.classList.add(isMatch ? 'match' : 'no-match');
+// The three readings; a red light means swapped flashes, so SWAPPED is the one picked first.
+function showMorseReadings(rle, red) {
+  const L = window.BombLogic.morse;
+  const dec = L.decodeMorseBothWays(rle);
+  const order = red ? ['swapped', 'forward', 'backward'] : ['forward', 'backward', 'swapped'];
+  const best = order.find(k => dec[k].frequency) || null;
+  morseState.readings = dec;
+  for (const [side, k] of MORSE_SIDES) {
+    const d = dec[k];
+    const box = document.getElementById(`morse${side}Word`);
+    const card = box && box.closest('.morse-dir');
+    const codeEl = document.getElementById(`morse${side}Code`);
+    const freqEl = document.getElementById(`morse${side}Freq`);
+    if (box) box.textContent = d.word || '---';
+    if (codeEl) codeEl.textContent = d.letters.map(l => l.code).join(' ').replace(/\s{2,}/g, ' / ');
+    if (freqEl) {
+      freqEl.textContent = d.frequency || (d.word ? (d.valid ? 'NOT IN LIST' : 'UNKNOWN LETTERS') : '---');
+      freqEl.style.color = d.frequency ? '#4caf50' : d.word ? '#ff9800' : '#444';
     }
-  });
+    if (card) {
+      card.classList.toggle('best', k === best);
+      card.title = d.word ? `Click to copy ${d.word}` : '';
+      card.onclick = d.word ? () => copyMorseWord(d.word, card) : null;
+      let note = card.querySelector('.morse-dir-note');
+      if (!note) { note = document.createElement('div'); note.className = 'morse-dir-note'; card.appendChild(note); }
+      note.textContent = k === 'swapped' && red ? '🔴 RED LIGHT' : '';
+    }
+  }
+  // word list: light up the words any reading found
+  const found = new Set(MORSE_SIDES.map(([, k]) => dec[k].frequency && dec[k].word).filter(Boolean));
+  const container = document.getElementById('morseWordListContainer');
+  if (container) {
+    container.querySelectorAll('.morse-word-item').forEach(item => {
+      item.className = 'morse-word-item' + (found.size ? (found.has(item.dataset.word) ? ' match' : ' no-match') : '');
+    });
+  }
+  if (best) {
+    const d = dec[best];
+    setMorseStatus(`${best.toUpperCase()}${red ? ' (red light)' : ''}: ${d.word} → ${d.frequency} — click a reading to copy it`, '#4caf50');
+  } else if (MORSE_SIDES.some(([, k]) => dec[k].word)) {
+    setMorseStatus('No reading is in the word list — pick the one that makes sense (click to copy).', '#ff9800');
+  }
+}
 
-  const freqOutput = document.getElementById('morseFrequencyOutput');
-  if (matches.length === 1 && activeLetters.length >= 2) {
-    const winner = matches[0];
-    freqOutput.textContent = winner.freq + " MHz";
-    freqOutput.style.color = '#4caf50';
-    setMorseStatus(`Match Found! Word: "${winner.word.toUpperCase()}" -> Freq: ${winner.freq} MHz`, '#4caf50');
-  } else if (matches.length > 1 && activeLetters.length >= 2) {
-    freqOutput.textContent = "AMBIGUOUS";
-    freqOutput.style.color = '#ff9800';
-  } else {
-    freqOutput.textContent = "---";
-    freqOutput.style.color = '#444';
+function copyMorseWord(word, card) {
+  const done = () => {
+    const el = card.querySelector('.morse-dir-note');
+    if (!el) return;
+    const was = el.textContent;
+    el.textContent = '✓ COPIED';
+    setTimeout(() => { el.textContent = was; }, 1200);
+  };
+  try { navigator.clipboard.writeText(word).then(done).catch(() => {}); } catch (e) {}
+}
+
+function clearMorseOutputs() {
+  morseState.readings = null;
+  for (const [side] of MORSE_SIDES) {
+    const wordEl = document.getElementById(`morse${side}Word`);
+    const codeEl = document.getElementById(`morse${side}Code`);
+    const freqEl = document.getElementById(`morse${side}Freq`);
+    if (wordEl) wordEl.textContent = "---";
+    if (codeEl) codeEl.textContent = "";
+    if (freqEl) {
+      freqEl.textContent = "---";
+      freqEl.style.color = '#444';
+    }
+    const card = wordEl && wordEl.closest('.morse-dir');
+    if (card) {
+      card.classList.remove('best');
+      card.onclick = null;
+      const note = card.querySelector('.morse-dir-note');
+      if (note) note.textContent = '';
+    }
   }
 }
 
@@ -1107,11 +1118,12 @@ function renderMorseWordList() {
   if (!container) return;
   container.innerHTML = '';
 
-  MORSE_WORDS.forEach(mw => {
+  const list = window.BombLogic ? window.BombLogic.morse.MORSE_FREQUENCIES : {};
+  Object.entries(list).forEach(([word, freq]) => {
     const item = document.createElement('div');
     item.className = 'morse-word-item';
-    item.dataset.word = mw.word;
-    item.innerHTML = `<span class="word">${mw.word}</span><span style="font-family:monospace; color:#ccc;">${mw.freq} MHz</span>`;
+    item.dataset.word = word;
+    item.innerHTML = `<span class="word">${word}</span><span style="font-family:monospace; color:#ccc;">${freq}</span>`;
     container.appendChild(item);
   });
 }
@@ -1195,19 +1207,11 @@ function resetMorseSolver() {
   morseState.lastStateChangeTime = 0; // set to 0 so first frame initializes state
   morseState.ignoreFirstTransition = false;
 
-  const decodedStrEl = document.getElementById('morseDecodedString');
-  if (decodedStrEl) decodedStrEl.textContent = "---";
-
-  const reconWordEl = document.getElementById('morseReconstructedWord');
-  if (reconWordEl) reconWordEl.textContent = "---";
-
-  const freqOutEl = document.getElementById('morseFrequencyOutput');
-  if (freqOutEl) {
-    freqOutEl.textContent = "---";
-    freqOutEl.style.color = '#444';
+  const kept = morseState.offline && morseState.readings;
+  if (!kept) {
+    clearMorseOutputs();
+    renderMorseWordList();
   }
-
-  renderMorseWordList();
   setMorseStatus(morseState.sourceEl ? "Solver reset. Playback restarted." : "No file loaded. Drag & drop a blinking GIF or Video.", '#aaa');
 }
 

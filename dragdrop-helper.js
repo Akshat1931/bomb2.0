@@ -321,6 +321,26 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'passwordSection': {
+          const input = document.getElementById('passwordFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'switchesSection': {
+          const input = document.getElementById('switchesFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'logicSection': {
+          const input = document.getElementById('logicFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'pianoSection': {
+          const input = document.getElementById('pianoFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
         case 'rubiksSection': {
           const input = document.getElementById('rubiksFileInput');
           if (file && input) feedFileToInput(input, file);

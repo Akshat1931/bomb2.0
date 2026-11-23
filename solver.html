@@ -686,6 +686,7 @@
       overflow-y: auto;
       padding-right: 4px;
     }
+    #complexWiresSection .cw-rule-box.cw-unsure { border-color: #f5c542 !important; box-shadow: 0 0 0 2px rgba(245,197,66,0.35); }
     #complexWiresSection .cw-rule-box {
       background: #070714;
       border: 1px solid var(--border);
@@ -900,6 +901,11 @@
       border-color: rgba(255, 95, 87, 0.4);
       color: #ff9b94;
     }
+    /* The Button (bomb_boomed's checklist solver) */
+    .button-warn { border-color: #f5c542 !important; box-shadow: 0 0 0 2px rgba(245,197,66,0.35); }
+    .button-answer { cursor: pointer; }
+    .button-rule-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #1f1f3a; font-family: monospace; }
+    .sym-puzzle-on { border-color: #3ddc84 !important; color: #3ddc84 !important; }
   </style>
 </head>
 
@@ -1043,11 +1049,17 @@
           <span>Answer needed:</span>
           <select id="vennTargetMode"
             style="padding:8px; background:#101025; border:1px solid #333; color:#eee; border-radius:8px;">
-            <option value="nonShaded" selected>Non-shaded region</option>
-            <option value="shaded">Shaded region</option>
+            <option value="shaded" selected>Shaded region</option>
+            <option value="nonShaded">Non-shaded region</option>
           </select>
         </label>
+        <label style="color:#ddd; font-size:13px; gap:8px; display:inline-flex; align-items:center;">
+          <span>Serial:</span>
+          <input id="vennSerialInput" type="text" placeholder="e.g. 4B2Z96" spellcheck="false" autocomplete="off"
+            style="width:120px; padding:8px; background:#101025; border:1px solid #333; color:#eee; border-radius:8px; font-family:monospace; text-transform:uppercase;">
+        </label>
       </div>
+      <div id="vennSerialNote" style="text-align:center; color:#8888aa; font-size:12px; margin:-8px 0 14px;"></div>
 
       <div class="venn-manual">
         <h3 style="color:#f5c542; text-align:center; margin-bottom:12px;">Build The Scenario</h3>
@@ -1143,9 +1155,17 @@
             </form>
           </div>
 
+          <!-- Screenshot (bomb_boomed's reader) -->
+          <div class="logic-card" id="logicDropzone" style="cursor:pointer; text-align:center; border-style:dashed;"
+            onclick="document.getElementById('logicFileInput').click()">
+            <input type="file" id="logicFileInput" accept="image/*" style="display:none;" onchange="window.handleLogicFile(this)">
+            🧠 <b>Paste</b> (Ctrl+V), drop or click: a grid screenshot fills its stage (from the dots)
+          </div>
           <!-- Greek Letter Outputs -->
           <div class="logic-card">
             <div class="logic-card-title">Greek Outputs</div>
+            <div id="logicCopyLine" title="Click to copy" onclick="window.copyLogicAnswer(this)"
+              style="display:none; margin-bottom:8px; padding:8px; border:1px solid #4caf50; border-radius:8px; cursor:pointer; font-family:monospace; font-weight:bold; color:#4caf50;"></div>
             <div class="logic-greek-item" id="logicGreekItem-a">
               <span>α (alpha) = Stage 1</span>
               <span class="logic-greek-badge unset" id="logicGreekBadge-a">Unset</span>
@@ -1373,28 +1393,27 @@
               style="width:100%; height:120px; border:1px solid #222; border-radius:6px; background:#070712; display:block;"></canvas>
           </div>
 
-          <!-- Decoded Text Display -->
-          <div class="logic-card" style="margin-bottom:12px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-            <div>
-              <div class="logic-card-title" style="margin-bottom:6px;">Decoded Symbols</div>
-              <div id="morseDecodedString"
-                style="font-family:monospace; font-weight:bold; color:#f5c542; font-size:18px; min-height:27px; word-break:break-all;">
-                ---</div>
+          <!-- Decoded word three ways: forward, backward (some games play it backwards) and swapped
+               (dots and dashes swapped: a red light). Click a reading to copy its word. -->
+          <div class="morse-dirs">
+            <div class="morse-dir">
+              <div class="logic-card-title">&#9654; Forward</div>
+              <div id="morseFwdWord" class="morse-dir-word">---</div>
+              <div id="morseFwdCode" class="morse-dir-code"></div>
+              <div id="morseFwdFreq" class="morse-dir-freq">---</div>
             </div>
-            <div>
-              <div class="logic-card-title" style="margin-bottom:6px;">Reconstructed Loop</div>
-              <div id="morseReconstructedWord"
-                style="font-family:monospace; font-weight:bold; color:#00d2ff; font-size:18px; min-height:27px; word-break:break-all;">
-                ---</div>
+            <div class="morse-dir">
+              <div class="logic-card-title">&#9664; Backward</div>
+              <div id="morseBwdWord" class="morse-dir-word">---</div>
+              <div id="morseBwdCode" class="morse-dir-code"></div>
+              <div id="morseBwdFreq" class="morse-dir-freq">---</div>
             </div>
-          </div>
-
-          <!-- Matching Frequency Output -->
-          <div
-            style="background:#0a0a1a; border:1px solid #222; border-radius:10px; padding:16px; text-align:center; margin-bottom:16px;">
-            <div style="font-size:11px; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:4px;">
-              Defuser Frequency</div>
-            <div id="morseFrequencyOutput" style="font-size:36px; font-weight:bold; color:#444;">---</div>
+            <div class="morse-dir">
+              <div class="logic-card-title">&#8644; Swapped</div>
+              <div id="morseSwpWord" class="morse-dir-word">---</div>
+              <div id="morseSwpCode" class="morse-dir-code"></div>
+              <div id="morseSwpFreq" class="morse-dir-freq">---</div>
+            </div>
           </div>
 
           <!-- Word List Matching State -->
@@ -1433,6 +1452,14 @@
         <div style="font-size:12px; color:#aaa; margin-bottom:6px; font-weight:bold;">Active Forbidden States (click
           &times; to remove):</div>
         <div id="switchesForbiddenChips" class="forbidden-chips-container"></div>
+      </div>
+
+      <!-- Screenshot: switch positions and the green target lights (bomb_boomed's reader) -->
+      <div id="switchesDropzone" class="logic-card" style="margin-bottom:16px; cursor:pointer; text-align:center; border-style:dashed;"
+        onclick="document.getElementById('switchesFileInput').click()">
+        <input type="file" id="switchesFileInput" accept="image/*" style="display:none;" onchange="window.handleSwitchesFile(this)">
+        🎚️ <b>Paste</b> (Ctrl+V), drop or click: a screenshot of the switches sets them and the target lights
+        <div id="switchesReadStatus" style="font-size:12px; min-height:16px; margin-top:6px;"></div>
       </div>
 
       <div class="switches-grid">
@@ -1519,6 +1546,8 @@
                 onclick="switchesNextStep()">Next &#9654;</button>
             </div>
           </div>
+          <div id="switchesCopyLine" style="display:none; margin-bottom:10px; padding:10px; border:1px solid #4caf50; border-radius:8px; cursor:pointer; font-family:monospace; font-weight:bold; color:#4caf50;"
+            onclick="window.copySwitchesMoves(this)" title="Click to copy"></div>
           <div id="switchesSolutionContainer" style="overflow-y:auto; flex:1; max-height:300px; padding-right:4px;">
             <!-- Generated steps -->
           </div>
@@ -1564,11 +1593,11 @@
 
       <!-- Collapsible Quick Guide -->
       <details style="background:#121226; border:1px solid #282845; border-radius:10px; padding:10px 14px; margin-bottom:18px; font-size:13px; color:#bbb;">
-        <summary style="cursor:pointer; color:#f5c542; font-weight:600; font-size:13px; outline:none;">📖 Quick Guide: How to Defuse The Button (Dynamic Countdown)</summary>
+        <summary style="cursor:pointer; color:#f5c542; font-weight:600; font-size:13px; outline:none;">📖 Quick Guide: How to Defuse The Button</summary>
         <div style="margin-top:10px; line-height:1.6; color:#ccc; font-size:13px;">
-          <p style="margin:0 0 6px;"><strong>1. Dynamic Countdown Timing:</strong> Solves target release timings (e.g. 5s, 7s, 10s, 11s, 12s) based on button color, label, needy count, non-needy count, disarmed modules, and serial number rules.</p>
-          <p style="margin:0 0 6px;"><strong>2. Auto-Branching (Show Both):</strong> If non-needy count or disarmed modules count is left on <em>Auto/Unknown</em>, the solver automatically evaluates and highlights both possibilities (e.g. <strong>5s if Odd</strong> vs <strong>7s if Even</strong>)!</p>
-          <p style="margin:0;"><strong>3. Serial Analysis:</strong> The serial input automatically calculates vowels, digits vs letters, and rightmost digit parity in real time.</p>
+          <p style="margin:0 0 6px;"><strong>1. Paste the round's checklist</strong> below (lines like "button is white and label says Blue: 3s"). "Serial: …" and module count lines fill those fields.</p>
+          <p style="margin:0 0 6px;"><strong>2. Paste a screenshot</strong> of the button: colour, label and which button it is (the dots) are read. Gold fields were read with low confidence.</p>
+          <p style="margin:0;"><strong>3. The first matching rule wins.</strong> If a rule above it needs a count you haven't entered, the answer waits and says which one. "Next button" keeps the checklist and counts.</p>
         </div>
       </details>
 
@@ -1587,93 +1616,58 @@
 
       <!-- Controls Grid -->
       <div
-        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
-        <!-- 1. Button Color -->
+        style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button Color</label>
-          <select id="buttonColorSelect"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
-            <option value="green" selected>Green</option>
-            <option value="red">Red</option>
-            <option value="white">White</option>
-            <option value="yellow">Yellow</option>
-            <option value="blue">Blue</option>
-          </select>
+          <label for="buttonColorSelect" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">1. Button Color</label>
+          <select id="buttonColorSelect" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;"></select>
         </div>
 
-        <!-- 2. Button Label -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button Label</label>
-          <input id="buttonLabelInput" type="text" value="Press" placeholder="e.g. Press, Blue, Detonate, Punch, Red"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <label for="buttonLabelInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">2. Button Label</label>
+          <input id="buttonLabelInput" type="text" placeholder="e.g. PRESS, BLUE, DETONATE" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
           <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
-            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Press'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Press</button>
-            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Blue'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Blue</button>
-            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Detonate'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Detonate</button>
-            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Punch'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Punch</button>
-            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='Red'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">Red</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='PRESS'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">PRESS</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='HOLD'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">HOLD</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='PUNCH'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">PUNCH</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='ABORT'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">ABORT</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='DETONATE'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">DETONATE</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='TAP'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">TAP</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='BLUE'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">BLUE</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='RED'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">RED</button>
+            <button type="button" class="upload-btn" style="padding:2px 8px; font-size:11px; margin-top:0;" onclick="document.getElementById('buttonLabelInput').value='WHITE'; document.getElementById('buttonLabelInput').dispatchEvent(new Event('input'))">WHITE</button>
           </div>
         </div>
 
-        <!-- 3. Serial Number -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial Number</label>
-          <input id="buttonSerialInput" type="text" value="AB3" placeholder="e.g. AB3"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
-          <div id="buttonSerialDetails" style="font-size:11px; color:#8888aa; margin-top:6px;">
-            Digits: 1 | Letters: 2 | Vowels: 1 (A) | Rightmost: 3 (Odd)
-          </div>
+          <label for="buttonSerialInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">3. Serial Number</label>
+          <input id="buttonSerialInput" type="text" placeholder="e.g. E1ZQGHV1" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div id="buttonSerialDetails" style="font-size:11px; color:#8888aa; margin-top:6px;"></div>
         </div>
 
-        <!-- 4. Non-Needy Modules -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Non-Needy Modules</label>
-          <select id="buttonNonNeedySelect"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
-            <option value="unknown" selected>Auto / Unknown (Show Both)</option>
-            <option value="odd">Odd count (1, 3, 5...)</option>
-            <option value="even">Even count (2, 4, 6...)</option>
-          </select>
-          <div style="font-size:11px; color:#8888aa; margin-top:6px;">If left Auto, evaluates both Odd & Even!</div>
+          <label for="buttonTotalInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">4. Total Modules</label>
+          <input id="buttonTotalInput" type="number" min="0" inputmode="numeric" placeholder="?" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">Left empty: non-needy + needy</div>
         </div>
-
-        <!-- 5. Needy Modules Count -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">5. Needy Modules Count</label>
-          <select id="buttonNeedySelect"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
-            <option value="unknown" selected>Auto / Unknown (Show Both)</option>
-            <option value="0">0 (No needy modules)</option>
-            <option value="1">Exactly 1 Needy</option>
-            <option value="2">2+ Needy Modules</option>
-          </select>
+          <label for="buttonNonNeedyInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">5. Non-Needy Modules</label>
+          <input id="buttonNonNeedyInput" type="number" min="0" inputmode="numeric" placeholder="?" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">Only needed when a rule asks</div>
+        </div>
+        <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
+          <label for="buttonNeedyInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">6. Needy Modules</label>
+          <input id="buttonNeedyInput" type="number" min="0" inputmode="numeric" placeholder="?" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
           <div style="font-size:11px; color:#8888aa; margin-top:6px;">E.g. Vent Gas, Capacitor, Knobs</div>
         </div>
-
-        <!-- 6. Modules Disarmed / Solved Count -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">6. Modules Disarmed / Solved</label>
-          <select id="buttonDisarmedSelect"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
-            <option value="unknown" selected>Auto / Unknown (Show Both)</option>
-            <option value="0">0 (Empty / None disarmed)</option>
-            <option value="odd">Odd count (1, 3, 5...)</option>
-            <option value="even">Even count (2, 4, 6...)</option>
-          </select>
-          <div style="font-size:11px; color:#8888aa; margin-top:6px;">Solved modules count on bomb</div>
+          <label for="buttonModsInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">7. Button Modules</label>
+          <input id="buttonModsInput" type="number" min="0" inputmode="numeric" placeholder="?" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">How many Button modules</div>
         </div>
-
-        <!-- 7. Button Number (Position on Bomb) -->
         <div style="background:#131328; padding:16px; border-radius:12px; border:1px solid #222244;">
-          <label style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">7. This Button Number</label>
-          <select id="buttonIndexSelect"
-            style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px;">
-            <option value="1" selected>Button 1 (First Button)</option>
-            <option value="2">Button 2 (Second Button)</option>
-            <option value="3">Button 3</option>
-            <option value="unknown">Auto / Unknown (Show Both)</option>
-          </select>
-          <div style="font-size:11px; color:#8888aa; margin-top:6px;">If multiple buttons on bomb</div>
+          <label for="buttonIndexInput" style="color:#f5c542; font-size:13px; font-weight:600; display:block; margin-bottom:6px;">8. This Button #</label>
+          <input id="buttonIndexInput" type="number" min="0" inputmode="numeric" placeholder="?" style="width:100%; padding:10px; background:#1a1a36; border:1px solid #333366; color:#fff; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div style="font-size:11px; color:#8888aa; margin-top:6px;">Read from the dots under the button</div>
         </div>
       </div>
 
@@ -1687,7 +1681,10 @@
           style="color:#fff; font-size:28px; font-weight:700; font-family:'Outfit', sans-serif; text-shadow:0 0 10px rgba(255,255,255,0.2);">
           --</div>
         <div id="buttonMatchedRule" style="color:#81c784; font-size:13px; margin-top:8px; font-style:italic;">
-          Configure button parameters or guide rules above</div>
+          Paste this round's Button checklist below.</div>
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          <button id="buttonNextBtn" type="button" class="upload-btn" style="margin-top:0; padding:4px 12px; font-size:12px;">Next button ▸</button>
+        </div>
 
         <!-- Conditional Possibilities Container (Renders when input is empty/ambiguous) -->
         <div id="buttonConditionalContainer" style="display:none; margin-top:16px; text-align:left;"></div>
@@ -1698,12 +1695,16 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <label for="buttonRulesInput" style="color:#f5c542; font-size:14px; font-weight:600;">Dynamic Guidebook Rules
             (Editable)</label>
-          <button id="buttonResetRulesBtn" type="button" class="upload-btn"
-            style="margin-top:0; padding:4px 12px; font-size:12px;">Reset Rules</button>
+          <span style="display:flex; gap:6px;">
+            <button id="buttonSampleBtn" type="button" class="upload-btn"
+              style="margin-top:0; padding:4px 12px; font-size:12px;">Sample</button>
+            <button id="buttonResetRulesBtn" type="button" class="upload-btn"
+              style="margin-top:0; padding:4px 12px; font-size:12px;">Clear</button>
+          </span>
         </div>
-        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">If the game manual changes rules,
-          paste the new instruction lines below. The solver will automatically parse and apply them in order.</p>
-        <textarea id="buttonRulesInput" rows="8"
+        <p style="color:#8a8ea3; font-size:12px; margin-top:0; margin-bottom:10px;">The checklist changes every round:
+          paste the bot's whole Button message. Rules are checked top to bottom; "Serial:" and module count lines fill the fields above.</p>
+        <textarea id="buttonRulesInput" rows="8" placeholder="button is white and label says Blue: 3s&#10;there is exactly 1 needy module, button is blue, and label says Hold: 11s&#10;...&#10;Otherwise: 7s&#10;&#10;Serial: E1ZQGHV1"
           style="width:100%; padding:12px; background:#0a0a16; border:1px solid #2a2a48; color:#eee; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.5; box-sizing:border-box; resize:vertical;"></textarea>
       </div>
 
@@ -2512,8 +2513,8 @@
 
           <!-- Dropzone for diagram screenshot -->
           <div id="cwDiagramDropzone" class="cw-dropzone">
-            📷 Click or drag &amp; drop Venn Diagram screenshot<br>
-            <span style="font-size:11.5px; color:var(--text-muted);">(or press Ctrl+V to paste anywhere)</span>
+            📷 Click or drag &amp; drop the Venn diagram <b>or</b> the wires panel<br>
+            <span style="font-size:11.5px; color:var(--text-muted);">(or press Ctrl+V to paste anywhere — a wide picture is read as the diagram, a square one as the wires)</span>
           </div>
           <input id="cwDiagramFileInput" type="file" accept="image/*" style="display:none;">
           <div id="cwDiagramStatus" style="display:none; font-size:12px; color:var(--green); margin-top:8px; font-weight:600; text-align:center;"></div>
@@ -2601,36 +2602,37 @@
     </div>
   </section>
 
-  <script src="./venn-module.js?v=20260918_v3"></script>
+  <!-- bomb_boomed's image readers and solvers (generated: node scripts/build-conso-logic.mjs in bomb_boomed) -->
+  <script src="./bomb-logic.js?v=20261123_v2"></script>
+  <script src="./venn-module.js?v=20261123_v1"></script>
   <script src="./logic-solver.js?v=20260918_v3"></script>
-  <script src="./logic-module.js?v=20260918_v3"></script>
-  <script src="./morse-module.js?v=20260918_v3"></script>
-  <script src="./switches-module.js?v=20260918_v3"></script>
+  <script src="./logic-module.js?v=20261122_v1"></script>
+  <script src="./morse-module.js?v=20261122_v1"></script>
+  <script src="./switches-module.js?v=20261122_v1"></script>
   <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-  <script src="./search-module.js?v=20260918_v3"></script>
-  <script src="./knobs-manual.js?v=20261122_v1"></script>
-  <script src="./knobs-module.js?v=20261122_v6"></script>
+  <script src="./search-module.js?v=20261122_v1"></script>
+  <script src="./knobs-module.js?v=20261122_v7"></script>
   <script src="./memory-module.js?v=20260918_v3"></script>
-  <script src="./password-module.js?v=20260918_v3"></script>
-  <script src="./piano-module.js?v=20260918_v3"></script>
-  <script src="./button-module.js?v=20260918_v3"></script>
-  <script src="./whos-module.js?v=20260918_v3"></script>
-  <script src="./wires-module.js?v=20261122_v6"></script>
+  <script src="./password-module.js?v=20261122_v1"></script>
+  <script src="./piano-module.js?v=20261123_v2"></script>
+  <script src="./button-module.js?v=20261122_v1"></script>
+  <script src="./whos-module.js?v=20261122_v1"></script>
+  <script src="./wires-module.js?v=20261122_v7"></script>
   <script src="./circuit-module.js?v=20261122_v5"></script>
-  <script src="./nqueen-module.js?v=20260918_v3"></script>
-  <script src="./complex-wires-module.js?v=20260918_v3"></script>
+  <script src="./nqueen-module.js?v=20261122_v1"></script>
+  <script src="./complex-wires-module.js?v=20261122_v1"></script>
   <script src="./chess-module.js?v=20261122_v4"></script>
-  <script src="./minesweeper-module.js?v=20260918_v3"></script>
-  <script src="./symbols-module.js?v=20260918_v1"></script>
+  <script src="./minesweeper-module.js?v=20261122_v1"></script>
+  <script src="./symbols-module.js?v=20261122_v1"></script>
   <script src="./multi-maze-module.js?v=20261122_v2"></script>
   <script src="./limbo-module.js?v=20261122_v1"></script>
   <script src="./pipes-module.js?v=20261122_v1"></script>
   <script src="./astrology-module.js?v=20261122_v1"></script>
   <script src="./hangman-module.js?v=20261122_v1"></script>
-  <script src="./simons-module.js?v=20261122_v2"></script>
+  <script src="./simons-module.js?v=20261122_v3"></script>
   <script src="./rubiks-module.js?v=20261122_v1"></script>
-  <script src="./dragdrop-helper.js?v=20261122_v3"></script>
+  <script src="./dragdrop-helper.js?v=20261122_v5"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -3756,8 +3758,71 @@
       solve();
     }
 
+    // ── bomb_boomed's maze reader (window.BombLogic.maze, bomb-logic.js) ──
+    // Walls from the manual picture (finds the light board, then each cell edge), the red start and
+    // yellow goal cells from the bot's picture, shortest path by BFS. Returns the same shape as the
+    // solver below so the drawing and the multi-maze slots work unchanged.
+    function solveMazeBombLogic(imageA, imageB) {
+      const MZ = window.BombLogic && window.BombLogic.maze;
+      if (!MZ) return null;
+      // canvases have no naturalWidth: the readers size their work canvas from it
+      [imageA, imageB].forEach(im => { if (im && !im.naturalWidth && im.width) { try { im.naturalWidth = im.width; im.naturalHeight = im.height; } catch (e) {} } });
+      const aDots = MZ.isDotsImage(imageA), bDots = MZ.isDotsImage(imageB);
+      if (aDots === bDots) return null;
+      const dotImage = aDots ? imageA : imageB, mazeImage = aDots ? imageB : imageA;
+      const { startPos, goalPos } = MZ.detectMazeDots(dotImage);
+      if (!startPos || !goalPos) return null;
+
+      const S = FIXED_DISPLAY_SIZE, N = MZ.MAZE_SIZE;
+      const mazeCanvas = makeCanvas(mazeImage, S, S);
+      const data = mazeCanvas.getContext('2d').getImageData(0, 0, S, S).data;
+      const w = MZ.mzWallsFromData(data, S, S);
+      if (w.fallback) return null; // board not found: let the other reader try
+      const steps = MZ.solveMazeBFS(w.grid, startPos, goalPos);
+      if (!steps) return null;
+
+      const { gx, gy, gw, gh } = w.geom, cw = gw / N, ch = gh / N;
+      const rowLines = Array.from({ length: N + 1 }, (_, i) => gy + i * ch);
+      const colLines = Array.from({ length: N + 1 }, (_, i) => gx + i * cw);
+      const centers = {
+        rowCenters: Array.from({ length: N }, (_, i) => gy + (i + 0.5) * ch),
+        colCenters: Array.from({ length: N }, (_, i) => gx + (i + 0.5) * cw)
+      };
+      const G = w.grid, idx = Array.from({ length: N }, (_, i) => i);
+      const wallData = {
+        rows: N, cols: N, cs: Math.min(cw, ch), centers, rowLines, colLines,
+        hWalls: idx.map(r => idx.slice(0, N - 1).map(c => G[r][c].r)),   // between column c and c+1
+        vWalls: idx.slice(0, N - 1).map(r => idx.map(c => G[r][c].d)),   // between row r and r+1
+        topWalls: idx.map(c => G[0][c].u), bottomWalls: idx.map(c => G[N - 1][c].d),
+        leftWalls: idx.map(r => G[r][0].l), rightWalls: idx.map(r => G[r][N - 1].r)
+      };
+      const path = [{ row: startPos.r, col: startPos.c }, ...steps.map(st => ({ row: st.r, col: st.c }))];
+      const at = (p) => ({ x: centers.colCenters[p.c], y: centers.rowCenters[p.r] });
+      return {
+        success: true, reader: 'bomb_boomed',
+        moves: steps.map(st => st.move).join(''),
+        path, wallData, mazeCanvas, dotImage,
+        structure: { rows: N, cols: N, cs: wallData.cs, rowLines, colLines, rowCenters: centers.rowCenters, colCenters: centers.colCenters, ox: gx, oy: gy },
+        calib: { dx: 0, dy: 0 }, totalDX: 0, totalDY: 0,
+        scaledDots: { red: at(startPos), yellow: at(goalPos) }
+      };
+    }
+
     // ── Reusable Maze Solve Instance (Used by both Single & Multi Maze) ──
+    // bomb_boomed's reader first; this page's own reader when that can't solve it, or when the
+    // nudge / wall-sensitivity controls have been moved (they tune this page's reader).
     window.solveMazeInstance = function(imageA, imageB, opts = {}) {
+      const tuned = (opts.nudgeDX || 0) !== 0 || (opts.nudgeDY || 0) !== 0 || (opts.wallSens != null && Math.abs(opts.wallSens - 0.47) > 1e-6);
+      if (!tuned) {
+        try {
+          const mine = solveMazeBombLogic(imageA, imageB);
+          if (mine) return mine;
+        } catch (e) { console.warn('bomb_boomed maze reader:', e); }
+      }
+      return solveMazeConso(imageA, imageB, opts);
+    };
+
+    function solveMazeConso(imageA, imageB, opts = {}) {
       const located = locateDotsImage(imageA, imageB);
       if (!located) {
         return { success: false, error: 'Could not determine which image contains the red/yellow dots.' };
@@ -3845,7 +3910,7 @@
         totalDY,
         scaledDots
       };
-    };
+    }
 
     // ── Main solve ────────────────────────────────────────────────
     function solve() {
@@ -3866,7 +3931,7 @@
         return;
       }
 
-      setBoxSizeInfo(`Fixed box size: ${HARD_CELL_SIZE} px`);
+      setBoxSizeInfo(res.reader ? `Read with bomb_boomed's reader (cell ${Math.round(res.wallData.cs)} px) — move a slider to use this page's reader` : `Fixed box size: ${HARD_CELL_SIZE} px`);
       const calibMs = Math.round(performance.now() - t0);
       document.getElementById('calibInfo').textContent =
         `Auto: DX=${res.calib.dx} DY=${res.calib.dy} + Manual: DX=${manualDX} DY=${manualDY} = Total: DX=${res.totalDX} DY=${res.totalDY} (${calibMs}ms)`;
