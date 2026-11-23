@@ -66,8 +66,9 @@
   const byColThenRow = (a, b) => (a[0] !== b[0] ? a[0].localeCompare(b[0]) : parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10));
 
   function solveMinesweeper(grid) {
-    const { safeList, mineList } = MS.solveMinesGrid(toCells(grid));
-    return { safe: safeList.slice().sort(byColThenRow), mines: mineList.slice().sort(byColThenRow) };
+    const cells = toCells(grid);
+    const { safeList, mineList } = MS.solveMinesGrid(cells); // marks each cell isSafe / isMine
+    return { cells, safe: safeList.slice().sort(byColThenRow), mines: mineList.slice().sort(byColThenRow) };
   }
 
   // ── UI INJECTION & RENDERING ──────────────────────────────
@@ -150,6 +151,14 @@
       margin-bottom: 18px;
       box-shadow: 0 0 25px rgba(34, 197, 94, 0.15);
     }
+    .ms-finish {
+      margin-top: 12px; padding: 9px 12px; border-radius: 10px;
+      border: 1px solid #22c55e; background: rgba(34, 197, 94, .12); color: #e2e8f0;
+      font-size: 13px; line-height: 1.5;
+    }
+    .ms-finish b { color: #4ade80; }
+    .ms-finish.partial { border-color: #ffd875; background: rgba(255, 216, 117, .10); }
+    .ms-finish.partial b { color: #ffd875; }
     .ms-safe-tag-list {
       display: flex;
       flex-wrap: wrap;
@@ -399,6 +408,7 @@
               <div id="msSafeTagList" class="ms-safe-tag-list">
                 <span style="font-size:13px; color:#94a3b8;">Upload or paste an image to calculate safe squares.</span>
               </div>
+              <div id="msFinishNote" class="ms-finish" style="display:none;"></div>
             </div>
 
             <!-- Board Grid -->
@@ -508,6 +518,8 @@
     state.allSafe = result.safe;
     state.safeCells = result.safe.filter(c => !state.knownSafe.has(c)); // new this round
     state.mineCells = result.mines;
+    // every covered square left is a sure mine or one of the squares this round clicks → it finishes Mines
+    state.finish = MS.finishCheck(result.cells, state.safeCells);
 
     renderBoard();
     updateStats();
@@ -545,8 +557,22 @@
     if (!summary || !tagList) return;
 
     const roundTag = state.round > 1 ? ` <span style="font-size:13px; color:#94a3b8;">(round #${state.round})</span>` : '';
+    const finish = state.finish;
+    const note = document.getElementById('msFinishNote');
+    if (note) {
+      if (finish && finish.solves) {
+        note.className = 'ms-finish';
+        note.innerHTML = `✅ <b>This input solves Mines</b> — ${finish.safeLeft.length === 1 ? 'this is the last safe square' : `these are the last ${finish.safeLeft.length} safe squares`}; every other covered square is a mine.`;
+      } else if (finish && finish.allKnown) {
+        note.className = 'ms-finish partial';
+        note.innerHTML = `✅ Every square is known — clicking <b>${finish.earlier.join(' ')}</b> ${state.safeCells.length ? 'as well as the new ones ' : ''}solves Mines (still covered from an earlier round).`;
+      }
+      note.style.display = finish && finish.allKnown ? 'block' : 'none';
+    }
     if (state.safeCells.length > 0) {
-      summary.innerHTML = `<span>✓ ${state.safeCells.length} New Safe Square${state.safeCells.length > 1 ? 's' : ''} to Click</span>${roundTag}`;
+      summary.innerHTML = finish && finish.solves
+        ? `<span>✅ This Input Solves Mines</span>${roundTag}`
+        : `<span>✓ ${state.safeCells.length} New Safe Square${state.safeCells.length > 1 ? 's' : ''} to Click</span>${roundTag}`;
       tagList.innerHTML = state.safeCells.map(c => `
         <span class="ms-safe-tag">
           <span style="font-size:14px;">✓</span> ${c}
@@ -669,6 +695,7 @@
     state.allSafe = [];
     state.knownSafe = new Set();
     state.round = 0;
+    state.finish = null;
     state.currentImage = null;
 
     const previewWrap = document.getElementById('msPreviewWrapper');
