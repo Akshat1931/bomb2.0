@@ -1,4 +1,4 @@
-// GENERATED from bomb_boomed (2026-11-23 15:07) by scripts/build-conso-logic.mjs — do not edit here.
+// GENERATED from bomb_boomed (2026-11-23 17:04) by scripts/build-conso-logic.mjs — do not edit here.
 // window.BombLogic.<module>.<function>: the same image readers and solvers as bomb_boomed.
 var __BombLogic = (() => {
   var __defProp = Object.defineProperty;
@@ -2581,6 +2581,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
   var TALL = 0.71;
   var SHORT = 0.5;
   var BRACKET = 0.68;
+  var GREY_INK = 0.79;
   function isGreekGlyph(f) {
     if (!Number.isFinite(f.bright)) return null;
     const thin = Number.isFinite(f.stroke) && f.stroke < 0.125;
@@ -2650,10 +2651,17 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     }
     if (gmax - level < 50) return { rows: [], text: "", tilesFound: !!found };
     const thr = level + 0.4 * (gmax - level);
-    const rows = groupRows(tiles).map((r) => r.map((t) => {
+    const glyphs = groupRows(tiles).map((r) => r.map((t) => {
       const g = extractGlyph(L, w, t, thr, { level, gmax });
-      if (!g) return null;
-      const f = measure(g);
+      return g ? { t, g, f: measure(g) } : null;
+    }));
+    const cells = glyphs.flat().filter(Boolean);
+    const boldInk = cells.some((c) => c.f.hRel >= SHORT && c.f.stroke >= 0.125);
+    const greyScale = !boldInk && gmax < 215 ? GREY_INK : 1;
+    const rows = glyphs.map((r) => r.map((cell) => {
+      if (!cell) return null;
+      const { t, g, f } = cell;
+      f.bright *= greyScale;
       let sym = classify(f);
       if (sym === "?" && Number.isFinite(g.bright)) {
         const peak = level + g.bright * (gmax - level);
