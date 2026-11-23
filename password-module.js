@@ -1,22 +1,25 @@
 (function() {
-  const DEFAULT_PASSWORDS_TEXT = `ABOUT AFTER AGAIN BELOW COULD
-EVERY FIRST FOUND HOUSE LARGE
-LEARN NEVER OTHER PLACE PLANT
-POINT RIGHT SMALL SOUND SPELL
-STILL STUDY THEIR THERE THESE
-THING THINK THREE WATER WHERE
-WHICH WORLD WOULD WRITE YEARS`;
+  // Reading, row splitting, the password list and matching are bomb_boomed's (window.BombLogic.password,
+  // bomb-logic.js). One screenshot of the dials = one row (the letter showing on each column).
+  const PW = window.BombLogic.password;
+  const DEFAULT_PASSWORDS_TEXT = PW.MASTER_PASSWORDS.join(' ');
 
   const passwordState = {
     initialized: false,
     cols: [new Set(), new Set(), new Set(), new Set(), new Set()],
-    words: []
+    rows: [],
+    words: [],
+    busy: false
   };
 
   // ── DYNAMIC STYLE INJECTION ───────────────────────────────
   function injectPasswordStyles() {
     if (document.getElementById('passwordStyles')) return;
     const css = `
+    .password-drop { border: 2px dashed #35355c; border-radius: 10px; padding: 12px; color: #aaa; font-size: 13px; cursor: pointer; text-align: center; margin-bottom: 6px; }
+    .password-drop:hover, .password-drop.dragover { border-color: #ffd875; color: #ffd875; background: rgba(255,216,117,0.05); }
+    .password-read-status { font-size: 12px; min-height: 16px; margin-bottom: 6px; text-align: left; }
+    .password-copied { color: #00ff66; font-weight: 700; }
     .password-shell {
       max-width: 950px;
       margin: auto;
@@ -211,6 +214,7 @@ WHICH WORLD WOULD WRITE YEARS`;
     
     handlePasswordWordsInput(wordsInput);
     solvePassword();
+    if (window.BombDragDrop) window.BombDragDrop.attachDropzone('passwordDropzone', (file) => readPasswordPicture(file));
   }
 
   function renderPasswordUI() {
@@ -229,9 +233,14 @@ WHICH WORLD WOULD WRITE YEARS`;
           <div class="password-col-left">
             <!-- Dials Entry Card -->
             <div class="password-card">
-              <div class="password-card-title">1. Paste Dials letters (6 lines, 5 letters each)</div>
+              <div class="password-card-title">1. Dial letters — one screenshot per row, or type them</div>
+              <div id="passwordDropzone" class="password-drop" onclick="document.getElementById('passwordFileInput').click()">
+                <input type="file" id="passwordFileInput" accept="image/*" style="display:none;" onchange="window.handlePasswordFile(this)">
+                🔑 <b>Paste</b> (Ctrl+V), drop or click: a screenshot of the dials adds one row
+              </div>
+              <div id="passwordReadStatus" class="password-read-status"></div>
               <div style="font-size:12px; color:#aaa; text-align:left; margin-bottom:8px;">
-                Paste the 6 scrolling rows of letters. Column 1 matches letter 1, etc.
+                Rows of 5 letters (every 5 letters is a row). Column 1 matches letter 1, etc.
               </div>
               <textarea id="passwordDialsInput" class="password-textarea" rows="6" placeholder="e.g.&#10;GPIIT&#10;WVUPC&#10;HURNC&#10;..." oninput="window.handlePasswordDialsInput(this)"></textarea>
               
@@ -289,19 +298,11 @@ WHICH WORLD WOULD WRITE YEARS`;
   }
 
   function handlePasswordDialsInput(textarea) {
-    const text = textarea.value;
-    const lines = text.split('\n').map(line => line.trim().toUpperCase().replace(/[^A-Z]/g, '')).filter(Boolean);
-
-    // Reset cols sets
+    // every 5 letters is a row (spaces, new lines and other characters are ignored)
+    passwordState.rows = PW.splitPasswordRows(textarea.value);
     passwordState.cols = [new Set(), new Set(), new Set(), new Set(), new Set()];
+    passwordState.rows.forEach(row => { for (let i = 0; i < 5; i++) passwordState.cols[i].add(row[i]); });
 
-    lines.forEach(line => {
-      for (let i = 0; i < Math.min(5, line.length); i++) {
-        passwordState.cols[i].add(line[i]);
-      }
-    });
-
-    // Update UI visualization
     for (let i = 0; i < 5; i++) {
       const el = document.getElementById(`password-col-${i}`);
       if (el) {
@@ -312,6 +313,46 @@ WHICH WORLD WOULD WRITE YEARS`;
 
     solvePassword();
   }
+
+  // One screenshot = one row: the letter currently showing on each of the 5 columns
+  async function readPasswordPicture(file) {
+    const status = document.getElementById('passwordReadStatus');
+    const say = (msg, color) => { if (status) { status.textContent = msg; status.style.color = color; } };
+    if (passwordState.busy) { say('Still reading the last row — paste again in a moment.', '#ffd875'); return; }
+    passwordState.busy = true;
+    say('Reading letters…', '#aaa');
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = () => reject(new Error('could not open that file as an image'));
+        im.src = URL.createObjectURL(file);
+      });
+      // letters each column can show according to the list — used to flag doubtful reads
+      const allowed = Array.from({ length: 5 }, (_, i) => new Set(passwordState.words.map(w => w[i])));
+      const r = await PW.readPasswordRow(img, allowed, t => say(t, '#aaa'));
+      if (!r.ok) { say(r.reason, '#ff9800'); return; }
+      const ta = document.getElementById('passwordDialsInput');
+      if (passwordState.rows.includes(r.row)) { say(`Row ${r.row} is already in the list.`, '#00ff66'); return; }
+      if (ta) {
+        ta.value = ta.value.trim() ? `${ta.value.trim()}\n${r.row}` : r.row;
+        handlePasswordDialsInput(ta);
+      }
+      const doubt = r.unsure.map((u, i) => (u ? i + 1 : 0)).filter(Boolean);
+      say(doubt.length ? `⚠ Added row ${r.row} — check letter ${doubt.join(', ')} (edit the rows if it's wrong).` : `✓ Added row ${r.row}.`,
+        doubt.length ? '#ff9800' : '#00ff66');
+    } catch (e) {
+      say(`⚠ ${e.message} — type the row instead.`, '#ff5c5c');
+    } finally {
+      passwordState.busy = false;
+    }
+  }
+
+  window.handlePasswordFile = function (input) {
+    const f = input.files && input.files[0];
+    if (f) readPasswordPicture(f);
+    input.value = '';
+  };
 
   function handlePasswordWordsInput(textarea) {
     const text = textarea.value;
@@ -352,7 +393,7 @@ WHICH WORLD WOULD WRITE YEARS`;
     if (!resultPanel) return;
 
     // Check if dials input is empty
-    const hasDialsInput = passwordState.cols.some(set => set.size > 0);
+    const hasDialsInput = passwordState.rows.length > 0;
     if (!hasDialsInput) {
       resultPanel.innerHTML = `
         <div style="color:#888; font-size:13px; text-align:center; padding:20px 0;">
@@ -373,30 +414,24 @@ WHICH WORLD WOULD WRITE YEARS`;
       return;
     }
 
-    // Filter matching words
-    const matches = passwordState.words.filter(word => {
-      for (let i = 0; i < 5; i++) {
-        if (!passwordState.cols[i].has(word[i])) return false;
-      }
-      return true;
-    });
-
-    // Remove duplicates from matches
+    const { matches } = PW.filterPasswordCandidates(passwordState.rows, passwordState.words.join(' '));
     const uniqueMatches = Array.from(new Set(matches));
+    // click to copy: the password, or every candidate (space-separated) when several are left
+    const copyAttr = (t) => `onclick="window.copyPasswordText('${t}', this)" title="Click to copy" style="cursor:pointer;"`;
 
     if (uniqueMatches.length === 1) {
       resultPanel.innerHTML = `
         <div class="password-solution-box" style="border-color:#00ff66;">
           <div class="password-solution-title">Match Found!</div>
-          <div class="password-solution-word">${uniqueMatches[0]}</div>
-          <div class="password-solution-desc">Enter this password on the module dials.</div>
+          <div class="password-solution-word" ${copyAttr(uniqueMatches[0])}>${uniqueMatches[0]}</div>
+          <div class="password-solution-desc">Enter this password on the module dials. <span class="password-copied">(click it to copy)</span></div>
         </div>
       `;
     } else if (uniqueMatches.length > 1) {
       resultPanel.innerHTML = `
         <div class="password-solution-box" style="border-color:#ffd875;">
           <div class="password-solution-title" style="color:#ffd875;">Multiple Matches (${uniqueMatches.length})</div>
-          <div class="password-solution-desc" style="margin-bottom:15px;">Narrow down by entering more dial letters.</div>
+          <div class="password-solution-desc" style="margin-bottom:15px;">Narrow down by entering more dial letters. <a href="#" ${copyAttr(uniqueMatches.join(' '))}>Copy all</a> <span class="password-copied"></span></div>
           <div class="password-candidate-list">
             ${uniqueMatches.map(w => `<div class="password-candidate-item">${w}</div>`).join('')}
           </div>
@@ -415,6 +450,9 @@ WHICH WORLD WOULD WRITE YEARS`;
 
   function resetPasswordSolver() {
     passwordState.cols = [new Set(), new Set(), new Set(), new Set(), new Set()];
+    passwordState.rows = [];
+    const st = document.getElementById('passwordReadStatus');
+    if (st) st.textContent = '';
     // Note: We keep the loaded words dictionary intact for easy reuse, but we clear the dials input
 
     const dialsInput = document.getElementById('passwordDialsInput');
@@ -434,4 +472,31 @@ WHICH WORLD WOULD WRITE YEARS`;
   window.handlePasswordDialsInput = handlePasswordDialsInput;
   window.handlePasswordWordsInput = handlePasswordWordsInput;
   window.resetPasswordSolver = resetPasswordSolver;
+  window.copyPasswordText = function (text, el) {
+    if (window.event) window.event.preventDefault();
+    const tag = el && el.parentElement && el.parentElement.parentElement && el.parentElement.parentElement.querySelector('.password-copied');
+    try {
+      navigator.clipboard.writeText(text).then(() => {
+        if (!tag) return;
+        const was = tag.textContent;
+        tag.textContent = '✓ Copied';
+        setTimeout(() => { tag.textContent = was; }, 1200);
+      }).catch(() => {});
+    } catch (e) {}
+  };
+
+  // A pasted picture (Discord links are routed to the file input by dragdrop-helper.js)
+  document.addEventListener('paste', (e) => {
+    if (!document.getElementById('passwordSection')?.classList.contains('active')) return;
+    const el = document.activeElement;
+    if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type === 'text'))) return;
+    for (const item of (e.clipboardData?.items || [])) {
+      if (item.type && item.type.startsWith('image/')) {
+        e.preventDefault();
+        const f = item.getAsFile();
+        if (f) readPasswordPicture(f);
+        return;
+      }
+    }
+  });
 })();

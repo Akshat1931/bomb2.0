@@ -1,27 +1,19 @@
 /**
  * Piano Solver Module for Keep Talking and Nobody Explodes
- * Interactive Manual Staff: Click left half for Note 1, right half for Note 2.
- * Calculates musical interval and displays corresponding module frequency code.
+ * Paste / drop the staff picture (clef and both notes are read), or click the staff: left half for
+ * Note 1, right half for Note 2. The answer is the interval between the two notes as drawn (no
+ * up / down); clicking it copies its name ("Major 6th"). The key signature is in the bot's message ("Key Signature: E Major") — paste it
+ * into the key field: notes without their own ♯ / ♭ take it.
+ * Reading and interval logic are bomb_boomed's (window.BombLogic.piano, bomb-logic.js).
  */
 
 (function() {
   const STORAGE_KEY = "ktane_piano_codes";
 
-  // Interval Names to Semitone Differences
-  const INTERVALS_DICT = {
-    1: "Minor 2nd",
-    2: "Major 2nd",
-    3: "Minor 3rd",
-    4: "Major 3rd",
-    5: "Perfect 4th",
-    6: "Tritone",
-    7: "Perfect 5th",
-    8: "Minor 6th",
-    9: "Major 6th",
-    10: "Minor 7th",
-    11: "Major 7th",
-    12: "Octave"
-  };
+  const PN = window.BombLogic.piano;
+  // no answer until notes are placed (two default notes would read as an answer)
+  let touched = false;
+  let keySig = ''; // '' = no key signature / C major
 
   const defaultCodes = {
     "Minor 2nd": "5.31",
@@ -61,6 +53,23 @@
       color: #e2e8f0;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
+    .piano-drop { border: 2px dashed #35355c; border-radius: 10px; padding: 14px; color: #aaa; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .piano-drop:hover, .piano-drop.dragover { border-color: #ffd875; color: #ffd875; background: rgba(255,216,117,0.05); }
+    .piano-read-status { font-size: 12px; min-height: 16px; margin: 8px 0; text-align: left; }
+    .piano-key-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; text-align: left; }
+    .piano-key-row label { color: #ffd875; font-size: 12px; font-weight: 800; letter-spacing: 1px; }
+    .piano-key-row input, .piano-key-row select { background: #080814; border: 1px solid #25253f; color: #fff; border-radius: 6px; padding: 7px 8px; font-size: 13px; outline: none; max-width: 100%; }
+    .piano-key-row input { width: 9.5em; }
+    .piano-key-row input.bad { border-color: #ff5c5c; }
+    .piano-key-tip { font-size: 12px; color: #8c8fae; flex-basis: 100%; }
+    .piano-dirs { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
+    .piano-dir { flex: 1 1 200px; min-width: 0; background: #12132a; border: 1px solid #25284e; border-radius: 12px; padding: 12px; cursor: pointer; text-align: center; }
+    .piano-dir:hover { border-color: #ffd875; }
+    .piano-dir.drawn { border-color: #4caf50; box-shadow: 0 0 0 1px #4caf50 inset; }
+    .piano-dir-lbl { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #94a3b8; }
+    .piano-dir-how { font-size: 12px; color: #8c8fae; margin-top: 4px; }
+    .piano-dir-code { font-size: 13px; color: #ffd875; margin-top: 6px; }
+    .piano-dir-copied { font-size: 12px; color: #4caf50; min-height: 14px; margin-top: 2px; font-weight: 800; }
     .piano-card {
       background: #090a18;
       border: 1.5px solid #1f2142;
@@ -164,8 +173,24 @@
         <h2 style="color:#f5c542; margin-bottom: 6px; text-align:center; font-family:'Outfit', sans-serif; font-size:26px;">Piano Solver</h2>
         <p style="text-align:center; color:#94a3b8; font-size:13px; margin-bottom:20px;">
           Click the <strong>left half</strong> of the staff to set <span style="color:#4caf50; font-weight:700;">Note 1</span>, 
-          and the <strong>right half</strong> to set <span style="color:#3b82f6; font-weight:700;">Note 2</span>.
+          and the <strong>right half</strong> to set <span style="color:#3b82f6; font-weight:700;">Note 2</span> —
+          or paste / drop the staff picture.
         </p>
+
+        <div class="piano-card" style="margin-bottom: 20px;">
+          <div id="pianoDropzone" class="piano-drop" onclick="document.getElementById('pianoFileInput').click()">
+            <input type="file" id="pianoFileInput" accept="image/*" style="display:none;" onchange="window.handlePianoFile(this)">
+            🎹 <b>Paste</b> (Ctrl+V), drop or click to upload the <b>staff picture</b>
+          </div>
+          <div id="pianoReadStatus" class="piano-read-status"></div>
+          <div class="piano-key-row">
+            <label for="pianoKeyText">KEY SIGNATURE</label>
+            <input id="pianoKeyText" type="text" placeholder="paste: E Major" spellcheck="false" autocomplete="off"
+              title="Paste or type the key from the bot's message: E, E Major, Bb, F# minor, or the whole message">
+            <select id="pianoKeySelect" aria-label="Key signature"></select>
+            <span id="pianoKeyTip" class="piano-key-tip"></span>
+          </div>
+        </div>
 
         <!-- Main Manual Staff Card -->
         <div class="piano-card" style="margin-bottom: 20px;">
@@ -197,7 +222,8 @@
                 Note 1 Accidental
               </label>
               <select id="pianoNoteAccReal-1" style="width:100%; padding:8px; background:#080814; border:1px solid #25253f; color:#fff; border-radius:6px; outline:none; font-size:13px;">
-                <option value="none" selected>♮ Natural</option>
+                <option value="none" selected>None drawn (key decides)</option>
+                <option value="natural">♮ Natural (cancels the key)</option>
                 <option value="sharp">♯ Sharp</option>
                 <option value="flat">♭ Flat</option>
               </select>
@@ -207,7 +233,8 @@
                 Note 2 Accidental
               </label>
               <select id="pianoNoteAccReal-2" style="width:100%; padding:8px; background:#080814; border:1px solid #25253f; color:#fff; border-radius:6px; outline:none; font-size:13px;">
-                <option value="none" selected>♮ Natural</option>
+                <option value="none" selected>None drawn (key decides)</option>
+                <option value="natural">♮ Natural (cancels the key)</option>
                 <option value="sharp">♯ Sharp</option>
                 <option value="flat">♭ Flat</option>
               </select>
@@ -217,9 +244,9 @@
 
         <!-- Answer Card -->
         <div class="piano-card" style="margin-bottom: 20px;">
-          <div class="piano-card-title">Calculated Interval & Code</div>
+          <div class="piano-card-title">Interval between the two notes — click it to copy</div>
           <div class="piano-result-box" id="pianoResultBox">
-            <div style="color:#718096; font-size: 14px;">Calculating...</div>
+            <div style="color:#718096; font-size: 14px;">Paste the staff picture or click the staff.</div>
           </div>
         </div>
 
@@ -262,8 +289,54 @@
     // Accidental change listeners
     ['pianoNoteAccReal-1', 'pianoNoteAccReal-2'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener('change', evaluatePianoManual);
+      if (el) el.addEventListener('change', () => { touched = true; evaluatePianoManual(); });
     });
+
+    // Key signature: a text field for what's pasted from the bot, and the full list
+    const keySelect = document.getElementById('pianoKeySelect');
+    const keyText = document.getElementById('pianoKeyText');
+    if (keySelect) {
+      const desc = (id) => {
+        const a = PN.pnKeyAccidentals(id);
+        return Object.keys(a).length ? Object.entries(a).map(([l, x]) => l + (x > 0 ? '♯' : '♭')).join(' ') : 'no ♯ / ♭';
+      };
+      keySelect.innerHTML = '<option value="">None (no ♯ / ♭)</option>' +
+        PN.PN_KEYS.map(k => `<option value="${k.id}">${k.id} — ${desc(k.id)}</option>`).join('');
+      keySelect.addEventListener('change', () => {
+        keySig = keySelect.value;
+        if (keyText) { keyText.value = ''; keyText.classList.remove('bad'); }
+        evaluatePianoManual();
+      });
+    }
+    if (keyText) {
+      keyText.addEventListener('focus', () => keyText.select());
+      keyText.addEventListener('input', () => {
+        const v = keyText.value;
+        // unreadable text clears the key too: a stale key from the last stage would give a wrong answer
+        keySig = PN.pnParseKeyField(v) || '';
+        keyText.classList.toggle('bad', v.trim() !== '' && !keySig);
+        if (keySelect) keySelect.value = keySig;
+        evaluatePianoManual();
+      });
+    }
+
+    // A pasted picture (Discord links are routed to the file input by dragdrop-helper.js)
+    document.addEventListener('paste', (e) => {
+      if (!document.getElementById('pianoSection')?.classList.contains('active')) return;
+      const el = document.activeElement;
+      if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type === 'text'))) return;
+      for (const item of (e.clipboardData?.items || [])) {
+        if (item.type && item.type.startsWith('image/')) {
+          e.preventDefault();
+          const f = item.getAsFile();
+          if (f) readPianoPicture(f);
+          return;
+        }
+      }
+    });
+    if (window.BombDragDrop) {
+      window.BombDragDrop.attachDropzone('pianoDropzone', (file) => readPianoPicture(file));
+    }
 
     // Clef change listener
     document.querySelectorAll('input[name="pianoClef"]').forEach(radio => {
@@ -333,6 +406,7 @@
         const octEl = document.getElementById(`pianoNoteOct-${num}`);
         if (nameEl) nameEl.value = noteName;
         if (octEl) octEl.value = octave;
+        touched = true;
 
         evaluatePianoManual();
       });
@@ -463,7 +537,7 @@
         ctx.font = 'bold 22px sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(note.acc === 'sharp' ? '♯' : '♭', x - 12, y);
+        ctx.fillText(note.acc === 'sharp' ? '♯' : note.acc === 'natural' ? '♮' : '♭', x - 12, y);
       }
 
       // Note Name & Label
@@ -474,22 +548,28 @@
 
       ctx.fillStyle = '#e2e8f0';
       ctx.font = 'bold 14px monospace';
-      ctx.fillText(`${note.name}${note.acc === 'sharp' ? '♯' : (note.acc === 'flat' ? '♭' : '')}${note.octave}`, x, centerY + 110);
+      ctx.fillText(`${note.name}${note.acc === 'sharp' ? '♯' : note.acc === 'flat' ? '♭' : note.acc === 'natural' ? '♮' : ''}${note.octave}`, x, centerY + 110);
     };
 
     drawNote(note1, Math.floor(canvas.width * 0.38), '#4caf50', 'Note 1 (Click Left)');
     drawNote(note2, Math.floor(canvas.width * 0.64), '#3b82f6', 'Note 2 (Click Right)');
   }
 
-  function getSemitoneValue(noteName, octave, accidental) {
-    const offsets = { "C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11 };
-    let val = offsets[noteName] + 12 * octave;
-    if (accidental === "sharp") {
-      val += 1;
-    } else if (accidental === "flat") {
-      val -= 1;
-    }
-    return val;
+  const ACC_OF = { sharp: 1, flat: -1, none: 0, natural: 0 };
+  const ACC_SIGN = { 1: '♯', '-1': '♭', 0: '' };
+
+  // a note's pitch with the key signature: its own ♯ / ♭ when drawn, else the key's for its letter
+  function notePitch(noteName, octave, accidental) {
+    // a drawn ♮ cancels the key's ♯ / ♭ for this note
+    const drawn = ACC_OF[accidental] || 0;
+    const acc = accidental === 'natural' ? 0 : drawn || PN.pnKeyAccidentals(keySig)[noteName] || 0;
+    const semi = PN.PN_STEPS[PN.PN_LET.indexOf(noteName)] + 12 * octave + acc;
+    const sign = accidental === 'natural' ? '♮' : ACC_SIGN[acc];
+    return { label: `${noteName}${sign}${octave}`, letter: `${noteName}${sign}`, semi };
+  }
+
+  function codeOf(name) {
+    return (name && intervalCodes[name]) || '';
   }
 
   function evaluatePianoManual() {
@@ -504,47 +584,91 @@
     const n2Acc = document.getElementById("pianoNoteAccReal-2")?.value || "none";
     const n2Oct = parseInt(document.getElementById("pianoNoteOct-2")?.value || (isBass ? "3" : "4"), 10);
 
-    const p1 = {
-      name: n1Name,
-      acc: n1Acc,
-      octave: n1Oct,
-      semitone: getSemitoneValue(n1Name, n1Oct, n1Acc)
-    };
+    // drawn notes (for the staff drawing) and the pitches they sound with the key signature
+    const p1 = { name: n1Name, acc: n1Acc, octave: n1Oct };
+    const p2 = { name: n2Name, acc: n2Acc, octave: n2Oct };
+    const a = notePitch(n1Name, n1Oct, n1Acc), b = notePitch(n2Name, n2Oct, n2Acc);
 
-    const p2 = {
-      name: n2Name,
-      acc: n2Acc,
-      octave: n2Oct,
-      semitone: getSemitoneValue(n2Name, n2Oct, n2Acc)
-    };
-
-    let lower = p1, upper = p2;
-    if (p1.semitone > p2.semitone) {
-      lower = p2;
-      upper = p1;
+    const tip = document.getElementById('pianoKeyTip');
+    const keyText = document.getElementById('pianoKeyText');
+    if (tip) {
+      const acc = PN.pnKeyAccidentals(keySig);
+      tip.textContent = keyText && keyText.classList.contains('bad') ? "can't read that key — try “E Major”, “Bb”, “F#”"
+        : keySig ? `notes without their own ♯ / ♭: ${Object.keys(acc).length ? Object.entries(acc).map(([l, x]) => l + (x > 0 ? '♯' : '♭')).join(' ') : 'none'}`
+        : 'changes every stage — paste the new one each time';
     }
-
-    const diff = upper.semitone - lower.semitone;
-    const intervalName = INTERVALS_DICT[diff] || (diff === 0 ? "Unison" : `Unknown (${diff} semitones)`);
-    const code = intervalCodes[intervalName] || "N/A";
 
     const resultBox = document.getElementById("pianoResultBox");
     if (resultBox) {
-      resultBox.innerHTML = `
-        <div style="width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <div class="piano-solution-press">${intervalName}</div>
-          <div style="font-size: 24px; color: #ffd875; font-weight: 800; margin-top: 4px; letter-spacing: 1px;">
-            Code: <span style="background: rgba(255,216,117,0.15); padding: 2px 10px; border-radius: 6px; border: 1px solid rgba(255,216,117,0.3);">${code}</span>
-          </div>
-          <div style="font-size: 12px; color: #8c8fae; margin-top: 8px;">
-            ${p1.name}${p1.acc === 'sharp' ? '♯' : (p1.acc === 'flat' ? '♭' : '')}${p1.octave} ↔ ${p2.name}${p2.acc === 'sharp' ? '♯' : (p2.acc === 'flat' ? '♭' : '')}${p2.octave} (${diff} semitones)
-          </div>
-        </div>
-      `;
+      if (!touched) {
+        resultBox.innerHTML = `<div style="color:#718096; font-size: 14px;">Paste the staff picture or click the staff.</div>`;
+      } else {
+        // the distance between the two notes as drawn — the game wants no up / down
+        const iv = PN.pnInterval(a.semi, b.semi);
+        const code = codeOf(iv.name);
+        resultBox.innerHTML = `<div class="piano-dirs"><div class="piano-dir drawn" onclick="window.copyPianoAnswer('${iv.name}', this)" title="Click to copy ${iv.name}">
+            <div class="piano-dir-lbl">INTERVAL</div>
+            <div class="piano-solution-press">${iv.name}</div>
+            <div class="piano-dir-how">${a.label} → ${b.label} · ${iv.distance} half-step${iv.distance === 1 ? '' : 's'}${iv.octaveDropped ? ' (octave dropped)' : ''}</div>
+            ${code ? `<div class="piano-dir-code">Code: <span>${code}</span></div>` : ''}
+            <div class="piano-dir-copied"></div>
+          </div></div>
+          <div style="font-size: 12px; color: #8c8fae; margin-top: 8px; text-align:center;">Key: ${keySig || 'none'}</div>`;
+      }
     }
 
     drawStaffDiagram("pianoManualCanvas", isBass, p1, p2);
   }
+
+  window.copyPianoAnswer = function (text, el) {
+    const done = () => {
+      const tag = el && el.querySelector('.piano-dir-copied');
+      if (!tag) return;
+      tag.textContent = '✓ COPIED';
+      setTimeout(() => { tag.textContent = ''; }, 1200);
+    };
+    try { navigator.clipboard.writeText(text).then(done).catch(() => {}); } catch (e) {}
+  };
+
+  // ── Staff picture: clef and both notes (bomb_boomed's reader) ──
+  async function readPianoPicture(file) {
+    const status = document.getElementById('pianoReadStatus');
+    const say = (msg, color) => { if (status) { status.textContent = msg; status.style.color = color; } };
+    let src;
+    try { src = await createImageBitmap(file); } catch (e) { say('⚠ Could not open that file as an image.', '#ff5c5c'); return; }
+    let w = src.width, h = src.height;
+    const MAXDIM = 1200;
+    if (w > MAXDIM || h > MAXDIM) { const sc = MAXDIM / Math.max(w, h); w = Math.round(w * sc); h = Math.round(h * sc); }
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(src, 0, 0, w, h);
+    const r = PN.pnAnalyze(ctx.getImageData(0, 0, w, h).data, w, h);
+    if (!r || r.notes.length < 2) {
+      say(r ? `⚠ Found ${r.notes.length} note(s) — place them by clicking the staff.` : '⚠ Could not find the musical staff — click the staff instead.', '#ff9800');
+      return;
+    }
+    // clef (set without the radio's change handler, which resets the octaves)
+    const radio = document.querySelector(`input[name="pianoClef"][value="${r.clef}"]`);
+    if (radio) radio.checked = true;
+    r.notes.slice(0, 2).forEach((n, i) => {
+      const nm = PN.pnNote(r.clef, n.pos, 0).name; // e.g. "E2"
+      const num = i + 1;
+      document.getElementById(`pianoNoteName-${num}`).value = nm[0];
+      document.getElementById(`pianoNoteOct-${num}`).value = parseInt(nm.slice(1), 10);
+      document.getElementById(`pianoNoteAccReal-${num}`).value = n.acc === 'n' ? 'natural' : n.acc > 0 ? 'sharp' : n.acc < 0 ? 'flat' : 'none';
+    });
+    touched = true;
+    const names = r.notes.slice(0, 2).map(n => PN.pnDrawnName(r.clef, n.pos, n.acc)).join(' then ');
+    if (r.notes.length !== 2 || r.stray) say(`⚠ Read ${r.clef} clef, ${names} — but ${r.notes.length} note(s)${r.stray ? ' and a loose ♯/♭' : ''} were found: check them.`, '#ff9800');
+    else say(`✓ Read: ${r.clef} clef, ${names} (as drawn). Set the key signature from the bot's message.`, '#4caf50');
+    evaluatePianoManual();
+  }
+
+  window.handlePianoFile = function (input) {
+    const f = input.files && input.files[0];
+    if (f) readPianoPicture(f);
+    input.value = '';
+  };
 
   window.initPianoModule = initPianoModule;
 })();

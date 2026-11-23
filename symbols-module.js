@@ -83,6 +83,8 @@
     // 3 Reference slots
     refImages: [null, null, null],
     refCounts: [{}, {}, {}],
+    refPanels: [[], [], []],   // grids read from each slot's picture: { cells, group }
+    puzzle: 0,                 // which puzzle's grids are counted (section of a strip)
     refMeta: ['', '', ''],
     // 4 module buttons: index 0 -> Button 1, index 1 -> Button 2, etc.
     buttons: [null, null, null, null],
@@ -93,344 +95,57 @@
     activeTarget: 'ref0' // 'ref0' | 'ref1' | 'ref2' | 'mod'
   };
 
-  // ── CLASSIFIER UTILITIES ──────────────────────────────────────────
-  function classifyCellPatch(patch) {
-    const h = patch.shape ? patch.shape[0] : patch.length;
-    const w = patch.shape ? patch.shape[1] : patch[0].length;
+  // ── SCREENSHOT READING: bomb_boomed's (window.BombLogic.symbols, bomb-logic.js) ──
+  // A picture is a reference grid / strip when it has full 5×5 grids, otherwise the 4-button keypad
+  // — whichever slot it was dropped on. Section #n of a strip belongs to puzzle #n; a single grid
+  // belongs to the puzzle being counted. The same grid added twice is counted once.
+  const SYV = window.BombLogic.symbols;
 
-    let area = 0;
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (patch[y][x]) area++;
-      }
-    }
-    const fillRatio = area / (h * w);
-
-    const scale = Math.min(14.0 / w, 14.0 / h);
-    const nw = Math.max(1, Math.round(w * scale));
-    const nh = Math.max(1, Math.round(h * scale));
-    const ox = Math.floor((16 - nw) / 2);
-    const oy = Math.floor((16 - nh) / 2);
-
-    const canvas = new Float32Array(256);
-    let sum = 0;
-    for (let r = 0; r < nh; r++) {
-      const srcY = Math.min(h - 1, Math.floor(r / scale));
-      for (let c = 0; c < nw; c++) {
-        const srcX = Math.min(w - 1, Math.floor(c / scale));
-        if (patch[srcY][srcX]) {
-          canvas[(oy + r) * 16 + (ox + c)] = 1.0;
-          sum += 1.0;
-        }
-      }
-    }
-
-    const mean = sum / 256;
-    let normSq = 0;
-    for (let i = 0; i < 256; i++) {
-      canvas[i] -= mean;
-      normSq += canvas[i] * canvas[i];
-    }
-    const norm = Math.sqrt(normSq);
-    if (norm === 0) return { symbol: '?', score: 0 };
-
-    let bestSymbol = '?';
-    let bestScore = -999;
-
-    for (const [key, tpl] of Object.entries(PRECOMPUTED_TEMPLATES)) {
-      if (tpl.norm === 0) continue;
-      let dot = 0;
-      for (let i = 0; i < 256; i++) {
-        dot += canvas[i] * tpl.vec[i];
-      }
-      const score = dot / (norm * tpl.norm);
-      if (score > bestScore) {
-        bestScore = score;
-        bestSymbol = key;
-      }
-    }
-
-    // Accurate discrimination between solid star vs hollow star
-    if (bestSymbol === 'STAR_SOLID' || bestSymbol === 'STAR_HOLLOW') {
-      bestSymbol = fillRatio > 0.24 ? 'STAR_SOLID' : 'STAR_HOLLOW';
-    }
-
-    return { symbol: bestSymbol, score: bestScore };
+  function imageData(img) {
+    const sc = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const W = Math.round(img.naturalWidth * sc), H = Math.round(img.naturalHeight * sc);
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const g = cv.getContext('2d', { willReadFrequently: true });
+    g.drawImage(img, 0, 0, W, H);
+    return g.getImageData(0, 0, W, H);
   }
 
-  // ── SCAN REFERENCE GRIDS (1 to 3 images) ───────────────────────────
-  function scanReferenceImage(img) {
-    const cv = document.createElement('canvas');
-    const W = img.naturalWidth || img.width;
-    const H = img.naturalHeight || img.height;
-    cv.width = W;
-    cv.height = H;
-    const ctx = cv.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(img, 0, 0);
-    const idata = ctx.getImageData(0, 0, W, H).data;
-
-    // Detect grid row intervals via average row brightness:
-    // Dark headers/separators ~ 40, light grid cells ~ 220
-    const rowMeans = new Float32Array(H);
-    for (let y = 0; y < H; y++) {
-      let rSum = 0;
-      for (let x = 0; x < W; x++) {
-        const idx = (y * W + x) * 4;
-        rSum += 0.299 * idata[idx] + 0.587 * idata[idx + 1] + 0.114 * idata[idx + 2];
-      }
-      rowMeans[y] = rSum / W;
+  // → { kind: 'grids', panels } | { kind: 'keypad', buttons } | { kind: 'none' }
+  function readSymbolsPicture(img) {
+    const d = imageData(img);
+    const pr = SYV.syReadPanels(d);
+    const fullGrids = pr.panels.filter(p => p.cells.filter(Boolean).length >= 20);
+    if (!fullGrids.length) {
+      const probe = SYV.syReadModule(d);
+      if (probe.tiles >= 4) return { kind: 'keypad', buttons: probe.buttons };
     }
-
-    const isGridRow = new Uint8Array(H);
-    for (let y = 0; y < H; y++) {
-      if (rowMeans[y] > 140) isGridRow[y] = 1;
-    }
-
-    const gridIntervals = [];
-    let inGrid = false;
-    let startY = 0;
-    for (let y = 0; y < H; y++) {
-      if (isGridRow[y] === 1 && !inGrid) {
-        inGrid = true;
-        startY = y;
-      } else if (isGridRow[y] === 0 && inGrid) {
-        inGrid = false;
-        if (y - startY > 45) {
-          gridIntervals.push({ y1: startY, y2: y, h: y - startY });
-        }
-      }
-    }
-    if (inGrid && (H - startY) > 45) {
-      gridIntervals.push({ y1: startY, y2: H, h: H - startY });
-    }
-
-    // Fallback: If no headers detected, treat entire image as 1 grid
-    if (gridIntervals.length === 0) {
-      gridIntervals.push({ y1: 0, y2: H, h: H });
-    }
-
-    const counts = {};
-    let totalCells = 0;
-
-    for (const grid of gridIntervals) {
-      const gY = grid.y1;
-      const gH = grid.h;
-      const cellW = W / 5.0;
-      const cellH = gH / 5.0;
-
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          const x1 = Math.floor(c * cellW);
-          const x2 = Math.floor((c + 1) * cellW);
-          const y1 = Math.floor(gY + r * cellH);
-          const y2 = Math.floor(gY + (r + 1) * cellH);
-          const cw = x2 - x1;
-          const ch = y2 - y1;
-          if (cw <= 0 || ch <= 0) continue;
-
-          // Find dark symbol pixels inside cell
-          let minX = cw, maxX = -1, minY = ch, maxY = -1;
-          const binary = [];
-          for (let py = 0; py < ch; py++) {
-            const row = new Uint8Array(cw);
-            for (let px = 0; px < cw; px++) {
-              // Exclude outer 2px boundary
-              if (py < 2 || py >= ch - 2 || px < 2 || px >= cw - 2) continue;
-              const idx = ((y1 + py) * W + (x1 + px)) * 4;
-              const gray = 0.299 * idata[idx] + 0.587 * idata[idx + 1] + 0.114 * idata[idx + 2];
-              if (gray < 110) {
-                row[px] = 1;
-                if (px < minX) minX = px;
-                if (px > maxX) maxX = px;
-                if (py < minY) minY = py;
-                if (py > maxY) maxY = py;
-              }
-            }
-            binary.push(row);
-          }
-
-          if (maxX >= minX && maxY >= minY) {
-            const pw = maxX - minX + 1;
-            const ph = maxY - minY + 1;
-            const patch = [];
-            for (let py = minY; py <= maxY; py++) {
-              const pRow = new Uint8Array(pw);
-              for (let px = minX; px <= maxX; px++) {
-                pRow[px - minX] = binary[py][px];
-              }
-              patch.push(pRow);
-            }
-            const res = classifyCellPatch(patch);
-            if (res.symbol && res.symbol !== '?') {
-              counts[res.symbol] = (counts[res.symbol] || 0) + 1;
-              totalCells++;
-            }
-          }
-        }
-      }
-    }
-
+    const panels = fullGrids.length ? fullGrids : pr.panels;
+    if (!panels.length) return { kind: 'none' };
+    const used = [...new Set(panels.map(p => p.group || 0))].sort((a, b) => a - b);
     return {
-      counts,
-      gridCount: gridIntervals.length,
-      totalCells
+      kind: 'grids',
+      panels: panels.map(p => ({ cells: p.cells, group: panels.length === 1 ? state.puzzle : used.indexOf(p.group || 0) }))
     };
   }
 
-  // ── SCAN 4-BUTTON MODULE IMAGE ─────────────────────────────────────
-  function scanModuleImage(img) {
-    const cv = document.createElement('canvas');
-    const W = img.naturalWidth || img.width;
-    const H = img.naturalHeight || img.height;
-    cv.width = W;
-    cv.height = H;
-    const ctx = cv.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(img, 0, 0);
-    const idata = ctx.getImageData(0, 0, W, H).data;
-
-    // Detect the 4 white buttons (buttons have light gray/white background)
-    const whiteMap = new Uint8Array(W * H);
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const idx = (y * W + x) * 4;
-        const r = idata[idx], g = idata[idx + 1], b = idata[idx + 2];
-        if (r > 195 && g > 195 && b > 195) {
-          whiteMap[y * W + x] = 1;
-        }
-      }
-    }
-
-    // BFS connected components to find buttons
-    const visited = new Uint8Array(W * H);
-    const btns = [];
-    const queue = new Int32Array(W * H * 2);
-
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const startIdx = y * W + x;
-        if (whiteMap[startIdx] === 1 && visited[startIdx] === 0) {
-          let qHead = 0, qTail = 0;
-          queue[qTail++] = x;
-          queue[qTail++] = y;
-          visited[startIdx] = 1;
-
-          let minX = x, maxX = x, minY = y, maxY = y;
-          let area = 0, sumX = 0, sumY = 0;
-
-          while (qHead < qTail) {
-            const cx = queue[qHead++];
-            const cy = queue[qHead++];
-            area++;
-            sumX += cx;
-            sumY += cy;
-
-            if (cx < minX) minX = cx;
-            if (cx > maxX) maxX = cx;
-            if (cy < minY) minY = cy;
-            if (cy > maxY) maxY = cy;
-
-            const neighbors = [cx - 1, cy, cx + 1, cy, cx, cy - 1, cx, cy + 1];
-            for (let i = 0; i < 8; i += 2) {
-              const nx = neighbors[i], ny = neighbors[i + 1];
-              if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
-                const nIdx = ny * W + nx;
-                if (whiteMap[nIdx] === 1 && visited[nIdx] === 0) {
-                  visited[nIdx] = 1;
-                  queue[qTail++] = nx;
-                  queue[qTail++] = ny;
-                }
-              }
-            }
-          }
-
-          const bw = maxX - minX + 1;
-          const bh = maxY - minY + 1;
-          // Filter button areas
-          if (area > 500 && bw >= 30 && bh >= 30 && bw <= W * 0.6 && bh <= H * 0.6) {
-            btns.push({
-              x: minX,
-              y: minY,
-              bw,
-              bh,
-              cx: sumX / area,
-              cy: sumY / area
-            });
-          }
-        }
-      }
-    }
-
-    // Sort into 2x2 grid: Top-Left (1), Top-Right (2), Bottom-Left (3), Bottom-Right (4)
-    if (btns.length >= 4) {
-      btns.sort((a, b) => {
-        const aTop = a.cy < H * 0.5;
-        const bTop = b.cy < H * 0.5;
-        if (aTop !== bTop) return aTop ? -1 : 1;
-        return a.cx - b.cx;
-      });
-    }
-
-    const detectedSymbols = [null, null, null, null];
-
-    for (let idx = 0; idx < Math.min(4, btns.length); idx++) {
-      const b = btns[idx];
-      // Inner area of button: zero out top-left corner where digit '1', '2', '3', '4' is
-      let minX = b.bw, maxX = -1, minY = b.bh, maxY = -1;
-      const binary = [];
-      const digitLimitY = Math.floor(b.bh * 0.32);
-      const digitLimitX = Math.floor(b.bw * 0.32);
-
-      for (let py = 0; py < b.bh; py++) {
-        const row = new Uint8Array(b.bw);
-        for (let px = 0; px < b.bw; px++) {
-          // Zero out top-left digit corner & outer borders
-          if (py < digitLimitY && px < digitLimitX) continue;
-          if (py < 4 || py >= b.bh - 4 || px < 4 || px >= b.bw - 4) continue;
-
-          const pIdx = ((b.y + py) * W + (b.x + px)) * 4;
-          const gray = 0.299 * idata[pIdx] + 0.587 * idata[pIdx + 1] + 0.114 * idata[pIdx + 2];
-          if (gray < 120) {
-            row[px] = 1;
-            if (px < minX) minX = px;
-            if (px > maxX) maxX = px;
-            if (py < minY) minY = py;
-            if (py > maxY) maxY = py;
-          }
-        }
-        binary.push(row);
-      }
-
-      if (maxX >= minX && maxY >= minY) {
-        const pw = maxX - minX + 1;
-        const ph = maxY - minY + 1;
-        const patch = [];
-        for (let py = minY; py <= maxY; py++) {
-          const pRow = new Uint8Array(pw);
-          for (let px = minX; px <= maxX; px++) {
-            pRow[px - minX] = binary[py][px];
-          }
-          patch.push(pRow);
-        }
-        const res = classifyCellPatch(patch);
-        if (res.symbol && res.symbol !== '?') {
-          detectedSymbols[idx] = res.symbol;
-        }
-      }
-    }
-
-    return detectedSymbols;
+  // grids of the puzzle being counted, every slot together, each distinct grid once
+  function countedGrids() {
+    const out = [];
+    state.refPanels.forEach(list => list.forEach(g => {
+      if (g.group !== state.puzzle) return;
+      if (!out.some(o => o.cells.every((k, i) => k === g.cells[i]))) out.push(g);
+    }));
+    return out;
   }
 
   // ── SOLVER & UI LOGIC ─────────────────────────────────────────────
   function recalcTotalCounts() {
     const total = {};
-    for (let i = 0; i < 3; i++) {
-      const counts = state.refCounts[i];
-      for (const [sym, count] of Object.entries(counts)) {
-        total[sym] = (total[sym] || 0) + count;
-      }
-    }
+    const grids = countedGrids();
+    for (const g of grids) for (const k of g.cells) if (k) total[k] = (total[k] || 0) + 1;
     state.totalCounts = total;
+    state.gridCount = grids.length;
   }
 
   function solveSymbols() {
@@ -444,6 +159,16 @@
     const gridEl = document.getElementById('symbolsCountsGrid');
     if (!gridEl) return;
     gridEl.innerHTML = '';
+
+    // a strip with several puzzles: pick which one is counted
+    const pick = document.getElementById('symPuzzlePick');
+    const groups = Math.max(0, ...state.refPanels.flat().map(g => g.group)) + 1;
+    if (pick) {
+      pick.style.display = groups > 1 || state.puzzle > 0 ? 'flex' : 'none';
+      pick.innerHTML = 'Counting puzzle: ' + Array.from({ length: Math.max(groups, state.puzzle + 1) }, (_, i) =>
+        `<button type="button" class="upload-btn${i === state.puzzle ? ' sym-puzzle-on' : ''}" style="margin-top:0; padding:2px 10px; font-size:11px;" onclick="window.symbolsModule.setPuzzle(${i})">#${i + 1}</button>`).join(' ') +
+        ` <span style="color:#94a3b8;">(${state.gridCount || 0} grid${state.gridCount === 1 ? '' : 's'})</span>`;
+    }
 
     for (const [key, def] of Object.entries(SYMBOLS_DEF)) {
       const count = state.totalCounts[key] || 0;
@@ -505,6 +230,17 @@
       return;
     }
 
+    // With no grid read every count is 0 — there is no order to give ("1 2 3 4" would just be the
+    // button numbers)
+    if (!state.gridCount) {
+      solBanner.style.display = 'none';
+      stepsEl.innerHTML = `<div style="color:#64748b; font-size:13.5px; padding:12px; text-align:center;">
+        Add the reference grid(s) to count the symbols.
+      </div>`;
+      state.answer = '';
+      return;
+    }
+
     // Sort buttons in descending order of count
     // In case of ties, preserve numerical order (1, 2, 3, 4)
     const sorted = [...assignedButtons].sort((a, b) => {
@@ -513,7 +249,29 @@
     });
 
     const seqText = sorted.map(b => b.num).join('  ➔  ');
+    state.answer = sorted.map(b => b.num).join(' ');   // copied as bomb_boomed copies it: "3 1 4 2"
+    const warnings = [];
+    const seen = new Set();
+    for (const b of sorted) {
+      if (seen.has(b.symbolKey)) warnings.push(`${b.symbolDef.name} is set on two buttons`);
+      seen.add(b.symbolKey);
+    }
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i].count === sorted[i - 1].count && sorted[i].symbolKey !== sorted[i - 1].symbolKey) {
+        warnings.push(`Tie: buttons ${sorted[i - 1].num} & ${sorted[i].num} both have ${sorted[i].count}`);
+      }
+    }
     solBanner.style.display = 'block';
+    solBanner.style.cursor = 'pointer';
+    solBanner.title = `Click to copy: ${state.answer}`;
+    solBanner.onclick = () => {
+      try {
+        navigator.clipboard.writeText(state.answer).then(() => {
+          const tag = document.getElementById('symCopied');
+          if (tag) { tag.textContent = '✓ Copied'; setTimeout(() => { tag.textContent = ''; }, 1200); }
+        }).catch(() => {});
+      } catch (e) {}
+    };
     solBanner.innerHTML = `
       <div style="font-size:11.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#ffd875; margin-bottom:4px;">
         PRESS SEQUENCE (DESCENDING BY COUNT)
@@ -521,6 +279,8 @@
       <div style="font-family:'Outfit',sans-serif; font-size:32px; font-weight:900; color:#3ddc84; letter-spacing:1px;">
         ${seqText}
       </div>
+      <div id="symCopied" style="font-size:12px; color:#3ddc84; min-height:14px;"></div>
+      ${warnings.map(w => `<div style="font-size:12px; color:#ffd875;">⚠️ ${w}</div>`).join('')}
     `;
 
     let stepsHtml = '<div style="display:flex; flex-direction:column; gap:8px; width:100%;">';
@@ -574,40 +334,57 @@
   }
 
   // ── IMAGE HANDLING ────────────────────────────────────────────────
-  function handleReferenceImage(file, slotIndex) {
+  function loadImage(file, cb) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
-      img.onload = () => {
-        state.refImages[slotIndex] = img;
-        const res = scanReferenceImage(img);
-        state.refCounts[slotIndex] = res.counts;
-        state.refMeta[slotIndex] = `${res.gridCount} grid(s), ${res.totalCells} cells scanned`;
-
-        // Update slot UI
-        const prevEl = document.getElementById(`symRefPrev-${slotIndex}`);
-        const metaEl = document.getElementById(`symRefMeta-${slotIndex}`);
-        const clearBtn = document.getElementById(`symRefClear-${slotIndex}`);
-        if (prevEl) {
-          prevEl.src = e.target.result;
-          prevEl.style.display = 'block';
-        }
-        if (metaEl) {
-          metaEl.textContent = state.refMeta[slotIndex];
-          metaEl.style.display = 'block';
-        }
-        if (clearBtn) clearBtn.style.display = 'inline-block';
-
-        solveSymbols();
-      };
+      img.onload = () => cb(img, e.target.result);
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
 
+  function handleReferenceImage(file, slotIndex) {
+    loadImage(file, (img, uri) => {
+      const r = readSymbolsPicture(img);
+      if (r.kind === 'keypad') { applyKeypad(r.buttons, uri); return; }
+      state.refImages[slotIndex] = img;
+      state.refPanels[slotIndex] = r.kind === 'grids' ? r.panels : [];
+      const cells = state.refPanels[slotIndex].reduce((n, g) => n + g.cells.filter(Boolean).length, 0);
+      const groups = new Set(state.refPanels[slotIndex].map(g => g.group)).size;
+      state.refMeta[slotIndex] = r.kind === 'grids'
+        ? `${state.refPanels[slotIndex].length} grid(s)${groups > 1 ? ` in ${groups} puzzles` : ''}, ${cells} cells read`
+        : '⚠️ No symbols found';
+
+      const prevEl = document.getElementById(`symRefPrev-${slotIndex}`);
+      const metaEl = document.getElementById(`symRefMeta-${slotIndex}`);
+      const clearBtn = document.getElementById(`symRefClear-${slotIndex}`);
+      if (prevEl) { prevEl.src = uri; prevEl.style.display = 'block'; }
+      if (metaEl) { metaEl.textContent = state.refMeta[slotIndex]; metaEl.style.display = 'block'; }
+      if (clearBtn) clearBtn.style.display = 'inline-block';
+      // the next paste goes to the next empty slot
+      const nextEmpty = [0, 1, 2].find(i => !state.refImages[i]);
+      if (nextEmpty !== undefined) selectTarget(`ref${nextEmpty}`);
+      solveSymbols();
+    });
+  }
+
+  function applyKeypad(buttons, uri) {
+    for (let i = 0; i < 4; i++) if (buttons[i]) state.buttons[i] = buttons[i];
+    const got = buttons.filter(Boolean).length;
+    const prevEl = document.getElementById('symModPrev');
+    const metaEl = document.getElementById('symModMeta');
+    const clearBtn = document.getElementById('symModClear');
+    if (prevEl) { prevEl.src = uri; prevEl.style.display = 'block'; }
+    if (metaEl) { metaEl.textContent = got === 4 ? '4/4 buttons read' : `${got}/4 buttons read — pick the rest`; metaEl.style.display = 'block'; }
+    if (clearBtn) clearBtn.style.display = 'inline-block';
+    solveSymbols();
+  }
+
   function clearReferenceSlot(slotIndex) {
     state.refImages[slotIndex] = null;
     state.refCounts[slotIndex] = {};
+    state.refPanels[slotIndex] = [];
     state.refMeta[slotIndex] = '';
 
     const prevEl = document.getElementById(`symRefPrev-${slotIndex}`);
@@ -625,35 +402,20 @@
   }
 
   function handleModuleImage(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        state.moduleImage = img;
-        const detected = scanModuleImage(img);
-        for (let i = 0; i < 4; i++) {
-          if (detected[i]) state.buttons[i] = detected[i];
-        }
-
-        const prevEl = document.getElementById('symModPrev');
+    loadImage(file, (img, uri) => {
+      const r = readSymbolsPicture(img);
+      if (r.kind === 'grids') {
+        // a reference grid dropped on the keypad slot: add it to the first empty grid slot
+        const slot = [0, 1, 2].find(i => !state.refImages[i]);
+        if (slot !== undefined) { handleReferenceImage(file, slot); return; }
+      }
+      state.moduleImage = img;
+      if (r.kind === 'keypad') applyKeypad(r.buttons, uri);
+      else {
         const metaEl = document.getElementById('symModMeta');
-        const clearBtn = document.getElementById('symModClear');
-        if (prevEl) {
-          prevEl.src = e.target.result;
-          prevEl.style.display = 'block';
-        }
-        if (metaEl) {
-          metaEl.textContent = '4 buttons auto-detected';
-          metaEl.style.display = 'block';
-        }
-        if (clearBtn) clearBtn.style.display = 'inline-block';
-
-        selectTarget('mod');
-        solveSymbols();
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+        if (metaEl) { metaEl.textContent = '⚠️ Keypad not found — click each button to pick its symbol'; metaEl.style.display = 'block'; }
+      }
+    });
   }
 
   function clearModuleImage() {
@@ -673,6 +435,7 @@
 
   function resetAll() {
     for (let i = 0; i < 3; i++) clearReferenceSlot(i);
+    state.puzzle = 0;
     clearModuleImage();
     selectTarget('ref0');
   }
@@ -997,8 +760,9 @@
             <!-- LIVE COUNTS BREAKDOWN -->
             <div style="margin-top:20px; border-top:1px solid #1e2442; padding-top:14px;">
               <div style="font-size:12px; font-weight:700; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
-                Total Reference Symbol Counts (All Slots)
+                Total Reference Symbol Counts (All Slots, each grid once)
               </div>
+              <div id="symPuzzlePick" style="display:none; gap:6px; align-items:center; flex-wrap:wrap; font-size:12px; color:#cbd5e1; margin-bottom:8px;"></div>
               <div class="sym-counts-grid" id="symbolsCountsGrid"></div>
             </div>
           </div>
@@ -1163,6 +927,10 @@
     },
     resetAll: function () {
       resetAll();
+    },
+    setPuzzle: function (i) {
+      state.puzzle = i;
+      solveSymbols();
     }
   };
 

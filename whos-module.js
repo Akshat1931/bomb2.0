@@ -8,47 +8,9 @@
  */
 
 (function() {
-  const DEFAULT_MANUAL_TEXT = `On the subject of Who's on First
-Ask the Defuser for the display word and all six button labels by position.
-
-Step 1. The display word tells you which button label to ask for:
-top left: BLANK, LEED, READ, THEY ARE, UR
-top right: LED, RED, SEE, YOU, YOU ARE
-middle left: CEE, HOLD ON, REED, THERE, YOU'RE
-middle right: DISPLAY, OKAY, THEIR, THEY'RE, YES
-bottom left: LEAD, NO, SAYS, YOUR
-bottom right: (blank), C, FIRST, NOTHING
-
-Step 2. Find that label's list below. Tell the Defuser to press the first word in the list that appears on any button.
-
-READY: UHHH, WAIT, WHAT, FIRST, BLANK, MIDDLE, PRESS, LEFT, READY
-FIRST: YES, NO, WHAT, RIGHT, LEFT, PRESS, NOTHING, READY, FIRST
-NO: MIDDLE, READY, YES, FIRST, NO
-BLANK: FIRST, YES, LEFT, BLANK
-NOTHING: LEFT, BLANK, NOTHING
-YES: NO, RIGHT, NOTHING, BLANK, FIRST, READY, YES
-WHAT: WHAT
-UHHH: WAIT, READY, FIRST, PRESS, RIGHT, YES, OKAY, MIDDLE, WHAT, NOTHING, UHHH
-LEFT: RIGHT, PRESS, MIDDLE, BLANK, WAIT, READY, LEFT
-RIGHT: RIGHT
-MIDDLE: BLANK, MIDDLE
-OKAY: BLANK, MIDDLE, WAIT, UHHH, OKAY
-WAIT: UHHH, MIDDLE, NOTHING, OKAY, BLANK, READY, NO, FIRST, YES, PRESS, WAIT
-PRESS: UHHH, PRESS
-YOU: YOU ARE, UH HUH, LIKE, SURE, WHAT?, NEXT, YOU'RE, U, YOU
-YOU ARE: WHAT?, LIKE, NEXT, HOLD, U, UH HUH, UH UH, DONE, SURE, YOU, UR, YOUR, YOU'RE, YOU ARE
-YOUR: SURE, WHAT?, UH UH, HOLD, YOU ARE, YOU'RE, YOU, LIKE, NEXT, DONE, UR, UH HUH, U, YOUR
-YOU'RE: WHAT?, SURE, YOUR, YOU ARE, NEXT, UH HUH, LIKE, UH UH, HOLD, U, UR, YOU, DONE, YOU'RE
-UR: DONE, NEXT, YOUR, UH UH, SURE, UH HUH, LIKE, U, HOLD, YOU'RE, WHAT?, YOU ARE, UR
-U: WHAT?, SURE, HOLD, DONE, UH HUH, UH UH, YOUR, NEXT, YOU ARE, YOU'RE, YOU, LIKE, U
-UH HUH: SURE, YOU'RE, YOU, UR, YOU ARE, YOUR, UH UH, U, NEXT, UH HUH
-UH UH: NEXT, YOU ARE, UH HUH, U, WHAT?, LIKE, SURE, UR, DONE, YOU'RE, YOU, UH UH
-WHAT?: SURE, UH UH, UH HUH, HOLD, WHAT?
-DONE: YOUR, YOU ARE, YOU, LIKE, DONE
-NEXT: YOU, UH UH, HOLD, UR, YOUR, UH HUH, LIKE, YOU ARE, WHAT?, U, YOU'RE, NEXT
-HOLD: WHAT?, U, NEXT, LIKE, DONE, SURE, YOU ARE, UH HUH, YOU'RE, YOU, UH UH, YOUR, HOLD
-SURE: SURE
-LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, LIKE`;
+  // Rules text, parser, OCR reader and solver are bomb_boomed's (window.BombLogic.wof, bomb-logic.js).
+  const W = window.BombLogic.wof;
+  const DEFAULT_MANUAL_TEXT = W.DEFAULT_RULES;
 
   const POSITIONS = ["top-left", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-right"];
   const POS_LABELS = {
@@ -60,90 +22,17 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     "bottom-right": "Bottom-Right"
   };
 
-  // Fixed Percentage Coordinates for Who's on First Module
-  const REGION_BOUNDS = {
-    display:       { x: 0.22, y: 0.22, w: 0.56, h: 0.12 },
-    "top-left":    { x: 0.20, y: 0.40, w: 0.26, h: 0.08 },
-    "top-right":   { x: 0.53, y: 0.40, w: 0.26, h: 0.08 },
-    "middle-left": { x: 0.20, y: 0.53, w: 0.26, h: 0.08 },
-    "middle-right":{ x: 0.53, y: 0.53, w: 0.26, h: 0.08 },
-    "bottom-left": { x: 0.20, y: 0.66, w: 0.26, h: 0.08 },
-    "bottom-right":{ x: 0.53, y: 0.66, w: 0.26, h: 0.08 }
-  };
-
   const whosState = {
     initialized: false,
-    step1Map: {},
-    step2Map: {},
-    displayWordsList: [],
-    buttonLabelsList: [],
+    rules: null,
+    busy: false,
     image: null,
     rawManualText: DEFAULT_MANUAL_TEXT
   };
 
   // ── DYNAMIC MANUAL RULES PARSER ───────────────────────────
   function parseManualRulesText(text) {
-    const s1Map = {};
-    const s2Map = {};
-    const displayWordsSet = new Set();
-    const buttonLabelsSet = new Set();
-
-    const lines = text.split('\n').map(l => l.trim());
-    let currentStep = 0;
-
-    for (let line of lines) {
-      if (!line) continue;
-
-      if (line.toLowerCase().includes('step 1')) {
-        currentStep = 1;
-        continue;
-      }
-      if (line.toLowerCase().includes('step 2')) {
-        currentStep = 2;
-        continue;
-      }
-
-      if (currentStep === 1) {
-        const colonIdx = line.indexOf(':');
-        if (colonIdx !== -1) {
-          const posRaw = line.substring(0, colonIdx).trim().toLowerCase();
-          let posKey = "";
-          if (posRaw.includes('top left')) posKey = "top-left";
-          else if (posRaw.includes('top right')) posKey = "top-right";
-          else if (posRaw.includes('middle left')) posKey = "middle-left";
-          else if (posRaw.includes('middle right')) posKey = "middle-right";
-          else if (posRaw.includes('bottom left')) posKey = "bottom-left";
-          else if (posRaw.includes('bottom right')) posKey = "bottom-right";
-
-          if (posKey) {
-            const wordsStr = line.substring(colonIdx + 1);
-            const words = wordsStr.split(',').map(w => w.trim());
-            words.forEach(w => {
-              if (w) {
-                const normWord = w === "(blank)" ? "" : w;
-                s1Map[normWord] = posKey;
-                displayWordsSet.add(w);
-              }
-            });
-          }
-        }
-      } else if (currentStep === 2) {
-        const colonIdx = line.indexOf(':');
-        if (colonIdx !== -1) {
-          const label = line.substring(0, colonIdx).trim();
-          const wordsStr = line.substring(colonIdx + 1);
-          const list = wordsStr.split(',').map(w => w.trim()).filter(w => w.length > 0);
-          s2Map[label] = list;
-          buttonLabelsSet.add(label);
-          list.forEach(item => buttonLabelsSet.add(item));
-        }
-      }
-    }
-
-    whosState.step1Map = s1Map;
-    whosState.step2Map = s2Map;
-    whosState.displayWordsList = Array.from(displayWordsSet).sort();
-    whosState.buttonLabelsList = Array.from(buttonLabelsSet).sort();
+    whosState.rules = W.parseRules(text);
   }
 
   // ── DYNAMIC STYLE INJECTION ───────────────────────────────
@@ -291,6 +180,8 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
       text-align: center;
       transition: all 0.2s;
     }
+    .whos-warn { border-color: #f5c542 !important; box-shadow: 0 0 0 2px rgba(245,197,66,0.35); }
+    .whos-answer { color: #00ff66; font-size: 28px; cursor: pointer; }
     .whos-btn-cell.target-btn {
       border: 2px solid #ffd875;
       box-shadow: 0 0 12px rgba(255, 216, 117, 0.3);
@@ -481,19 +372,19 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     `;
   }
 
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   function getDisplaySelectOptionsHtml() {
     let html = `<option value="">-- Select Display Word --</option>`;
-    whosState.displayWordsList.forEach(word => {
-      const val = word === "(blank)" ? "" : word;
-      html += `<option value="${val}">${word}</option>`;
+    (whosState.rules?.displayWords || []).forEach(word => {
+      html += `<option value="${esc(word)}">${esc(word)}</option>`;
     });
     return html;
   }
 
   function getButtonSelectOptionsHtml() {
-    let html = `<option value="">-- Blank / None --</option>`;
-    whosState.buttonLabelsList.forEach(label => {
-      html += `<option value="${label}">${label}</option>`;
+    let html = `<option value="">-- Not set --</option>`;
+    [...(whosState.rules?.buttonLabels || [])].sort().forEach(label => {
+      html += `<option value="${esc(label)}">${esc(label)}</option>`;
     });
     return html;
   }
@@ -627,201 +518,46 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     }
   }
 
-  // Helper to crop a specific region canvas using percentage bounds scaled 2x for optimal OCR
-  function getCroppedRegionCanvas(sourceImg, bounds) {
-    const w = sourceImg.width;
-    const h = sourceImg.height;
-
-    const rx = Math.max(0, Math.round(w * bounds.x));
-    const ry = Math.max(0, Math.round(h * bounds.y));
-    const rw = Math.min(w - rx, Math.round(w * bounds.w));
-    const rh = Math.min(h - ry, Math.round(h * bounds.h));
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = rw * 2;
-    tempCanvas.height = rh * 2;
-    const tempCtx = tempCanvas.getContext('2d');
-
-    try {
-      tempCtx.drawImage(sourceImg, rx, ry, rw, rh, 0, 0, rw * 2, rh * 2);
-    } catch(err) {
-      console.warn("Canvas crop fallback:", err);
-    }
-    return tempCanvas;
-  }
-
-  function whosLevenshtein(a, b) {
-    const m = a.length, n = b.length;
-    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-      }
-    }
-    return dp[m][n];
-  }
-
-  // Best fuzzy word match helper against candidate vocabulary
-  function findBestWordMatch(rawText, candidates) {
-    const clean = rawText.toUpperCase().replace(/[^A-Z? ']/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!clean) return "";
-    const noSpace = clean.replace(/[\s']/g, '');
-
-    // 1. Direct exact match (handles spacing differences such as "UH HUH" vs "UHHUH")
-    for (const cand of candidates) {
-      if (cand === "(blank)") continue;
-      const candNorm = cand.toUpperCase().trim();
-      if (clean === candNorm) return cand;
-      if (noSpace === candNorm.replace(/[\s']/g, '')) return cand;
-    }
-
-    // 2. Exact word token match
-    const tokens = clean.split(' ').filter(Boolean);
-    for (const token of tokens) {
-      for (const cand of candidates) {
-        if (cand === "(blank)") continue;
-        if (token === cand.toUpperCase().trim()) return cand;
-      }
-    }
-
-    // 3. Substring match for longer candidate words
-    for (const cand of candidates) {
-      if (cand === "(blank)") continue;
-      const candNorm = cand.toUpperCase().trim();
-      if (clean.includes(candNorm) && candNorm.length >= 3) return cand;
-    }
-
-    // 4. Edit distance similarity scoring
-    let bestMatch = "";
-    let bestScore = -1;
-
-    for (const cand of candidates) {
-      if (cand === "(blank)") continue;
-      const candNorm = cand.toUpperCase().replace(/[\s']/g, '');
-      const dist = whosLevenshtein(noSpace, candNorm);
-      const maxLen = Math.max(noSpace.length, candNorm.length);
-      const sim = 1 - (dist / maxLen);
-
-      if (sim >= 0.50 && sim * 100 > bestScore) {
-        bestScore = sim * 100;
-        bestMatch = cand;
-      }
-    }
-
-    return bestMatch;
-  }
-
-  // Region-cropped OCR: Crops display box and 6 button boxes separately using exact percentage coordinates
+  // bomb_boomed's reader: display + 6 buttons read side by side, each snapped to the closest word
+  // in the rules; slots read with low confidence get a gold border.
   async function runOcrOnRegions() {
     const statusEl = document.getElementById('whosOcrStatus');
-    if (!statusEl) return;
-
-    if (typeof Tesseract === 'undefined') {
-      statusEl.innerHTML = `<span style="color:#ffd875;">⚠️ Tesseract OCR engine not loaded. Select words manually below.</span>`;
-      return;
-    }
-
-    statusEl.innerHTML = `<span style="color:#ffd875;">⏳ Reading image regions with OCR...</span>`;
-
+    if (!statusEl || !whosState.image) return;
+    const say = (html) => { statusEl.innerHTML = html; };
+    if (whosState.busy) { say(`<span style="color:#ffd875;">Still reading the last screenshot — paste again in a moment.</span>`); return; }
+    whosState.busy = true;
     try {
-      const sourceImg = whosState.image;
-
-      let worker = null;
-      if (typeof Tesseract.createWorker === 'function') {
-        try {
-          worker = await Tesseract.createWorker('eng');
-          await worker.setParameters({
-            tessedit_pageseg_mode: '7'
-          });
-        } catch(e) {
-          console.warn("Worker creation fallback:", e);
-        }
+      const r = await W.wofReadImage(whosState.image, whosState.rules, (t) => say(`<span style="color:#ffd875;">⏳ ${t}</span>`));
+      const dEl = document.getElementById('whosDisplaySelect');
+      if (dEl) {
+        dEl.value = r.disp || '';
+        dEl.classList.toggle('whos-warn', !!r.warnDisp);
       }
-
-      async function doRecognize(canvas) {
-        if (worker && typeof worker.recognize === 'function') {
-          const res = await worker.recognize(canvas);
-          return res?.data?.text || "";
-        }
-        try {
-          const res = await Tesseract.recognize(canvas, 'eng', { tessedit_pageseg_mode: 7 });
-          return res?.data?.text || "";
-        } catch(e) {
-          const res = await Tesseract.recognize(canvas, 'eng');
-          return res?.data?.text || "";
-        }
-      }
-
-      // 1. Process Display Box
-      const displayCanvas = getCroppedRegionCanvas(sourceImg, REGION_BOUNDS.display);
-      const rawDisplay = await doRecognize(displayCanvas);
-      const matchedDisplay = findBestWordMatch(rawDisplay, whosState.displayWordsList);
-
-      if (matchedDisplay) {
-        document.getElementById('whosDisplaySelect').value = matchedDisplay;
-      } else {
-        document.getElementById('whosDisplaySelect').value = "";
-      }
-
-      // 2. Process 6 Button Regions
-      for (const pos of POSITIONS) {
-        const btnCanvas = getCroppedRegionCanvas(sourceImg, REGION_BOUNDS[pos]);
-        const rawBtnText = await doRecognize(btnCanvas);
-        const matchedBtn = findBestWordMatch(rawBtnText, whosState.buttonLabelsList);
-
-        const btnSelect = document.getElementById(`whosSelect-${pos}`);
-        if (btnSelect) {
-          btnSelect.value = matchedBtn || "";
-        }
-      }
-
-      if (worker && typeof worker.terminate === 'function') {
-        try { await worker.terminate(); } catch(e) {}
-      }
-
-      handleWhosInputChange();
-      statusEl.innerHTML = `<span style="color:#00ff66;">✓ OCR Extracted all 7 regions 100% accurately!</span>`;
+      POSITIONS.forEach((pos, i) => {
+        const el = document.getElementById(`whosSelect-${pos}`);
+        if (!el) return;
+        el.value = r.btns[i] || '';
+        el.classList.toggle('whos-warn', !!r.warnBtn[i]);
+      });
+      solveModule();
+      const anyWarn = r.warnDisp || r.warnBtn.some(Boolean);
+      say(anyWarn
+        ? `<span style="color:#ffd875;">✅ OCR done — ⚠️ gold-bordered slots were read with low confidence, double-check them.</span>`
+        : `<span style="color:#00ff66;">✅ OCR done — all slots read confidently.</span>`);
     } catch (err) {
-      console.warn("Whos on First region OCR notice:", err);
-      // Fallback: full text matching if sub-canvas cropping has security origin restriction
-      try {
-        const result = await Tesseract.recognize(whosState.image, 'eng');
-        const textUpper = (result?.data?.text || "").toUpperCase();
-        for (const dWord of whosState.displayWordsList) {
-          if (dWord !== "(blank)" && textUpper.includes(dWord)) {
-            document.getElementById('whosDisplaySelect').value = dWord;
-            break;
-          }
-        }
-        POSITIONS.forEach((pos) => {
-          for (const bLabel of whosState.buttonLabelsList) {
-            if (bLabel !== "BLANK" && textUpper.includes(bLabel)) {
-              document.getElementById(`whosSelect-${pos}`).value = bLabel;
-              break;
-            }
-          }
-        });
-        handleWhosInputChange();
-        statusEl.innerHTML = `<span style="color:#00ff66;">✓ OCR Extracted! Verify/adjust dropdowns if needed.</span>`;
-      } catch(e) {
-        statusEl.innerHTML = `<span style="color:#f44336;">❌ Select words manually from dropdowns.</span>`;
-      }
+      say(`<span style="color:#f44336;">⚠️ ${esc(err.message)} — pick the words from the dropdowns instead.</span>`);
+    } finally {
+      whosState.busy = false;
     }
   }
 
-  // ── SOLVER ENGINE ─────────────────────────────────────────
+  // ── SOLVER ENGINE (bomb_boomed's solveCore) ───────────────
   function solveModule() {
     const displayEl = document.getElementById('whosDisplaySelect');
     if (!displayEl) return;
 
-    const displayWord = displayEl.value;
-
-    const buttons = {};
-    POSITIONS.forEach(pos => {
-      buttons[pos] = document.getElementById(`whosSelect-${pos}`)?.value || "";
-    });
+    const disp = displayEl.value;
+    const btns = POSITIONS.map(pos => document.getElementById(`whosSelect-${pos}`)?.value || '');
 
     const solBox = document.getElementById('whosSolutionBox');
     const step1El = document.getElementById('whosStep1Text');
@@ -829,79 +565,58 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
     const finalEl = document.getElementById('whosFinalText');
     const listEl = document.getElementById('whosPriorityListText');
 
-    // Reset visual button highlights
     POSITIONS.forEach(pos => {
       const cell = document.getElementById(`whosCell-${pos}`);
-      if (cell) {
-        cell.classList.remove('target-btn', 'press-btn');
-      }
+      if (cell) cell.classList.remove('target-btn', 'press-btn');
     });
 
-    // Check Step 1 mapping
-    const targetPos = whosState.step1Map[displayWord];
-
-    if (targetPos === undefined) {
-      solBox.style.display = 'none';
+    const res = W.solveCore(whosState.rules, disp, btns);
+    whosState.answer = res.ok ? res.ans : '';
+    if (res.look === undefined) {
+      solBox.style.display = disp ? 'block' : 'none';
+      step1El.innerHTML = '';
+      step2El.innerHTML = '';
+      finalEl.textContent = disp ? res.msg : '';
+      listEl.textContent = '';
       return;
     }
-
     solBox.style.display = 'block';
 
-    // Highlight target button position
-    const targetCell = document.getElementById(`whosCell-${targetPos}`);
-    if (targetCell) targetCell.classList.add('target-btn');
+    const lookPos = POSITIONS[res.look];
+    document.getElementById(`whosCell-${lookPos}`)?.classList.add('target-btn');
+    step1El.innerHTML = `Step 1: Display <strong>"${esc(disp)}"</strong> ➔ Read <strong>${POS_LABELS[lookPos]}</strong> button label: <strong>"${esc(btns[res.look] || '?')}"</strong>`;
 
-    const targetLabel = buttons[targetPos];
-
-    step1El.innerHTML = `Step 1: Display <strong>"${displayWord || '(blank)'}"</strong> ➔ Read <strong>${POS_LABELS[targetPos]}</strong> button label: <strong>"${targetLabel || '(blank)'}"</strong>`;
-
-    if (!targetLabel) {
-      step2El.innerHTML = `Step 2: Select/input the word on the <strong>${POS_LABELS[targetPos]}</strong> button.`;
-      finalEl.textContent = "Awaiting Button Label...";
-      listEl.textContent = "";
+    if (!res.ok) {
+      step2El.innerHTML = res.label ? `Step 2: Priority list for <strong>"${esc(res.label)}"</strong>` : '';
+      finalEl.textContent = res.msg;
+      listEl.textContent = res.list ? `List: ${res.list.join(', ')}` : '';
       return;
     }
 
-    const priorityList = whosState.step2Map[targetLabel];
-    if (!priorityList) {
-      step2El.innerHTML = `Step 2: Label "${targetLabel}" not found in current Step 2 manual rules.`;
-      finalEl.textContent = "Label Not in Rules";
-      listEl.textContent = "";
-      return;
-    }
-
-    // Step 2: Find first word in priority list that appears on ANY of the 6 buttons
-    let winningWord = null;
-    let winningPos = null;
-
-    for (const priorityWord of priorityList) {
-      for (const pos of POSITIONS) {
-        if (buttons[pos] === priorityWord) {
-          winningWord = priorityWord;
-          winningPos = pos;
-          break;
-        }
-      }
-      if (winningWord) break;
-    }
-
-    if (winningWord) {
-      // Highlight winning press button
-      const winCell = document.getElementById(`whosCell-${winningPos}`);
-      if (winCell) winCell.classList.add('press-btn');
-
-      step2El.innerHTML = `Step 2: Priority list for <strong>"${targetLabel}"</strong> finds match on <strong>${POS_LABELS[winningPos]}</strong> button.`;
-      finalEl.innerHTML = `👉 PRESS: <span style="color:#00ff66; font-size:28px;">"${winningWord}"</span> (${POS_LABELS[winningPos]})`;
-      listEl.innerHTML = `Priority Order: ${priorityList.map(w => w === winningWord ? `<strong style="color:#00ff66;">[${w}]</strong>` : w).join(', ')}`;
-    } else {
-      step2El.innerHTML = `Step 2: Looking up priority list for <strong>"${targetLabel}"</strong>...`;
-      finalEl.textContent = `No buttons match list for "${targetLabel}" yet. Fill out remaining button labels.`;
-      listEl.textContent = `List: ${priorityList.join(', ')}`;
-    }
+    const hitPos = POSITIONS[res.hit];
+    document.getElementById(`whosCell-${hitPos}`)?.classList.add('press-btn');
+    step2El.innerHTML = `Step 2: Priority list for <strong>"${esc(res.label)}"</strong> finds match on <strong>${POS_LABELS[hitPos]}</strong> button.`;
+    finalEl.innerHTML = `👉 PRESS: <span class="whos-answer" title="Click to copy" onclick="window.copyWhosAnswer(this)">"${esc(res.ans)}"</span> (${POS_LABELS[hitPos]})`;
+    listEl.innerHTML = `Priority Order: ${res.list.map(w => w === res.ans ? `<strong style="color:#00ff66;">[${esc(w)}]</strong>` : esc(w)).join(', ')}`;
   }
+
+  window.copyWhosAnswer = function (el) {
+    const t = whosState.answer;
+    if (!t) return;
+    try {
+      navigator.clipboard.writeText(t).then(() => {
+        const was = el.textContent;
+        el.textContent = '✓ Copied';
+        setTimeout(() => { el.textContent = was; }, 1200);
+      }).catch(() => {});
+    } catch (e) {}
+  };
 
   // ── GLOBAL CONTROLLER FUNCTIONS ───────────────────────────
   window.handleWhosInputChange = function() {
+    // a slot changed by hand is no longer a doubtful read
+    const el = document.activeElement;
+    if (el && el.classList) el.classList.remove('whos-warn');
     solveModule();
   };
 
@@ -944,10 +659,10 @@ LIKE: UR, HOLD, U, UH HUH, YOU ARE, NEXT, WHAT?, YOU'RE, SURE, YOUR, DONE, YOU, 
   window.clearWhosModule = function() {
     clearWhosImage();
     const displayEl = document.getElementById('whosDisplaySelect');
-    if (displayEl) displayEl.value = "";
+    if (displayEl) { displayEl.value = ""; displayEl.classList.remove('whos-warn'); }
     POSITIONS.forEach(pos => {
       const el = document.getElementById(`whosSelect-${pos}`);
-      if (el) el.value = "";
+      if (el) { el.value = ""; el.classList.remove('whos-warn'); }
     });
     solveModule();
   };

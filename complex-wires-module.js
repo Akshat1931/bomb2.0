@@ -81,6 +81,8 @@
       totalModulesGTE5: true
     };
 
+    let cwCopyText = 'NONE';
+
     // 6 Wires State
     // color: 'white' | 'red' | 'blue' | 'striped'
     let wires = [
@@ -92,183 +94,45 @@
       { active: true, color: 'striped', star: false, led: false }
     ];
 
-    // ── Letter Templates for OCR (Canonical Font Bitmasks) ───────────
-    const CANDIDATES = ['C', 'D', 'S', 'P', 'B'];
+    // ── Screenshots: bomb_boomed's readers (window.BombLogic.complexwires, bomb-logic.js) ──
+    // A wide picture is the Venn rule diagram (16 letters), a tall/square one the wires panel.
+    const CW = window.BombLogic.complexwires;
+    let unsureRegions = new Set();
 
-    const CANONICAL_TEMPLATES = {
-      C: [8162, 32766, 131070, 261758, 258078, 516111, 516103, 1040387, 1040384, 1032192, 1032192, 1032192, 1032192, 1032192, 1032192, 1032192, 516096, 516098, 516103, 260111, 261758, 131070, 32760, 8176],
-      D: [1048448, 524272, 262136, 262140, 254206, 254078, 254015, 254015, 253983, 253983, 253983, 253983, 253983, 253983, 253983, 253983, 254015, 254078, 254206, 254974, 262140, 262136, 262112, 262016],
-      S: [12, 32732, 131068, 524284, 516606, 1040446, 1040414, 1040398, 1044480, 523264, 262016, 262112, 65532, 16380, 8190, 1023, 511, 127, 917567, 983103, 1044735, 262140, 131064, 32736],
-      P: [1048544, 1048568, 524284, 258558, 258175, 258111, 258111, 258079, 258111, 258111, 258175, 258558, 262140, 262136, 262080, 258048, 258048, 258048, 258048, 258048, 253952, 253952, 245760, 196608],
-      B: [1048544, 524280, 262140, 258556, 258302, 258174, 258174, 258174, 258300, 258556, 262136, 262136, 262140, 258302, 258175, 258111, 258111, 258079, 258111, 258175, 258559, 262142, 262140, 131040]
-    };
-
-    // ── Process Diagram Image ───────────────────────────────────────
     function processDiagramImage(img) {
-      const cv = document.createElement('canvas');
-      const W = img.naturalWidth || img.width;
-      const H = img.naturalHeight || img.height;
-      cv.width = W;
-      cv.height = H;
-      const ctx = cv.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0);
-
-      const idata = ctx.getImageData(0, 0, W, H).data;
-
-      // 1. Threshold dark pixels (letters are dark charcoal/black; lines are colored)
-      const binary = new Uint8Array(W * H);
-      for (let y = 0; y < H; y++) {
-        for (let x = 0; x < W; x++) {
-          const idx = (y * W + x) * 4;
-          const r = idata[idx], g = idata[idx + 1], b = idata[idx + 2];
-          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-          if (gray < 85 && Math.max(r, g, b) < 110) {
-            binary[y * W + x] = 1;
-          }
-        }
-      }
-
-      // 2. Connected component labeling with BFS
-      const visited = new Uint8Array(W * H);
-      const components = [];
-      const queue = new Int32Array(W * H * 2);
-
-      for (let y = 0; y < H; y++) {
-        for (let x = 0; x < W; x++) {
-          const startIdx = y * W + x;
-          if (binary[startIdx] === 1 && visited[startIdx] === 0) {
-            let qHead = 0, qTail = 0;
-            queue[qTail++] = x;
-            queue[qTail++] = y;
-            visited[startIdx] = 1;
-
-            let minX = x, maxX = x, minY = y, maxY = y;
-            let area = 0, sumX = 0, sumY = 0;
-
-            while (qHead < qTail) {
-              const cx = queue[qHead++];
-              const cy = queue[qHead++];
-              area++;
-              sumX += cx;
-              sumY += cy;
-
-              if (cx < minX) minX = cx;
-              if (cx > maxX) maxX = cx;
-              if (cy < minY) minY = cy;
-              if (cy > maxY) maxY = cy;
-
-              const neighbors = [
-                [cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]
-              ];
-              for (let n = 0; n < 4; n++) {
-                const nx = neighbors[n][0], ny = neighbors[n][1];
-                if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
-                  const nIdx = ny * W + nx;
-                  if (binary[nIdx] === 1 && visited[nIdx] === 0) {
-                    visited[nIdx] = 1;
-                    queue[qTail++] = nx;
-                    queue[qTail++] = ny;
-                  }
-                }
-              }
-            }
-
-            const compW = maxX - minX + 1;
-            const compH = maxY - minY + 1;
-
-            if (compW >= 5 && compW <= 70 && compH >= 8 && compH <= 70 && area >= 25 && area <= 1500) {
-              components.push({
-                minX, minY, maxX, maxY,
-                w: compW, h: compH,
-                cx: sumX / area, cy: sumY / area,
-                area
-              });
-            }
-          }
-        }
-      }
-
-      // 3. For each detected component, resize to 20x24 and match against CANONICAL_TEMPLATES
-      const scoredComps = components.map(comp => {
-        let bestLetter = 'C';
-        let bestScore = -1;
-
-        const resized = new Uint8Array(20 * 24);
-        for (let ry = 0; ry < 24; ry++) {
-          const srcY = Math.min(comp.maxY, comp.minY + Math.floor(ry * comp.h / 24));
-          for (let rx = 0; rx < 20; rx++) {
-            const srcX = Math.min(comp.maxX, comp.minX + Math.floor(rx * comp.w / 20));
-            resized[ry * 20 + rx] = binary[srcY * W + srcX];
-          }
-        }
-
-        for (const [letter, rows] of Object.entries(CANONICAL_TEMPLATES)) {
-          let match = 0, total = 0;
-          for (let r = 0; r < 24; r++) {
-            const rowMask = rows[r];
-            for (let c = 0; c < 20; c++) {
-              const tBit = (rowMask >>> (19 - c)) & 1;
-              const pBit = resized[r * 20 + c];
-              if (tBit === 1 && pBit === 1) match += 2;
-              else if (tBit === pBit) match += 1;
-              total += 2;
-            }
-          }
-          const score = match / total;
-          if (score > bestScore) {
-            bestScore = score;
-            bestLetter = letter;
-          }
-        }
-
-        return {
-          nx: comp.cx / W,
-          ny: comp.cy / H,
-          letter: bestLetter,
-          score: bestScore
-        };
-      });
-
-      // 4. Map each of the 16 regions to closest recognized component
-      const recognized = {};
-      REGIONS.forEach(reg => {
-        let bestComp = null;
-        let bestDist = 1e9;
-        for (const comp of scoredComps) {
-          const d = Math.hypot(comp.nx - reg.nx, comp.ny - reg.ny);
-          if (d < bestDist) {
-            bestDist = d;
-            bestComp = comp;
-          }
-        }
-        recognized[reg.id] = bestComp ? bestComp.letter : 'C';
-      });
-
-      activeRules = Object.assign({}, recognized);
-
-      // Check if matches known preset
+      const res = CW.cwReadDiagramImage(img);
+      if (res.error) { showDiagramStatus(`⚠️ ${res.error}`, true); return; }
+      activeRules = Object.assign({}, res.rules);
+      unsureRegions = res.unsure;
       const presetSelect = document.getElementById('cwPresetSelect');
       if (presetSelect) {
-        let matchedKey = '';
-        for (const [pKey, pVal] of Object.entries(PRESETS)) {
-          const allMatch = Object.keys(pVal.rules).every(k => pVal.rules[k] === activeRules[k]);
-          if (allMatch) {
-            matchedKey = pKey;
-            break;
-          }
-        }
+        const matchedKey = Object.keys(PRESETS).find(k => Object.keys(PRESETS[k].rules).every(id => PRESETS[k].rules[id] === activeRules[id]));
         if (matchedKey) presetSelect.value = matchedKey;
       }
-
       updateRuleGridUI();
       renderWireDecisions();
-      showDiagramStatus(`✅ Diagram recognized with 100% accuracy (${scoredComps.length} letters detected)! All 16 rules updated.`);
+      showDiagramStatus(res.unsure.size
+        ? `⚠️ Diagram read (${res.count} letters), but ${res.unsure.size} look unsure — check the gold boxes.`
+        : `✅ Diagram read: ${res.count} letters, all matched clearly.`, res.unsure.size > 0);
     }
 
-    function showDiagramStatus(msg) {
+    function processWiresImage(img) {
+      const found = CW.cwReadWiresImage(img);
+      if (found.length) {
+        wires = Array.from({ length: 6 }, (_, i) => (found[i] ? found[i] : { active: false, color: 'white', star: false, led: false }));
+        renderWireInputs();
+        renderWireDecisions();
+      }
+      showDiagramStatus(found.length === 6 ? '✅ Wires read: 6 wires found. Check them below.'
+        : found.length ? `⚠️ Found ${found.length} wire(s), expected 6. Extra slots are switched off — fix by hand if needed.`
+        : '⚠️ No wires found — set them by hand below.', found.length !== 6);
+    }
+
+    function showDiagramStatus(msg, warn) {
       const el = document.getElementById('cwDiagramStatus');
       if (el) {
         el.textContent = msg;
+        el.style.color = warn ? '#ffd875' : 'var(--green)';
         el.style.display = 'block';
       }
     }
@@ -282,7 +146,7 @@
       REGIONS.forEach(reg => {
         const curLetter = activeRules[reg.id] || 'C';
         const box = document.createElement('div');
-        box.className = 'cw-rule-box';
+        box.className = 'cw-rule-box' + (unsureRegions.has(reg.id) ? ' cw-unsure' : '');
 
         const label = document.createElement('div');
         label.className = 'cw-rule-label';
@@ -291,7 +155,7 @@
 
         const sel = document.createElement('select');
         sel.className = 'cw-rule-select';
-        CANDIDATES.forEach(ch => {
+        CW.CW_LETTERS.forEach(ch => {
           const opt = document.createElement('option');
           opt.value = ch;
           opt.textContent = ch;
@@ -301,6 +165,8 @@
 
         sel.onchange = () => {
           activeRules[reg.id] = sel.value;
+          unsureRegions.delete(reg.id);
+          box.classList.remove('cw-unsure');
           renderWireDecisions();
         };
 
@@ -310,58 +176,11 @@
     }
 
     // ── Evaluate Single Wire ────────────────────────────────────────
-    function getWireKey(w) {
-      const isRed = (w.color === 'red' || w.color === 'striped');
-      const isBlue = (w.color === 'blue' || w.color === 'striped');
-      const isStar = !!w.star;
-      const isLED = !!w.led;
-
-      const feats = [];
-      if (isRed) feats.push('Red');
-      if (isBlue) feats.push('Blue');
-      if (isStar) feats.push('Star');
-      if (isLED) feats.push('LED');
-      return feats.length ? feats.join('+') : 'None';
-    }
-
     function evaluateWire(w) {
-      const key = getWireKey(w);
+      const key = CW.cwKey(w);
       const letter = activeRules[key] || 'D';
-      let cut = false, reason = '';
-
-      switch (letter) {
-        case 'C':
-          cut = true;
-          reason = "Rule C: Always cut.";
-          break;
-        case 'D':
-          cut = false;
-          reason = "Rule D: Always leave intact.";
-          break;
-        case 'S':
-          cut = edgework.serialEven;
-          reason = edgework.serialEven
-            ? "Rule S: Rightmost serial digit is even → CUT."
-            : "Rule S: Rightmost serial digit is odd/none → LEAVE.";
-          break;
-        case 'P':
-          cut = edgework.hasNeedy;
-          reason = edgework.hasNeedy
-            ? "Rule P: Bomb has needy module(s) → CUT."
-            : "Rule P: No needy modules present → LEAVE.";
-          break;
-        case 'B':
-          cut = edgework.totalModulesGTE5;
-          reason = edgework.totalModulesGTE5
-            ? "Rule B: Bomb has ≥ 5 modules → CUT."
-            : "Rule B: Bomb has fewer than 5 modules → LEAVE.";
-          break;
-        default:
-          cut = false;
-          reason = `Unknown rule letter '${letter}'.`;
-      }
-
-      return { key, letter, cut, reason };
+      const r = CW.cwRuleFor(letter, { even: edgework.serialEven, needy: edgework.hasNeedy, gte5: edgework.totalModulesGTE5 });
+      return { key, letter, cut: r.cut, reason: r.why };
     }
 
     // ── Render Results ──────────────────────────────────────────────
@@ -405,7 +224,20 @@
         outList.appendChild(card);
       });
 
+      // copied as bomb_boomed copies it: "Wire 1 Wire 4", or NONE
+      cwCopyText = toCut.length ? toCut.map(n => `Wire ${n}`).join(' ') : 'NONE';
       if (summaryEl) {
+        summaryEl.title = `Click to copy: ${cwCopyText}`;
+        summaryEl.style.cursor = 'pointer';
+        summaryEl.onclick = () => {
+          try {
+            navigator.clipboard.writeText(cwCopyText).then(() => {
+              const was = summaryEl.innerHTML;
+              summaryEl.innerHTML = '<strong>✓ Copied</strong> ' + cwCopyText;
+              setTimeout(() => { summaryEl.innerHTML = was; }, 1200);
+            }).catch(() => {});
+          } catch (e) {}
+        };
         if (toCut.length === 0) {
           summaryEl.className = 'cw-summary-banner leave';
           summaryEl.innerHTML = `<strong>🚫 DO NOT CUT ANY WIRES!</strong> Leave all ${toLeave.length} wires intact.`;
@@ -590,13 +422,17 @@
 
       function handleFile(f) {
         if (!f || !f.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => processDiagramImage(img);
-          img.src = e.target.result;
+        const img = new Image();
+        img.onload = () => {
+          try {
+            if (img.naturalWidth / img.naturalHeight > 1.05) processDiagramImage(img);
+            else processWiresImage(img);
+          } catch (e) {
+            showDiagramStatus('⚠️ Could not read that image.', true);
+          }
+          URL.revokeObjectURL(img.src);
         };
-        reader.readAsDataURL(f);
+        img.src = URL.createObjectURL(f);
       }
 
       if (dropzone && fileInput) {
@@ -635,6 +471,7 @@
           const p = PRESETS[presetSelect.value];
           if (p) {
             activeRules = Object.assign({}, p.rules);
+            unsureRegions = new Set();
             updateRuleGridUI();
             renderWireDecisions();
             showDiagramStatus(`Loaded ${p.name}!`);

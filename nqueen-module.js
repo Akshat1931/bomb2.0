@@ -258,13 +258,13 @@
     }
 
     // ── Queen Coordinates Formatting & Copy ─────────────────────────
-    let coordFormat = 'colLetter'; // 'colLetter' = H1 E2 G3 (Col Letter + Row Num); 'rowLetter' = A5 B8 C6 (Row Letter + Col Num)
+    let coordFormat = 'colLetter'; // 'colLetter' = A1 B4 C7 (Col Letter + Row Num, by column); 'rowLetter' = A5 B8 C6 (Row Letter + Col Num)
 
     function formatCoords(cellsList) {
       if (!cellsList || !cellsList.length) return '';
       if (coordFormat === 'colLetter') {
-        // Sorted by row: Col Letter + Row Number (e.g. H1 E2 G3...)
-        const sorted = cellsList.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        // Col Letter + Row Number, sorted by column A → H (e.g. A1 B4 C7 …), as bomb_boomed copies it
+        const sorted = cellsList.slice().sort((a, b) => a[1] - b[1] || a[0] - b[0]);
         return sorted.map(([r, c]) => `${String.fromCharCode(65 + c)}${r + 1}`).join(' ');
       } else {
         // Sorted by row: Row Letter + Col Number (e.g. A5 B8 C6...)
@@ -1992,6 +1992,29 @@
       el.style.display = t ? 'block' : 'none';
     }
 
+    // bomb_boomed's reader and solver (window.BombLogic.queens, bomb-logic.js): the 8×8 colour
+    // regions are read from the picture and solved; the board text below loads them into this
+    // editor with the queens placed. null when it can't read / solve the picture (the crop tool
+    // below is used then).
+    function bombLogicBoard(img) {
+      const Q = window.BombLogic && window.BombLogic.queens;
+      if (!Q) return null;
+      let regions;
+      try { regions = Q.parseQueensRegionsFromImage(img); } catch (_) { return null; }
+      if (!regions || regions.length !== 8 || regions.some(row => !row || row.length !== 8 || row.some(v => !(v >= 1 && v <= 8)))) return null;
+      const sols = Q.solveQueensPuzzle(regions);
+      if (!sols || !sols.length) return null;
+      const sol = sols[0];
+      const L = k => String.fromCharCode(64 + k);
+      const ids = [...new Set(regions.flat())].sort((x, y) => x - y);
+      return [
+        'size 8', 'stars 1', 'icon queen',
+        'colors ' + ids.map(k => `${L(k)}=${Q.QUEENS_PALETTE[(k - 1) % Q.QUEENS_PALETTE.length]}`).join(' '),
+        'regions', ...regions.map(row => row.map(L).join('')),
+        'marks', ...regions.map((row, r) => row.map((_, c) => (sol[r] === c ? 'Q' : '.')).join(''))
+      ].join('\n');
+    }
+
     function loadFile(file) {
       if (!file) { impMsg('No image received — try again.'); return; }
       impMsg('Processing image…');
@@ -2000,6 +2023,17 @@
       reader.onload = () => {
         stageImg.onload = () => {
           natImg = stageImg; dataCache = null;
+          const quick = bombLogicBoard(stageImg);
+          if (quick) {
+            fastImportMode = false;
+            if (overlay) overlay.classList.remove('show');
+            showStage(false);
+            loadBoardFromText(quick);
+            coordFormat = 'colLetter';
+            updateCoordsCard();
+            impMsg('✓ Board read and solved — the queens are placed. (Wrong? Use the crop tool: paste again with the editor open.)');
+            return;
+          }
           showStage(true); impMsg('Board detected! Click "⚡ Read & Import Board" or press Enter ↵ to solve.');
           if (fastImportMode && overlay) overlay.classList.add('show');
           requestAnimationFrame(() => {

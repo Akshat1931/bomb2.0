@@ -2,242 +2,22 @@
  * Simon Says Module Solver for Keep Talking and Nobody Explains
  *
  * One screenshot / GIF = one stage. A GIF replays every flash so far; the LAST
- * flash in it is the new colour for this stage. The manual is one universal
- * table (the same picture every game): its row is picked by whether the bomb
- * SERIAL has a vowel and whether an ODD or EVEN number of modules is disarmed,
- * so both the ODD and EVEN press sequences are shown.
+ * flash in it is the new colour for this stage. The manual table changes every
+ * game, so this game's manual picture is pasted first and read (4 rows × 4
+ * flash colours). Its row is picked by whether the bomb SERIAL has a vowel and
+ * whether an ODD or EVEN number of modules is disarmed, so both the ODD and
+ * EVEN press sequences are shown.
  *
- * Features:
- * 1. Built-in GIF decoder + glow detection at the four tile centres.
- * 2. Several files at once are read as stages in file-name order.
- * 3. Tap a colour on any stage to fix a misread, or add a stage by hand.
+ * Reading and solving are bomb_boomed's (window.BombLogic.simons, bomb-logic.js).
+ * Several files at once are read as stages in file-name order; tap a colour on
+ * any stage to fix a misread, or a table cell to fix the manual.
  */
 
 (function () {
   'use strict';
 
-  // ── src/utils/gif.js ────────────────────────────────────────────
-  const { decodeGIFRGBA } = (function () {
-    /**
-     * Full-colour GIF decoder (from the standalone simons.html): returns every composited frame as
-     * RGBA pixels, honouring transparency, interlacing and disposal. No browser APIs needed.
-     * @returns {{ w:number, h:number, frames: Array<{ data: Uint8ClampedArray, delay: number }> }}
-     */
-    function decodeGIFRGBA(buf) {
-      const d = new Uint8Array(buf); let p = 0;
-      if (String.fromCharCode(d[0], d[1], d[2]) !== 'GIF') throw new Error('not a GIF');
-      p = 6;
-      const W = d[p] | d[p + 1] << 8, H = d[p + 2] | d[p + 3] << 8; p += 4;
-      const fl = d[p++]; p += 2;
-      let gct = null;
-      if (fl & 0x80) { const n = 2 << (fl & 7); gct = d.subarray(p, p + n * 3); p += n * 3; }
-      let cv = new Uint8ClampedArray(W * H * 4);
-      const frames = [];
-      let gce = { delay: 0, trans: -1, disp: 0 };
-      const skipSub = () => { while (p < d.length && d[p] !== 0) p += d[p] + 1; p++; };
-      while (p < d.length) {
-        const b = d[p++];
-        if (b === 0x3B) break;
-        if (b === 0x21) {
-          const label = d[p++];
-          if (label === 0xF9) {
-            p++; const pf = d[p];
-            gce = { disp: (pf >> 2) & 7, delay: (d[p + 1] | d[p + 2] << 8) * 10, trans: (pf & 1) ? d[p + 3] : -1 };
-            p += 5;
-          } else skipSub();
-        } else if (b === 0x2C) {
-          const x0 = d[p] | d[p + 1] << 8, y0 = d[p + 2] | d[p + 3] << 8, w = d[p + 4] | d[p + 5] << 8, h = d[p + 6] | d[p + 7] << 8, f = d[p + 8]; p += 9;
-          let ct = gct;
-          if (f & 0x80) { const n = 2 << (f & 7); ct = d.subarray(p, p + n * 3); p += n * 3; }
-          const minCode = d[p++];
-          const chunks = []; let tot = 0;
-          while (p < d.length && d[p] !== 0) { chunks.push(d.subarray(p + 1, p + 1 + d[p])); tot += d[p]; p += d[p] + 1; }
-          p++;
-          const data = new Uint8Array(tot); let o = 0;
-          for (const c of chunks) { data.set(c, o); o += c.length; }
-          const idx = gifLzwFull(minCode, data, w * h);
-          const rows = new Array(h);
-          if (f & 0x40) { let r = 0; for (const [s, st] of [[0, 8], [4, 8], [2, 4], [1, 2]]) for (let y = s; y < h; y += st) rows[y] = r++; }
-          else for (let y = 0; y < h; y++) rows[y] = y;
-          const saved = gce.disp === 3 ? cv.slice() : null;
-          if (ct) {
-            for (let y = 0; y < h; y++) {
-              const sy = rows[y] * w, dy = y0 + y; if (dy >= H) continue;
-              for (let x = 0; x < w; x++) {
-                const dx = x0 + x; if (dx >= W) continue;
-                const ci = idx[sy + x]; if (ci === gce.trans) continue;
-                const o2 = (dy * W + dx) * 4;
-                cv[o2] = ct[ci * 3]; cv[o2 + 1] = ct[ci * 3 + 1]; cv[o2 + 2] = ct[ci * 3 + 2]; cv[o2 + 3] = 255;
-              }
-            }
-          }
-          frames.push({ data: cv.slice(), delay: gce.delay || 100 });
-          if (gce.disp === 2) {
-            for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-              const dx = x0 + x, dy = y0 + y;
-              if (dx < W && dy < H) cv.fill(0, (dy * W + dx) * 4, (dy * W + dx) * 4 + 4);
-            }
-          } else if (gce.disp === 3 && saved) cv = saved;
-          gce = { delay: 0, trans: -1, disp: 0 };
-        } else break;
-      }
-      return { w: W, h: H, frames };
-    }
-
-    function gifLzwFull(minCode, data, npix) {
-      const clear = 1 << minCode, eoi = clear + 1;
-      let size = minCode + 1, next = eoi + 1, mask = (1 << size) - 1;
-      const prefix = new Uint16Array(4096), suffix = new Uint8Array(4096), stack = new Uint8Array(4097), out = new Uint8Array(npix);
-      for (let i = 0; i < clear; i++) suffix[i] = i;
-      let bits = 0, nb = 0, op = 0, old = -1, first = 0;
-      for (let i = 0; i < data.length; i++) {
-        bits |= data[i] << nb; nb += 8;
-        while (nb >= size) {
-          let code = bits & mask; bits >>= size; nb -= size;
-          if (code === clear) { size = minCode + 1; mask = (1 << size) - 1; next = eoi + 1; old = -1; continue; }
-          if (code === eoi) return out;
-          if (old === -1) { out[op++] = suffix[code]; old = code; first = code; continue; }
-          const inCode = code; let top = 0;
-          if (code >= next) { stack[top++] = first; code = old; }
-          while (code >= clear) { stack[top++] = suffix[code]; code = prefix[code]; }
-          first = suffix[code]; stack[top++] = first;
-          if (next < 4096) { prefix[next] = old; suffix[next] = first; next++; if ((next & mask) === 0 && next < 4096) { size++; mask = (1 << size) - 1; } }
-          old = inCode;
-          while (top > 0 && op < npix) out[op++] = stack[--top];
-        }
-      }
-      return out;
-    }
-    return { decodeGIFRGBA };
-  })();
-
-  // ── src/modules/simons/simonsSolver.js ──────────────────────────
-  const { SINAMES, SIMON_TABLE, simonRules, simonPresses, SI_POS, SI_REF, siTileRGB, siStageOf, siClassify, siToFlashes, siLayoutLooksOff, siAnalyzeFrames } = (function () {
-    // Simon Says rules and glow detection (ported from the standalone simons.html, which read the
-    // game's GIFs correctly: the bot this replaced sampled the wrong spots and saw "yellow" everywhere).
-    //
-    // One screenshot / GIF = one stage. A GIF replays every flash so far; the LAST flash in it is the
-    // new colour for this stage. The manual is now one universal table (the same image every game):
-    // the row is picked by whether the bomb SERIAL has a vowel and whether an ODD or EVEN number of
-    // modules is disarmed. The serial is known (top bar), so both ODD and EVEN answers are shown.
-
-    const SINAMES = { R: 'Red', B: 'Blue', Y: 'Yellow', G: 'Green' };
-
-    // The universal manual image: SIMON_TABLE[vowel ? 'vowel' : 'noVowel'][odd|even][flash] = press
-    const SIMON_TABLE = {
-      noVowel: {
-        odd: { R: 'G', B: 'R', Y: 'Y', G: 'B' },
-        even: { R: 'R', B: 'G', Y: 'B', G: 'Y' }
-      },
-      vowel: {
-        odd: { R: 'G', B: 'R', Y: 'B', G: 'Y' },
-        even: { R: 'R', B: 'B', Y: 'Y', G: 'G' }
-      }
-    };
-
-    /** { odd, even } colour maps for a serial that has / hasn't got a vowel. */
-    const simonRules = (hasVowel) => SIMON_TABLE[hasVowel ? 'vowel' : 'noVowel'];
-
-    /** Flash colours → the presses for one serial / parity. */
-    const simonPresses = (flashes, hasVowel, parity) => flashes.map(c => simonRules(hasVowel)[parity][c]);
-
-    // Tile centres as fractions of the module screenshot (diamond: Blue top, Red left, Green right,
-    // Yellow bottom) and their measured UNLIT colours.
-    const SI_POS = { B: [0.50, 0.45], R: [0.38, 0.59], G: [0.63, 0.59], Y: [0.50, 0.72] };
-    const SI_REF = { B: [21, 101, 192], R: [198, 40, 40], G: [46, 125, 50], Y: [249, 168, 37] };
-    // Total RGB change vs the unlit colour that counts as "lit" (a lit yellow only moves ~55)
-    const GLOW = 30;
-
-    const dist = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
-    const med = a => { const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; };
-
-    /** Mean colour of a small patch at each tile centre. data = RGBA pixels of a W×H image. */
-    function siTileRGB(data, W, H) {
-      const r = Math.max(2, Math.round(Math.min(W, H) * 0.025)), o = {};
-      for (const k in SI_POS) {
-        const cx = Math.round(SI_POS[k][0] * W), cy = Math.round(SI_POS[k][1] * H);
-        const s = [0, 0, 0]; let n = 0;
-        for (let y = Math.max(0, cy - r); y <= Math.min(H - 1, cy + r); y++) {
-          for (let x = Math.max(0, cx - r); x <= Math.min(W - 1, cx + r); x++) {
-            const i = (y * W + x) * 4; s[0] += data[i]; s[1] += data[i + 1]; s[2] += data[i + 2]; n++;
-          }
-        }
-        o[k] = s.map(v => v / (n || 1));
-      }
-      return o;
-    }
-
-    /** Number of lit stage dots under the title (1..5) = how many flashes this stage should show. */
-    function siStageOf(data, W, H) {
-      let n = 0;
-      for (const fx of [0.380, 0.442, 0.500, 0.558, 0.620]) {
-        const cx = Math.round(fx * W), cy = Math.round(0.264 * H); let m = 0;
-        for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) {
-          if (x < 0 || y < 0 || x >= W || y >= H) continue;
-          const i = (y * W + x) * 4; m = Math.max(m, data[i], data[i + 1], data[i + 2]);
-        }
-        if (m >= 120) n++;
-      }
-      return n;
-    }
-
-    /** list of siTileRGB() results (one per frame) → glowing colour per frame (or null). */
-    function siClassify(list) {
-      const base = {};
-      for (const k in SI_REF) {
-        let b = SI_REF[k];
-        // the clip's own typical colour is the unlit baseline when it is close to the reference
-        if (list.length >= 3) {
-          const m = [0, 1, 2].map(c => med(list.map(l => l[k][c])));
-          if (dist(m, SI_REF[k]) <= 25) b = m;
-        }
-        base[k] = b;
-      }
-      return list.map(l => {
-        let best = null, bs = GLOW;
-        for (const k in l) { const s = dist(l[k], base[k]); if (s > bs) { bs = s; best = k; } }
-        return best;
-      });
-    }
-
-    /** Per-frame colours → flashes. A gap (no glow) between two frames of one colour = two flashes. */
-    function siToFlashes(cols) {
-      const fl = []; let prev = null;
-      cols.forEach(c => {
-        if (c) { if (c !== prev) fl.push({ c, n: 1 }); else fl[fl.length - 1].n++; }
-        prev = c;
-      });
-      return fl;
-    }
-
-    /** Unlit tiles should be near the measured colours; if several aren't, the crop is probably off. */
-    function siLayoutLooksOff(rgb) {
-      return Object.keys(SI_REF).filter(k => dist(rgb[k], SI_REF[k]) > 80).length >= 2;
-    }
-
-    /**
-     * Analyse decoded frames of one screenshot / GIF.
-     * frames = [{ data }] all W×H. Returns { color, flashes, stage, warn, strip, thumbIndex }.
-     */
-    function siAnalyzeFrames(frames, W, H) {
-      const rgb = frames.map(fr => siTileRGB(fr.data, W, H));
-      const cols = siClassify(rgb);
-      const fl = siToFlashes(cols);
-      const last = fl.length ? fl[fl.length - 1].c : null;
-      const stage = siStageOf(frames[0].data, W, H);
-      let thumbIndex = 0;
-      for (let i = cols.length - 1; i >= 0; i--) if (cols[i] && cols[i] === last) { thumbIndex = i; break; }
-      return {
-        color: last,
-        flashes: fl.map(x => x.c),
-        stage,
-        warn: siLayoutLooksOff(rgb[0]),
-        strip: cols.map(c => c || '·').join(''),
-        thumbIndex
-      };
-    }
-    return { SINAMES, SIMON_TABLE, simonRules, simonPresses, SI_POS, SI_REF, siTileRGB, siStageOf, siClassify, siToFlashes, siLayoutLooksOff, siAnalyzeFrames };
-  })();
+  // bomb_boomed's GIF decoder, Simon reader, manual-table reader and solver (bomb-logic.js)
+  const { decodeGIFRGBA, SINAMES, simonRules, siAnalyzeFrames, siReadManual } = window.BombLogic.simons;
 
   // ── UI ──────────────────────────────────────────────────────────
   const SERIAL_KEY = 'ktane_bomb_serial'; // the serial is the same on every bomb in one game
@@ -256,25 +36,20 @@
   };
   window.simonsModuleState = state;
 
-  // The table is built in from the 22 Nov manual picture. Manuals have changed between games (Wire
-  // Sequences did), so it can be edited here — click a cell — and the edit is remembered.
-  const TABLE_KEY = 'ktane_simon_table';
-  const BUILT_IN = JSON.stringify(SIMON_TABLE);
-  try {
-    const saved = JSON.parse(localStorage.getItem(TABLE_KEY) || 'null');
-    if (saved) for (const v of ['noVowel', 'vowel']) for (const p of ['odd', 'even']) Object.assign(SIMON_TABLE[v][p], saved[v][p]);
-  } catch (e) {}
-  const tableEdited = () => JSON.stringify(SIMON_TABLE) !== BUILT_IN;
+  // The table changes every game: it is read from this game's Simon manual picture (pasted like a
+  // stage) and kept for this page only. A misread cell can be fixed by clicking it.
+  state.table = null;
   window.cycleSimonTable = function (v, p, c) {
+    if (!state.table) return;
     const order = ['R', 'B', 'Y', 'G'];
-    SIMON_TABLE[v][p][c] = order[(order.indexOf(SIMON_TABLE[v][p][c]) + 1) % 4];
-    try { if (tableEdited()) localStorage.setItem(TABLE_KEY, JSON.stringify(SIMON_TABLE)); else localStorage.removeItem(TABLE_KEY); } catch (e) {}
+    const row = state.table[v][p];
+    row[c] = order[(order.indexOf(row[c]) + 1) % 4];
+    state.tableEdited = true;
     update();
   };
-  window.resetSimonTable = function () {
-    const b = JSON.parse(BUILT_IN);
-    for (const v of ['noVowel', 'vowel']) for (const p of ['odd', 'even']) Object.assign(SIMON_TABLE[v][p], b[v][p]);
-    try { localStorage.removeItem(TABLE_KEY); } catch (e) {}
+  window.forgetSimonTable = function () {
+    state.table = null;
+    state.tableEdited = false;
     update();
   };
 
@@ -302,6 +77,7 @@
       const g = decodeGIFRGBA(buf);
       if (g.frames.length) {
         const r = siAnalyzeFrames(g.frames, g.w, g.h);
+        if (r.notSimon) return { name, notSimon: true };
         const secs = (g.frames.reduce((a, x) => a + x.delay, 0) / 1000).toFixed(1);
         let note = `GIF ${g.frames.length} fr, ${secs}s · ${r.flashes.length} flash${r.flashes.length === 1 ? '' : 'es'}: ${r.flashes.join(' ') || 'none'}`;
         if (r.stage) note += ` · stage ${r.stage}`;
@@ -317,6 +93,11 @@
     ctx.drawImage(src, 0, 0);
     const data = ctx.getImageData(0, 0, W, H).data;
     const r = siAnalyzeFrames([{ data }], W, H);
+    if (r.notSimon) {
+      // not the module: maybe this game's manual table
+      const table = siReadManual(data, W, H);
+      return table ? { name, manual: table } : { name, notSimon: true };
+    }
     return { name, color: r.color, thumb: thumbFrom(data, W, H), note: 'still frame', warn: r.warn ? 'colours look unusual — different crop?' : '' };
   }
 
@@ -324,12 +105,13 @@
     const serial = cleanSerial(state.serial);
     const hasSerial = Boolean(serial);
     const vowel = /[AEIOU]/.test(serial);
-    const rules = simonRules(vowel);
+    const rules = simonRules(state.table, vowel);
     const counted = state.entries.filter(e => e.color);
-    // no serial yet → no answer (the vowel row would be a guess)
-    const odd = hasSerial ? counted.map(e => rules.odd[e.color]) : [];
-    const even = hasSerial ? counted.map(e => rules.even[e.color]) : [];
-    return { serial, hasSerial, vowel, rules, counted, odd, even };
+    // no manual or no serial yet → no answer (it would be a guess)
+    const ready = Boolean(rules && hasSerial);
+    const odd = ready ? counted.map(e => rules.odd[e.color]) : [];
+    const even = ready ? counted.map(e => rules.even[e.color]) : [];
+    return { serial, hasSerial, vowel, rules, ready, counted, odd, even };
   }
 
   function injectStyles() {
@@ -402,7 +184,7 @@
     section.innerHTML = `
       <div class="si-shell">
         <div class="si-head">
-          <div class="si-title"><span>🔴</span> Simon Says Solver <span class="si-pill">One GIF per stage · universal table</span></div>
+          <div class="si-title"><span>🔴</span> Simon Says Solver <span class="si-pill">This game's manual · one GIF per stage</span></div>
           <div style="display:flex; gap:10px;">
             <button class="si-btn" type="button" id="simonsUndoBtn" onclick="window.removeLastSimon()">↶ Remove last</button>
             <button class="si-btn" type="button" onclick="window.clearSimons()">Reset</button>
@@ -415,8 +197,8 @@
             <div id="simonsDropzone" class="si-dropzone" onclick="document.getElementById('simonsFileInput').click()">
               <input type="file" id="simonsFileInput" accept="image/*" multiple style="display:none;" onchange="window.handleSimonsFiles(this)">
               <div id="simonsDropIcon" style="font-size:28px; margin-bottom:8px;">🔴 🔵 🟡 🟢</div>
-              <div style="font-weight:700; font-size:14px; color:#fff; margin-bottom:4px;">Click to Upload the Simon Says GIF</div>
-              <div style="font-size:12px; color:#94a3b8;">one GIF per stage — its <b>last</b> flash is the new colour · several files are read in name order · <kbd style="background:#1e2246; padding:2px 6px; border-radius:4px; color:#ffd875;">Ctrl+V</kbd> anywhere</div>
+              <div style="font-weight:700; font-size:14px; color:#fff; margin-bottom:4px;">Upload the manual table picture, then the Simon Says GIFs</div>
+              <div style="font-size:12px; color:#94a3b8;">the manual changes every game · one GIF per stage — its <b>last</b> flash is the new colour · several files are read in name order · <kbd style="background:#1e2246; padding:2px 6px; border-radius:4px; color:#ffd875;">Ctrl+V</kbd> anywhere</div>
             </div>
             <div class="si-lbl">Bomb serial (once per game)</div>
             <div class="si-serial">
@@ -430,6 +212,7 @@
             <div class="si-help">
               <strong>💡 How to solve:</strong>
               <ol>
+                <li>Paste this game's Simon <strong>manual table</strong> picture — it changes every game.</li>
                 <li>Type the bomb <strong>serial</strong> once — the table row depends on whether it has a vowel.</li>
                 <li>Paste each stage's GIF; its last flash is the new colour.</li>
                 <li>Press the <strong>ODD</strong> or <strong>EVEN</strong> sequence, by how many modules are disarmed.</li>
@@ -501,10 +284,17 @@
     const list = files.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
     state.busy = true;
     update();
+    let skipped = 0;
     for (const f of list) {
-      try { state.entries.push(await readSimonFile(f)); }
+      try {
+        const r = await readSimonFile(f);
+        if (r.manual) { state.table = r.manual; state.tableEdited = false; }
+        else if (r.notSimon) skipped++;
+        else state.entries.push(r);
+      }
       catch (e) { state.entries.push({ name: (f && f.name) || 'image', color: null, thumb: '', note: 'could not read file', warn: '' }); }
     }
+    state.skipped = skipped;
     state.busy = false;
     update();
   }
@@ -521,11 +311,14 @@
     $('simonsAnswers').innerHTML = [['odd', 'ODD', 'odd # of modules disarmed', a.odd], ['even', 'EVEN', 'even # of modules disarmed', a.even]].map(([k, label, sub, seq]) => `
       <div class="si-banner" onclick="window.copySimons('${k}', this)" title="Click to copy the ${label} sequence">
         <div class="si-banner-lbl"><b>${label}</b><span class="si-copied">${sub}</span></div>
-        <div class="si-seq">${seq.length ? seq.map(c => chip(c)).join('') : `<span class="si-muted">${!a.hasSerial && a.counted.length ? 'needs the serial' : '—'}</span>`}</div>
+        <div class="si-seq">${seq.length ? seq.map(c => chip(c)).join('') : `<span class="si-muted">${!a.counted.length ? '—' : !state.table ? 'needs the manual picture' : 'needs the serial'}</span>`}</div>
       </div>`).join('');
 
-    $('simonsWarn').innerHTML = !a.hasSerial && a.counted.length
-      ? '<div class="si-warn">⚠ Type the bomb serial — the manual row depends on whether it has a vowel.</div>' : '';
+    $('simonsWarn').innerHTML = [
+      !state.table ? '<div class="si-warn">⚠ Paste this game\'s Simon <b>manual table</b> picture — the table changes every game.</div>' : '',
+      !a.hasSerial && a.counted.length ? '<div class="si-warn">⚠ Type the bomb serial — the manual row depends on whether it has a vowel.</div>' : '',
+      state.skipped ? `<div class="si-warn">⚠ ${state.skipped} picture${state.skipped === 1 ? ' is' : 's are'} neither a Simon module nor its manual — skipped.</div>` : ''
+    ].join('');
 
     let stage = 0;
     $('simonsLog').innerHTML = state.entries.length ? state.entries.map((e, i) => {
@@ -535,7 +328,7 @@
         ${e.thumb ? `<img src="${e.thumb}" alt="">` : '<span class="si-noimg"></span>'}
         <div class="si-ent-body">
           <div class="si-ent-read">${e.color
-            ? `${chip(e.color, true)} <b>${SINAMES[e.color]}</b>${a.hasSerial ? ` → ODD ${chip(a.rules.odd[e.color], true)} EVEN ${chip(a.rules.even[e.color], true)}` : ''}`
+            ? `${chip(e.color, true)} <b>${SINAMES[e.color]}</b>${a.ready ? ` → ODD ${chip(a.rules.odd[e.color], true)} EVEN ${chip(a.rules.even[e.color], true)}` : ''}`
             : '<span class="si-note warn">no glow found — pick the colour</span>'}</div>
           <div class="si-note">${esc(e.note)}</div>
           ${e.warn ? `<div class="si-note warn">⚠ ${esc(e.warn)}</div>` : ''}
@@ -545,12 +338,18 @@
       </div>`;
     }).join('') : '<div class="si-muted">Nothing yet — paste the stage-1 GIF.</div>';
 
-    $('simonsTable').innerHTML = `<table class="si-table"><thead><tr><th>Serial / disarmed</th>${['R', 'B', 'Y', 'G'].map(c => `<th>${SINAMES[c]} flash</th>`).join('')}</tr></thead><tbody>${
+    const T = state.table;
+    $('simonsTable').innerHTML = !T
+      ? '<div class="si-muted">No manual yet — paste this game\'s Simon manual picture (the 4×4 colour table).</div>'
+      : `<table class="si-table"><thead><tr><th>Serial / disarmed</th>${['R', 'B', 'Y', 'G'].map(c => `<th>${SINAMES[c]} flash</th>`).join('')}</tr></thead><tbody>${
       [['noVowel', 'odd'], ['noVowel', 'even'], ['vowel', 'odd'], ['vowel', 'even']].map(([v, p]) => {
         const cls = !a.hasSerial ? '' : (v === 'vowel') === a.vowel ? 'on' : 'off';
-        return `<tr class="${cls}"><td>${v === 'vowel' ? 'Vowel' : 'No vowel'} · ${p === 'odd' ? 'Odd' : 'Even'}</td>${['R', 'B', 'Y', 'G'].map(c => `<td style="cursor:pointer;" title="Click to change" onclick="window.cycleSimonTable('${v}','${p}','${c}')">${chip(SIMON_TABLE[v][p][c], true)}</td>`).join('')}</tr>`;
-      }).join('')}</tbody></table>${tableEdited() ? '<button type="button" class="si-btn" style="margin-top:6px;" onclick="window.resetSimonTable()">Reset to the built-in (22 Nov) table</button>' : ''}`;
-    $('simonsTableSum').textContent = tableEdited() ? 'Manual table — EDITED for this game' : 'Manual table — built in from the 22 Nov manual (click to check / edit)';
+        return `<tr class="${cls}"><td>${v === 'vowel' ? 'Vowel' : 'No vowel'} · ${p === 'odd' ? 'Odd' : 'Even'}</td>${['R', 'B', 'Y', 'G'].map(c => `<td style="cursor:pointer;" title="Click to change" onclick="window.cycleSimonTable('${v}','${p}','${c}')">${chip(T[v][p][c], true)}</td>`).join('')}</tr>`;
+      }).join('')}</tbody></table><button type="button" class="si-btn" style="margin-top:6px;" onclick="window.forgetSimonTable()">Forget this manual</button>`;
+    $('simonsTableSum').textContent = !T ? 'Manual table — paste this game\'s picture'
+      : state.tableEdited ? 'Manual table — read from the picture, EDITED (click a cell to change)'
+      : 'Manual table — read from this game\'s picture (click a cell to fix a misread)';
+    if (T && !state.tableShown) { $('simonsTableBox').open = true; state.tableShown = true; }
   }
 
   window.handleSimonsFiles = function (input) {

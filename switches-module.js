@@ -2,6 +2,8 @@
  * Switches Solver Module for Keep Talking and Nobody Explains
  * Computes shortest path from current switch positions to target green lights
  * while avoiding forbidden states managed dynamically by the user.
+ * A screenshot is read with bomb_boomed's reader (window.BombLogic.switches, bomb-logic.js); the
+ * answer is copied as bomb_boomed copies it: "SW1 → SW3 → SW2".
  */
 
 (function() {
@@ -18,8 +20,9 @@ const switchesState = {
   currentStepIndex: 0
 };
 
-// Default forbidden states from the guide
-const DEFAULT_FORBIDDEN_TEXT = `DDUUU, DDUUD, DDUDD, UDDDU, UDDUD, DUDUU, UUDUD, DUDDU, UDDUU, UDUDD`;
+// No built-in forbidden states (as in bomb_boomed): the list changes between games — the old
+// built-in one forbade DUDDU, the target of a real 22 Nov board. Add this game's states above.
+const DEFAULT_FORBIDDEN_TEXT = ``;
 
 // ── DYNAMIC STYLE INJECTION ───────────────────────────────
 
@@ -280,6 +283,8 @@ function initSwitchesModule() {
     });
   });
 
+  if (window.BombDragDrop) window.BombDragDrop.attachDropzone('switchesDropzone', (file) => readSwitchesPicture(file));
+
   // Load defaults
   updateSwitchesUI();
   solveSwitches();
@@ -423,8 +428,16 @@ function solveSwitches() {
   const start = switchesState.current.join('');
   const target = switchesState.target.join('');
   
-  // Compute path
-  const path = findSwitchesPath(start, target, switchesState.forbidden);
+  // Compute path (bomb_boomed's BFS: the states from start to target), as switch flips
+  const SW = window.BombLogic.switches;
+  const states = switchesState.forbidden.has(target) ? null : SW.swBFS(start, target, [...switchesState.forbidden]);
+  const path = states ? states.slice(1).map((st, i) => st.split('').findIndex((c, j) => c !== states[i][j])) : null;
+  const line = document.getElementById('switchesCopyLine');
+  switchesState.moves = path && path.length ? path.map(i => `SW${i + 1}`).join(' → ') : '';
+  if (line) {
+    line.style.display = switchesState.moves ? 'block' : 'none';
+    line.textContent = switchesState.moves ? `📋 ${switchesState.moves}` : '';
+  }
   switchesState.solutionPath = path;
   switchesState.currentStepIndex = 0;
 
@@ -580,6 +593,59 @@ function resetSwitchesSolver() {
   updateSwitchesUI();
   solveSwitches();
 }
+
+// ── SCREENSHOT ────────────────────────────────────────────
+
+function readSwitchesPicture(file) {
+  const status = document.getElementById('switchesReadStatus');
+  const say = (msg, color) => { if (status) { status.textContent = msg; status.style.color = color; } };
+  const img = new Image();
+  img.onload = () => {
+    const d = window.BombLogic.switches.detectSwitchesAndGoals(img);
+    URL.revokeObjectURL(img.src);
+    if (!d) { say('⚠ Could not read the switches — set them by clicking.', '#ff9800'); return; }
+    const init = window.BombLogic.switches.swNorm(d.detectedInit || 'UUUUU');
+    const goal = window.BombLogic.switches.swNorm(d.detectedGoal || 'DDDDD');
+    switchesState.current = init.split('');
+    switchesState.target = goal.split('');
+    updateSwitchesUI();
+    solveSwitches();
+    say(`✓ Read: switches ${init}, target lights ${goal} — check them against the picture.`, '#4caf50');
+  };
+  img.onerror = () => say('⚠ Could not open that file as an image.', '#ff5c5c');
+  img.src = URL.createObjectURL(file);
+}
+
+window.handleSwitchesFile = function (input) {
+  const f = input.files && input.files[0];
+  if (f) readSwitchesPicture(f);
+  input.value = '';
+};
+
+window.copySwitchesMoves = function (el) {
+  const t = switchesState.moves;
+  if (!t) return;
+  try {
+    navigator.clipboard.writeText(t).then(() => {
+      el.textContent = '✓ Copied';
+      setTimeout(() => { el.textContent = `📋 ${switchesState.moves}`; }, 1200);
+    }).catch(() => {});
+  } catch (e) {}
+};
+
+document.addEventListener('paste', (e) => {
+  if (!document.getElementById('switchesSection')?.classList.contains('active')) return;
+  const el = document.activeElement;
+  if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type === 'text'))) return;
+  for (const item of (e.clipboardData?.items || [])) {
+    if (item.type && item.type.startsWith('image/')) {
+      e.preventDefault();
+      const f = item.getAsFile();
+      if (f) readSwitchesPicture(f);
+      return;
+    }
+  }
+});
 
 // Attach to window
 window.initSwitchesModule = initSwitchesModule;

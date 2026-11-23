@@ -1,7 +1,7 @@
 (function() {
   // The table (8 patterns per direction) changes every game, so nothing is built in: last game's
   // table could match by chance and give a confident wrong answer. It is read from the manual
-  // picture (knobs-manual.js) or pasted as text, and remembered for the game.
+  // picture (bomb_boomed's reader in bomb-logic.js) or pasted as text, and remembered for the game.
   const MANUAL_KEY = 'ktane_knobs_manual'; // { text, at, picture }
   const EMPTY_CONFIGS = () => ({ UP: [], DOWN: [], LEFT: [], RIGHT: [] });
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
@@ -412,61 +412,9 @@
     return activeRows;
   }
 
-  // ── bomb_boomed/src/modules/knob/knobSolver.js ─────────────
-  // "UP" with or without a colon, X/O or 1/0, the 6-light pattern anywhere on the line
-  function parseManualText(text) {
-    const rules = { UP: [], DOWN: [], LEFT: [], RIGHT: [] };
-    let curDir = null;
-    const lines = String(text || '').split(/\r?\n/);
-    for (const raw of lines) {
-      const l = raw.trim().toUpperCase();
-      if (l.startsWith('UP')) { curDir = 'UP'; continue; }
-      if (l.startsWith('DOWN')) { curDir = 'DOWN'; continue; }
-      if (l.startsWith('LEFT')) { curDir = 'LEFT'; continue; }
-      if (l.startsWith('RIGHT')) { curDir = 'RIGHT'; continue; }
-      const match = l.match(/[XO01]{6}/);
-      if (match && curDir && rules[curDir]) {
-        const pat = match[0].replace(/1/g, 'X').replace(/0/g, 'O');
-        if (!rules[curDir].includes(pat)) rules[curDir].push(pat);
-      }
-    }
-    return rules;
-  }
-
-  const countLit = (pat) => (pat.match(/X/g) || []).length;
-
-  function findPatternDir(pat, rules) {
-    if (!pat || pat.length !== 6) return null;
-    for (const dir of ['UP', 'DOWN', 'LEFT', 'RIGHT']) {
-      if (rules[dir] && rules[dir].includes(pat)) return dir;
-    }
-    return null;
-  }
-
-  // One row matching is enough; with both, ODD → the row with MORE lit lights, EVEN → FEWER,
-  // a tie → the top row.
-  function solveKnob(topPat, botPat, disarmed, rules) {
-    const dirTop = findPatternDir(topPat, rules);
-    const dirBot = findPatternDir(botPat, rules);
-    const litTop = countLit(topPat), litBot = countLit(botPat);
-    if (!dirTop && !dirBot) return { ok: false, msg: 'No matching pattern found for top or bottom row' };
-    const isOdd = disarmed % 2 !== 0;
-    let chosenDir = null, reason = '';
-    if (dirTop && !dirBot) {
-      chosenDir = dirTop;
-      reason = `Only Top Row matched (${topPat} → ${dirTop})`;
-    } else if (!dirTop && dirBot) {
-      chosenDir = dirBot;
-      reason = `Only Bottom Row matched (${botPat} → ${dirBot})`;
-    } else if (isOdd) {
-      chosenDir = litBot > litTop ? dirBot : dirTop;
-      reason = litTop === litBot ? `Tie (${litTop} lit each) → top row` : `ODD → row with MOST lit lights (${litTop} vs ${litBot})`;
-    } else {
-      chosenDir = litBot < litTop ? dirBot : dirTop;
-      reason = litTop === litBot ? `Tie (${litTop} lit each) → top row` : `EVEN → row with FEWEST lit lights (${litTop} vs ${litBot})`;
-    }
-    return { ok: true, direction: chosenDir, reason, dirTop, dirBot, litTop, litBot };
-  }
+  // ── Solving and reading: bomb_boomed's (window.BombLogic.knobs, from bomb-logic.js) ──
+  // the 8 patterns per direction (text or the manual picture), and the direction for two LED rows
+  const { parseKnobRules: parseManualText, countLit, findPatternDir, solveKnob, readKnobManual, knobManualText, detectKnobStateFromImage } = window.BombLogic.knobs;
 
   function handleKnobsActiveInput(textarea) {
     const text = textarea.value;
@@ -753,7 +701,6 @@
   }
 
   function readKnobsManualFile(file) {
-    if (!window.KnobsManual) { knobsState.manualMsg = '⚠ Manual reader not loaded.'; renderKnobsManualState(); return; }
     const img = new Image();
     img.onload = () => {
       const W = img.naturalWidth, H = img.naturalHeight;
@@ -761,14 +708,14 @@
       const ctx = cv.getContext('2d', { willReadFrequently: true });
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(img.src);
-      const man = window.KnobsManual.readKnobManual(ctx.getImageData(0, 0, W, H).data, W, H);
+      const man = readKnobManual(ctx.getImageData(0, 0, W, H).data, W, H);
       const marks = man.panels.reduce((n, pnl) => n + pnl.rows.join('').length, 0);
       if (man.panels.length !== 4 || marks < 150) { // 4 panels × 48 X / O when read cleanly
         // not the manual: the defuser's 12 LEDs
         readKnobsLeds(img, cv);
         return;
       }
-      const text = window.KnobsManual.knobManualText(man.dirs);
+      const text = knobManualText(man.dirs);
       const ta = document.getElementById('knobsManualInput');
       if (ta) {
         ta.value = text;
@@ -784,70 +731,14 @@
     img.src = URL.createObjectURL(file);
   }
 
-  // ── bomb_boomed/src/modules/knob/knobVision.js ─────────────
-  // OCR of the X / O rows first, then the lights' brightness at fixed spots.
-  let knobsOcrWorker = null;
-  async function ensureKnobsOcr() {
-    if (knobsOcrWorker) return knobsOcrWorker;
-    if (typeof Tesseract === 'undefined' || typeof Tesseract.createWorker !== 'function') throw new Error('no OCR');
-    knobsOcrWorker = await Tesseract.createWorker('eng');
-    return knobsOcrWorker;
-  }
-
-  async function detectKnobStateFromImage(img, canvas) {
-    const W = canvas.width, H = canvas.height;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const knobState = new Array(12).fill(0);
-    let foundText = false;
-    try {
-      const worker = await ensureKnobsOcr();
-      await worker.setParameters({ tessedit_char_whitelist: 'XO01 \n\r\t', tessedit_pageseg_mode: '6', user_defined_dpi: '150' });
-      const { data } = await worker.recognize(canvas);
-      const text = data.text.toUpperCase().replace(/[01]/g, m => (m === '1' ? 'X' : 'O'));
-      const matches = text.match(/[XO]{6}/g);
-      if (matches && matches.length >= 2) {
-        for (let i = 0; i < 6; i++) knobState[i] = matches[0][i] === 'X' ? 1 : 0;
-        for (let i = 0; i < 6; i++) knobState[i + 6] = matches[1][i] === 'X' ? 1 : 0;
-        foundText = true;
-      }
-    } catch (e) {}
-
-    if (!foundText) {
-      const imgData = ctx.getImageData(0, 0, W, H).data;
-      const samples = [];
-      const rowY = [0.35, 0.65];
-      const colX = [0.15, 0.29, 0.43, 0.57, 0.71, 0.85];
-      for (let r = 0; r < 2; r++) {
-        for (let c = 0; c < 6; c++) {
-          const cx = Math.floor(colX[c] * W), cy = Math.floor(rowY[r] * H);
-          const rad = Math.max(2, Math.floor(Math.min(W, H) * 0.03));
-          let rSum = 0, gSum = 0, bSum = 0, count = 0;
-          for (let dy = -rad; dy <= rad; dy++) {
-            for (let dx = -rad; dx <= rad; dx++) {
-              const px = cx + dx, py = cy + dy;
-              if (px >= 0 && px < W && py >= 0 && py < H) {
-                const idx = (py * W + px) * 4;
-                rSum += imgData[idx]; gSum += imgData[idx + 1]; bSum += imgData[idx + 2]; count++;
-              }
-            }
-          }
-          samples.push(count ? (0.299 * rSum + 0.587 * gSum + 0.114 * bSum) / count : 0);
-        }
-      }
-      const maxB = Math.max(...samples), minB = Math.min(...samples);
-      const thresh = minB + 0.45 * (maxB - minB);
-      for (let i = 0; i < 12; i++) knobState[i] = (samples[i] > thresh && (maxB - minB > 25)) ? 1 : 0;
-    }
-    return knobState;
-  }
-
   async function readKnobsLeds(img, canvas) {
     knobsState.manualMsg = 'Reading the knob LEDs…';
     renderKnobsManualState();
     let st = null;
-    try { st = await detectKnobStateFromImage(img, canvas); } catch (e) {}
+    // the lamps from pixels (lit = yellow, unlit = grey); typed X / O text only as a last resort
+    try { st = await detectKnobStateFromImage(img); } catch (e) {}
     if (!st || st.length !== 12) {
-      knobsState.manualMsg = '⚠ Could not read that picture — click the LEDs instead.';
+      knobsState.manualMsg = '⚠ No knob lamps found in that picture — click the LEDs instead.';
       renderKnobsManualState();
       return;
     }

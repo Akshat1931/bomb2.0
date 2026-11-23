@@ -8,7 +8,9 @@ const logicState = {
   initialized: false,
   variables: {},
   expressions: ['', '', '', '', ''],
-  stageResults: [null, null, null, null, null]
+  stageResults: [null, null, null, null, null],
+  nextStage: 1,
+  answer: ''
 };
 
 function injectStyles() {
@@ -328,6 +330,9 @@ function initLogicModule() {
   renderLogicVariables();
   generateLogicHelperButtons();
   evaluateAllLogicStages();
+  if (window.BombDragDrop) {
+    window.BombDragDrop.attachDropzone('logicDropzone', (file) => logicFileToImage(file, img => readLogicPicture(img, logicState.nextStage || 1)));
+  }
 }
 
 function saveLogicState() {
@@ -587,9 +592,14 @@ function evaluateAllLogicStages() {
       logicState.stageResults[s - 1] = null;
     } else {
       try {
-        // Evaluate using shunting yard and postfix resolver from logic-solver.js
-        const postfix = shuntingYard(expression);
-        const res = evaluatePostfix(postfix, stageEnv);
+        // bomb_boomed's evaluator (¬ ^ V →, P–T, α–δ from earlier stages)
+        let res;
+        try {
+          res = LG.evaluateExpression(expression.replace(/⇒/g, '→'), greekEnv, logicState.variables);
+        } catch (err) {
+          if (/not solved yet/.test(err.message)) res = null; // waits for an earlier stage
+          else throw err;
+        }
         
         if (res === null) {
           resultVal.textContent = 'PENDING';
@@ -617,6 +627,17 @@ function evaluateAllLogicStages() {
   }
   
   updateGreekSidebar(greekEnv);
+
+  // copied as bomb_boomed copies it: "α=T β=F γ=T δ=F T" (stage 5 has no symbol)
+  const sym = ['α', 'β', 'γ', 'δ', ''];
+  logicState.answer = logicState.stageResults
+    .map((r, i) => (r === true || r === false ? (sym[i] ? `${sym[i]}=${r ? 'T' : 'F'}` : (r ? 'T' : 'F')) : null))
+    .filter(Boolean).join(' ');
+  const line = document.getElementById('logicCopyLine');
+  if (line) {
+    line.style.display = logicState.answer ? 'block' : 'none';
+    line.textContent = `📋 ${logicState.answer}`;
+  }
 }
 
 function updateLiveHighlightPreview(container, str, env) {
@@ -790,220 +811,89 @@ function loadLogicDemoScenario() {
 
 // ── LOGIC OCR ──────────────────────────────────────────────
 
-const _LT = {"(": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAD+ElEQVRYCX3Bf2iUdRzA8ffn9kvvvN2gZe7UNuHZdqU3bxzNzPkjIxSF2VjhH7GUUBDC8FZJKi2IJMO/LBWssMKMoC6n0mNlqEuztSl6PUUXQugIKs+pDDJ4prdg9zz75/t9vq+XYNZSUbOm6tkI8MHlfwfyKASTylBzbWTtjEVVwBnnysk8CsGksZp1tLcy4Y/PP8qjEIKFq+rqw13tsWom9PX9lEchBJs9veKJ6Q0deF56/94dFEKQcE31rKaWp++jpODu2ouGEKS2/n5r/sPzI5R8f/zcABpCkNo5S5rmL6CkMHpqUxEdIUi6zeqeOo2SoQt/7SyiI+iF5yxuj3bg++oz94siOoKWRJofezWOZ/yXM/t+R0/QKUuVx7s6oniuH/764gh6gk6oNb5qTR2+4f0HbhNA0ClLpbqX4rt18pPjBBE0asrrV3a14hnLHR48TxBBIxl+6I3Z+Ea/3fw3gQSNZCT1+gw89y4e+vQmgQSN5NxlG0N4bm05XBwnkKCxLDV3A567l7aewUDQeGbFg0/iGevfPoSBoGiIJnvS+Mb6dwxiICisWCKTxnfn7GtDGAgKK5bIpPENXDp4AQNBYcUSmTQ+u9dxMRAUViyRSeOzex0XA0FhxRKZNJ4Re4/jYiAorKbuJXE8OTvruBgICmthxoriydlZx8VAUCTXv1CFL2dnHRcDQdHe08mknJ11XAwERXtPJ5NydtZxMRAU7T2dTMrZWcfFQFC093QyKWdnHRcDQfHIpufK8eXsrONiICistdsi+HJ21nExEBTW2m0RfDk767gYCAprYcaK4snZWcfFQFBYTd1L4nhydtZxMRAUViyRSeMZsfc4LgaCwoolMml8dq/jYiAorFgik8bnvHLaxUBQWLFEJo3vn81HXQwEhRVLZNL4br394XUMBEVDtHHLYnxj/TsGMRA0kstXP4lnrH/7EAaCRjL5+AY8d/O7vvyPYIJGcu6yjSF87+wsjBNI0EhWhve04vv54KGbBBI0kpWhvW34Rk9vuUogQaOmvH5lVyuesdET750liKBTlkp1L2XSud3HCCLohFrjq9bU4Rvef+A2AQSdslR5vKsjiuf60JG+EfQELYk0t21twDM+fmHn+RtoCXqRRG1ycQe+a8M/7CiiI+hFElNr5m14YBol12789nKhiIagN2VmZTj66FMLKCmMXum9PIaGEKS2fsrMRc9PwzP4zYkf0RCChGuqI21vxsooKbi73y2iEoLNnj6lkc4OPB/v+/UOCiFYuKpuKuuXz6pmwndHTuVRCCaN1cyrWdfKhL6jA3kUgkllqLm8YnXLiiooHPvz6kAehWDWUsG85hcjMPxW0R3Io/gfKIUmUHCG0GEAAAAASUVORK5CYII=", ")": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADuUlEQVRYCYXBf0zUZRzA8fdHAvOcAd6GJ82zGDNoyUwHOlrgnDXJmjb1dNScq2/lzsoKm9Z0hk3XrIAc55prp3+4aSttLqakk6KSWO6uIbHxoyG6MEIyEVM4J0TyfeiP7/M8vl6CV8682X4HKs42dnFXgsfE+fPypy+E4611rRdvcReCR2BF3uIsRg3Fzr53lbsQPCateTfTx6jhgY6Ddc3YCV6hfVMmcEdPx9fVN7ESvJa8Mzsd5eim89gIXlklawtQfjtyuOUWZoLOx2/xv/I9VzATdHJzq2ag1MejLSOYCFpJJx7z4erp2358EBNBS54sfGUayodfxRIYCHqB4PoV9+FqPln1OwaCgb90SyZK2wsNGAgGEx6uLkb5+2BVJ3qCiX/7qgCuG7U7zo2gJRjlhMpRbn8WaUZLMEp/an8ySsOhyAg6gtmM+gdRuk68OoyOYBbYOz8TV9eZzX8MoyGYZewqzsbV277j5340BLOpLy+fj9JT/m0bGoJZyiPrNkzANVjz+ZdoCDbPHEgXXPFoBA3BpmBnoQ9XPBpBQ7Ap2Fnow3Xh0w/QEGwKdhb6UCrK0BBsst8sTUOpKENDsAmGHT9KRRkagk0w7PhR9r9xDS/BJhh2/Cg/bGscwkOwCYYdP0qssqYfD8EmGHb8KLHKmn48BJtg2PGjxCpr+vEQbIJhx49S90l9Px6CTTDs+FH27rg6hIdgEww7fpSKMjQEm3nvF01GqShDQ7DJ31XowzWwZysagkVy0bZ8H654NIKGYDH1pU1p9+CKRyNoCBZTX9/OuHg0goZglly82mFcPBpBQzBLXhhyULr3NR1DQzBLXrj6RZSLocudaAhmk9cvXoKrt2VLXycaglHS3N2zMnGdj+3+qxMNwSgnVM64+m9qr1xAQzBasGYjyvVIzY9oCSYpy1etRLm29Wg3WoJB6uOluXNw3WipPt2NlmCQUbJy1ixcrY3HG7rREgweentp2r24Dn9ETzdagl5u8XP5Exlz6Wh7Az3daAlaKU8sWjET13mn//LA4E20BJ2soudTgjMZ01R7LHGhDwPBKynw6Jy1Uyal8p/hq6fqTl+/dhMDwSv16WVZ9wcYc6PhUFP7AEaCR3p+KC8jLZU7en46GfuzdxAjwSNQsiErnTHDLTVHmhNYCB6Bla9Nn8Idv37R8E+iOYGF4JG6buM0HzDS29b5fWuC5gQWgteC0LIs4PZ3m4Eh2m5hIXjlZS9d9MDAuTMdvwAx7ASvnMklz87tO3XoEqNi2P0LqkkaUHmufQoAAAAASUVORK5CYII=", "->": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABtklEQVRYCaXBv0vUcRzH8edrauiHoF1RYVy1FeQQfMeGhIOWc3FKkAqPcrEC3U4adErHNm3yHyhM6AIDW/KrB8ZxFEhIt4hQw01FRNjx4cMH7m75fHg/HsJIGAkjYSSMhJEwEkbCSBgJI2EkjESky2X48oE+IlKpBqsV+ogoFx9euw/1N5826SGiZDnO8hw9RJQsx9nderdJFxEly/HmF+kiohTGrj/DqX+GV9sEIlKpRjC5RiAinb8No49wdlov6ngiwdQKXnkdTyS4dGO8grP3A6YP6BBJZpcIRhp0iCQXhh8/wGv+GjsCkWihSlBsgTi9S4qzQwQHf0EMtLHQkc5hoWNsdIyNfusEFmKgjYU4s0+KUycJfv4DkWihSlBsgUgyWHgyjff9z51DEElmlwhGGnSIBIUrEzM4+22Y+EaHSDC1gldexxORhm7B3ac4zcPn23giUqlGMLlGIKIMjt6s4jS/wsuPBCJKluPNL9JFRMlynMbO6w26iChZjrM8Rw8RZXimOA6N91tv6SEilWqwWqGPiHT1Huxt0EcYCSNhJIyEkTASRsJIGAkjYSSMhJEwEkb/Ae8fW/sk/PjAAAAAAElFTkSuQmCC", "AND": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAEg0lEQVRYCaXBT2hTdwDA8e9PO/8061tFXJQZVILd1pQ39bCR3uYIAfWwR33gWA6jD+HtIvjMwUFLGRvsUhLw0qBLxmwO23LIpYxFhrDDFC/rHH0RlUxHO20UmWaJ+Kedez/Tkj++VyL9fASrJFglgaeNa3ju2UNWIPBk+nduw1E98RfeBJ5MfzSMo3q4gDeBJ9MfDeN4+Glh4R5eBJ5MfzSMdLFQTuFF4Mn0R8NIjx+XJ85UcSdwt62bg5uiYermU8kK7gTuYkEgGqauPJGs4E7gLvZWH7zTR115IlnBncBdbK9Fw4Pzib9v4ErgLrbXolliOosrgbvYXotmieksrgQudm9h3y6LZrevZm+cx4XAhaaCYtGiNFnM4ULgQlNBsWhRmizmcCFwoamgWHB/6gkR6OkF7hftUzO8SOBCU0GxoDBUYwzCUSR7NM+LBC40FRQLCkM1xiAcRbJH87xI0G5gN4FNoFhQGKqhsv6LKJJ9epbrM7QRtDsygvT0Osx/VgN8X22Fg908mIMvv6ONoN1wGqmSAMZrgC8OWAqSkaGNoEX/PvacQKokpu5zcxFYu5PeQ5aCZGRoI2gxGCFgID1Ipsos85tHe+jqhmPfslijmaDFYISAgVRJpMos85tASIcL55hL00zQYjBCwMAxZSfvLbDMbwIhHWpVfjhGM0GLwQgBA8fkdJIGvwmEdKSMQTNBi+M6PQNweX7yym80+E0gpCNlDJoJGvoPYAaRcna2RJM1G9l5OKQjZQyaCRpUDSOAlLOzJVoFYyEdKWPQTNCgahgBpJydLdEqGAvpSBmDZoIGVcMI4MiPFGkXjOEwAjjyI0WWCRpUDSOAIz9SpF0whsMI4MiPFFkmWLJ2A/0HMAI48iNF2u3Q6VqPEcDx4+f2o0XqBEuCsc198F4v/86QP1vGhaphBJBydrZEnWBJMBbSkWbT5P/AjaphBJBydrZEnUDq2sz2QyEd6copzl/DTd9+jr2NlLMn/6ROIPlNIKQjZQy8pYeRcna2RJ1A8ptASEfKGHhLDyM9XJj8/WueE0h+EwjpSBkDb+lh6n6+mpx9gkMg+U0gpCNlDLylh1lSSaTKOASS3+x7he1hpIyBt5EjdO9CqiRSZRwCuvp5bb+lIN29xU8n8bZ7gHdPIlUSqTIOAb44YClIF84xl2ZFw2mkSiJVxiHAFwcsBenCOebSrGg4jVRJpMo4BPjigKVw4/vr3LzGkzus6NCHsH8Xi7cuVi998xQBvjhgKdijeToQGQQ9hFQYqiHAFwcsBXs0Twcig6CHkApDNUSEde/3whEf9mieDux4g4GPd9G1DS59UkWMQTiKZI/m6YymgmIB41XEGISjSPZons5oKigWMF5FjEE4Ctz51T49S2c0FRQLsBcQM7B5K0zNTFbm6JCmgmLB5WsgnvFcYjpLxzQVFAsKF0GcZYPOP1PJ+dt07PUePnjTgsKJR4jjvBqnPHGmykuJ7TkKv3xUQ4AvTjnFS4oFcYzXELBmCwv3eEmb1uG4+x+CVRKskmCVBKskWKX/AaKRYYa3o3RgAAAAAElFTkSuQmCC", "NOT": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABS0lEQVRYCaXBsU4UYBCF0e9qyAYWNmOc1bCB0pIOO6O1Hb7AhILWRBtj89e8ka2FpQ2NjVJDQYwRRV0LNJPsC+zMOaJJNIkm0SSaRJNoEk2iSTSJJtEkmkSTaBJNgsWjQyq+Xl38AMHiyTEV51/OLkHvmNzbo+Lm1/Xy02/9o+PDT31jukHZ8lafWUxp0BkPNlnbnRkrerWxx/osWBG7b1mfBSti9pz1TZ9xNCOJEh+EkUSJD8JIosQHYSRR4oMwkijxQRhJlPggjCRKfBBGEiU+CCOJEh+EkUSJD8JIosQHYSRR4oMwkijxQRhJlPggjCRKfBBGEiU+CCOJEh+EkUTJ/Td3X+xsb/79jijZevrw9dbcbi4QJZOD/ZeTuf35uBRFByfMjdNLUbT7mLnx/lo0iSbRJJpEk2gSTaJJNIkm0SSaRJNoEk2i6T+09DhdcZHdHgAAAABJRU5ErkJggg==", "OR": "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", "P": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADLElEQVRYCZXBsWpcRxSA4f8UCelilqgxAaXY45RunNknMGjU5AGGpDKk2u0CaWwwfoPdRhBXMdMljQpP4SKoHKMmjSC+g7EaNwqLQsAEDCFc7+qeuULsvf4+4cp84mfc5DCxg3BlPvEzbnKY2EH44PZT9j/Zu8VNTi+4cvqI64QPpg1jpEOuEz7Ye8h3txh0dgQcn1MRrjRTxjlMVIQrL7764hZjPDj5+4KOYJZzxlkt6AhmOWec1YKOYJZzxrn86819tgSznDNWUbYE88O3e/eonJ1fnLKx95Ce5g5bgvFOA5WUS2Rj2tBTlC3BeKeBSsolsrH/gv1PMW/uc/6elmC800Al5RLZmMxZTDDrJas1LcF4p4FKyiWyMZmzmGDWS1ZrWoLxTgOVlEuk00zp0UJLMN5poJJyiXSaKT1aaAnGOw1UUi6RziulRwstwXingUrKJdJppvRooSWYg5kGKimXSOeV0qOFlmC800Al5RLpNFN6tNASjHcaqKRcIp1mSo8WWoLxTgOVlEuk00zp0UJLMN5poJJyiXSaKT1aaAnGOw1UUi6Rjc+/5+EePVpoCcY7DVRSLpGNyZzFhB4ttARzMNNAJeUS2fjyV+5+hrl4wrNLWoLxTgOVlEtkY9rQU5QtwXingcrpn29/Z+P2U3qaO2wJxjsNjFOULcF4p4FxirIlGO80MMZqQUcw3mlgjNWCjmC808CwR6fnZ3QE450Ghh0mKoI5mGlgp/Nj4OiMimC808BO6ZDrBOOdBnre/8OayskDrhOMdxroaSKP2U0w3mmgp4k8ZjfBeKeByskfJbJmN8F4p4FKyiUyRDAHMw1UUi6RIYLxTgOVlEtkiGC800Al5RIZIhjvNFBJuUSGCMY7DVRSLpEhgvFOA5WUS2SIYLzTQCXlEhkiGO80UHnyy7u3DBGMdxqoLFYME8zBTAOVxYphgvFOA5XFimGC8U4Dncv/fvqZYYLxTgOd5Tq9ZJhgvNNAZ7lOLxkmGO800Pnm9bt/GSYY7zTQ0cIYgjmYaaB18hvw7JIxBOOdBlqrBaMJ5t7Xd38kAcdHjCbU/HOEjyPU/HOEj/M/rewDUE5MIj0AAAAASUVORK5CYII=", "Q": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAEZUlEQVRYCY3BXYgVdRjA4d9b6fpRu6uUC2L2uQqWK6IDZiOZY3UxW6ZFwZaEBMGZqLQvR5QskuZ4EdbNDgWmYg5BZl04XYhCqawXnrLaCJvFQjN1s8ij5MdqWjIz553/7rrr8wj9KrVjKi+jf0IvUn/NDbBwFab21XD8DH0JvdT5TSX61xrTl2AaN9wfNZ/+vb7n6PnDFzEJJr/B58rC7vI5TEJR8zD/+ke4su3V8umfMAhFpTH+MAZUrpYxCGrS6NKY2dehfji595xdZ1HwVfVRDIJqay41UfTRofeqKxuWUFRtxCCoNffeNQK1bu/+Uz/0TB86ZdTMsVPJ9aw9sooCQW11KXoqIjV+0eTHUJ0tFAg5q/nVqaj1m/cdITV83MPvon7zf/+aGiHnTm+bgFpWRrVtQnWHXRE1Qm71M4115H7c9cU2lLVo6gxyF/7a/jQ1Qq69hNob79iNmrzAnouKW6kRUjNmz5uB+vDFC/+irhny2tuo/Ru+3UZGSNmOa6FCD5MfoJKoEpMRUrbjWqjQw+QHqCSqxGSE1IOPzrqb3LkTG5ZiemH5DSPIHfxy5ydkhJQfoJKoEmOyHddChR4ZIeUHqCSqxJhsx7VQoUdGSPkBKokqMSbbcS1U6JERUn6ASqJKjMl2XAsVemSElB+gkqgSY7Id10KFHhkh5QeojqVHD2Aad+vL81GhR0ZI+QEqbqWv9hIq9MgIKT9AffPOL99hmnjXcw+hQo+MkPIDVBJVYky241qo0CMjpPwAlUSVGJPtuBYq9MgIKT9AJVElxmQ7roUKPTJCyg9QSVSJMdmOa6FCj4yQ8gNUElViTLbjWqjQIyOkbMe1yCVRJcZkO66FCj0yQsp2XIvcr190bMbkuHOmkDt/eu0rZISU7bgWKvQw+QEqiSoxGSHVMm3h/aiNK06cpMgPUN+/v38PGSHXXkLtjXfspsgPUHErNUJu+ZO31JP7Zd+mz1GNNz/7EipupUbIudPbJqCWlVGTF9hzUXErNUJu4rhVM1AffPzzcXJzlt16J7l/9nUspUZQW13U9t1bOsm1bUJ1h10RNYJaac2qJ3f46JbOjr+57I5XmueSO7+tO6x2USOotuZSE+qzznWHuMzehTpb/iOkQFBjR5aaHh9K7uipw2e4bPQ9qFPTeg5SIBSVxvjDGFi1EYNQNPo6v/5ZBjKz+hMGweQ3+AyksYpJMNVJ3aQO+vfpgbXHT17CJPQxqQOGDqev9T+vPU5vQr9K7fTVGtOX0K8nVvC/UUNuvBb1/K6us/QmDGDR+CUNFLV00pswgAduWtwwgYLW5MBFTMKAFje8SUHYXT6HSRjQnOFbKdh56onTmIRBXMLQWMUkDMJvXErBmupbGITBjD9IUbURgzCYkfMmvoHq2VzdfqyDGmFw9i6KusOuiBphcPUtt9/XMp1cz7Ek2r+HjHA1Ji+w56KSqBKTEa7GkBF1w2DebQtvBP7c2BX1nCEjXL225lIT0B12RdT8B/CzW1CMHqvQAAAAAElFTkSuQmCC", "R": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADKUlEQVRYCY3BsYtdRRTA4d+REFIYIYRwbbWwELxbWKVL8878A6bM+A9YehsDitYXq2DSmilMYRmUmRXBQixki7uKRYpYCOaGkEIT1CLwfMs7bziZt7D3+wS6mWVSZJ9AN7NMiuwTuPIL5y6zwNcf8M8zGsKJfmKZcaAhnOgnlhkHGsKJfmKZLz/n0RM84UQ/sdgw4gkn+onFhhFPOPHmbS6/S+OnZ2wojWHEE4xmGgfHbKxpDCOeYDTTODhmY01jGPEEoxnvu0fc/IONu1y4jvfVt/z4kEowmvFCYaebacREJRjNeKGw0800YqISzKrg6SE7Fz/myvt4MVEJRjNeKDj9hBcTlWA044WC0094MVEJZlXw9BCnn/BiohKMZrxQcPoJLyYqwWjGCwWnn/BiohKMZrxQcPoJLyYqwWjGCwWnn/BiohKMZrxQcPoJLyYqwawKnh6yc+keF6/ixUQlGM14obDTzTRiohKMZrxQ2OlmGjFRCWZV8B4+5/oDvr8MnHubRkxUgtFM4+CYueM0MVEJRjONg2PmjtPERCUYzTSevuDKK+z59DZ//UclGM0sM4x4gtHMMsOIJxjNLDAONASjmQXGgYZgNHOWf//mi89oCEYzZ0mRfYLRzFlSZJ9gVoWz3L/Jk0c0BKOZBcaBhmA0s8A40BDMquAdPWXj2nleNg40BKMZLxQ25o6XjQMNwWjGC4WNueNl40BDMJrxQmHj1mvcwPvmHke/4QlGM14obK1pDCOeYDTjhcLWmsYw4glmVfD0kK01jWHEE4xmvFDYWtMYRjzBaMYLha01jWHEE8yq4OkhWx/y6id4P/zMvSMqwWjGC4WdbqYRE5VgNOOFwk4304iJSjCa8UJhp5tpxEQlGM14obDTzTRiohKMZrxQ2OlmGjFRCWZV8PSQnfPXeOMO3q9/8tERW4LRjBcKTj/RCIUtwWjGCwWnn2iEwpZgVoXq5n1+f4Zz4S2u3sF7+JzrD9gQjGaqmNijmcbBMRuC0UwVE3s00zg4ZkMwmqliYs/5S7x3C+/pC955gmA0U8XEaW7cpfH6YwSjmSomTnPjLo3XH/M/Cw34Qd4YWlgAAAAASUVORK5CYII=", "S": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAEUklEQVRYCYXBT2ibdRzA4c+3NpnunS6RLZmFsb0V7cRMxosMRHJpFXXaeAjCuslykB3Sy7tDeljuC0JyycEVnB46kFRBhBVEDy1oQA9qlTHEV7EZHsb6brpMfctMnPOlefO+v3f59zzCYIk8HYs2oJ8iPUPNouKgEAZL5OlYtAH9FOkZahYVB4XQa/8E2+JZOj6+BUwc48iz1CwqDgqh17kiA9UsKg4Kode5IgPVLCoOCkG18zSuV19koJpFxUEhqBKbjFCzqDgoBFVikxFqFhUHhRB4Wdv9PiPULCoOCiFgxrQFRqhZVBwUQsCMaQuMULOoOCiEwPcHxnbjS20BT7/Atsg8HX+3efImCiGwoaPY5QDGLNuiRXxJG4Xg2THOlYN03blLYgs4/BKuh8YiZ3jgQTqSNgrBk01hxulaalBq05VPAHqOjqSNQvBkU5hxupYalNp05ROAnqMjaaMQPNkUZpyutU1K7X+u0vHK7rEn0HN0JG0UgiebwoyjKLXsRboiRfQcHUkbheDJpjDjKEote5GuSBE9R0fSRiF4sinMOIpSa+s7rv3EtrHniR3mwONcvknVQSF4sinMOIpSC1hfQZGeZtkiTPBkU5hxFKUWsL6CIj3NskWY4Nm7iy/2o7h679Yl/rrJ17/QFYuzuUWYENjQCbHP41pZZxghsKETYp/HtbLOMEKgEN95BsW9Nq67/3HhRqvCAELAjGkL9HPebpcYQAicfERbIBqjx4e/t0u4HIcegkorMDVHH60SrvoaPQSVVmBqjj5aJVz1NXoIKq3AvqNM7ON+/36Kq77Gr7cJE1RaAddMmv7qqyxbhAkqrYBrJk1/9VWWLcIE1fgzuKbTPLeXPq5fo2bxeQuF0Gs6TU6nv5pFxUEh9JpOk9Ppr2ZRcVAIvTSNUzqnI/TRbFF2/vwAn9DXKZ1ilP7KTrOKT+jrxEHORoGxcXqUnWYVnzBIMQIYGXqUnWYVnzBIMQIYGXqUnWYVnzDIiXHAyLDnYcLKTrOKTxjKmCVjEFZ2mlV8wlDGLBmDsLLTrOIThpo4RMbA0FDUW9ffxCeMMmswnyCkMYlPGGXWYD5BSGMSnxB4N3nnE1yXf0SRjJFPjL+BojGJTwhs6E4Z11qdsHwiWkTRmMQnBDZ0p4xrrU5YPhEtomhM4hM8rx3i7KP3tnCt1vnoNxT5RLSI752tP97GJ3iyKcw421brXGygyCeiRXxlp1nFJ3iyKcw42776hosbdO3cwck9kXl8ZadZxSd4sinMOF1LDboyBmFlp1nFJ3iyKcw4XUsNujIGYWWnWcUneI7ux4yNP0XHlzfoMnTC3rrtfIZPCJgxbYHRkjYKIWDGtAVGS9oohMCRHdoCCYNh3rvChS0UgkorMDXHMK9fIkxQaQWm5hjm9UuECaqxx5iaw3VsgpD2Eq4fvuXnW4QJ95k6jiunE9Iq4aqv0UO4z9RxXDmdkFYJV32NHv8DQLtCUMPK3LcAAAAASUVORK5CYII=", "alpha": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAFaklEQVRYCaXBb2yU9QHA8e8PitAyOsq0zHZatkeEZD0n2bpg5GHuycKyNNuRxUR58UTBnEu7jEQaZVm3NVt4XlilL7rl2GxiO3khbg9LT0MynqlJYeyZSKSQn/vPzFXL9BHauTKucAfP+tzP5+5+9Dnf+PkIFmvZzd5GdOcOFgap0dOa3kREsFjLbvY2ojt3sDBIjZ7W9CYiAt3mlGEtXcutS9DNXywM8sJ/KVu6i57WliZ4fxyBbts9nfeTqPAkw7OUNfTT28qC6REEtR5bf9vaNQaJSqcZnj19ngXLj9PZyILpEQS1JrbyUYZnDksWNF5GmR5B8KEVG/nCku/fSdUbZ6DpAWr8/vLTf4CV65f/iciFt8+PIPhQaw/9y6j1QwfaptHsOAQdDy/rJ/L6kfMjCMpWNLf28GgDZdcu8n4IP3sGWl8Bbm8m9p3xy5fueKzhUSLHDgWHEZTdnW7tJTYzzGCBqvE0MVf63tYJlAO9gKDs7nRrL7GZYQYLVI2nibnS97ZOoBzoBQRlD42IBpQ3x2eGKVHjpqV7B1Bcef16R4bIS2dfewkQlO18lph0Z4e5Qf8+FFdCx04iudOnjgCCBZs3mrtQTr4pDxfPc4P+fSiu/PyXl3+ayOO/mZsBBAu6v7QpjXLUl4dZpH8fiivv+TrKrlEiAjY3d3fdcgfK8KEL/2CRHQ/d/EUif7946zoiJy4NeUQEZNq6u4j1DZHAtAwbTTbITRIRkGnr7kL51+WnniOBaRk2mj1Tp/JEBGTaurtQRvOeTwLTMmw0KYkiWsi033cXkdlwdOr4aRKYlmFTFc6y5S8oYoBMO4pTHMuTyLQMm6qiw4EARQyQaUdximN5EpmWYVNVdDgQoIgBMu0oTnF0ikSmZdhUFT7FfIgiBsi0ozjFsTyJTMuwqSo0USH+SfsKlM756XkSmZZhE3vPKz5ChQipaCpQh2kZNrH8aMmhQoQol07yjavUYVqGTezM966foEKEKEEWp0QdpmXYxI59hRoiRAmyOCXqMC3DRpkJTtnUECFKkMUpUYdpGTaKfzQ/Rg0RogRZnBJ1mJZho0y8+M6vqSFClCCLU6IO0zJslKE+NCJECbI4JeowLcNGGepDI0KUP29mjnpMy7CJHPnrsRfRiBBFpqjPtAybiCt9D40IUWSKerZ8xrRW3kbElb6HRoQoMkU9D27YaqG40vfQiBBFpqjnp/eu+xyKK30PjQhRZIp6xtPEXOl7aESIIlMk62j4xdeIudL30IgQRaZItmfVgxuJudL30IgQRaZI9oPmb68n5krfQyNCFJki2XQbVa70PTQiRJEpkk23UeVK30MjQhSZIsHKR/jJaqpc6XtoRIgiUyRYtYe+VVS50vfQiBBlag/j17jRLa+yYRlVrvQ9NCJECbI4JW7UNo3Glb6HRoQol07wravojPQnf4zm7L9/+wwaEVLRVECXHmeRoT40IqRiw5V3r1C17vYtDsoH/1mxFmXEmX+PGiKkwimO5ana10/s2KuGjeIfzY9RQ4RUPFl67u1iiUgDS5cM7EW5eu2Pxw0b5bWXpw4CpfBaSESEaPqGiDzRaBvEtudMy7DRZIPcJBERoukbIvJEo20Q254zLcNGkw1yk0REJ893UvXuBSI3L1l9E8qv/vfLs02fuO8FNNkgN0lEwMkuPsr+uUN/g21H0WSD3CQRAU+tv+uz1FHw2D/31gfQvq3p59TIBrlJIgIybd1d1DG3n6E5ytZcpEY2yE0SEXDv6s6OjV8lwVu/m3+Fl69Q1vQ0qeXGGpTv5s+8Q0RQtvNZEuS2o9ndcn8nSkqiCMq++SMSTDyO5oFmy0DZcQ5F8DEJPqb/AymZ5LRo6PVeAAAAAElFTkSuQmCC", "beta": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADAklEQVRYCZXBIXcjNxSA0e+BJVnQEhOTkNHSkuAUSyCkpQ0K1fQXOCS/YDUkICilRQESKUlxcEBHJCRkSUtCFrjnHWdtSTP2Wd8rHGIjLaEmHGIjLaEm7HO3hMUZrcT1EwVhn7FjnksUhH3+MaiBrfOfUC5REPYZO5SwFTzKJQrCrA+n/HUKb68YtlaXJ0vAJQrCrG5EJUfFRsAlCsKsbkQlR8VGwCUKwqxuBG7u314prC5PloBLFIRZ3Qj0A5XgUS5REGac//rDJdAPVD73KJcoCDN8QPUDleBRLlEQZviA6gcqwaNcoiDM8AHVD1SCR7lEQZjhA6ofqASPcomCMMMHVD9QGDuUUBNm+IDqBwpjhxJqwgwfUP3AN8s7zj+ihJowwwdUP/BNN/JOqAkzfADu//vz79MLNhYr1MsDPTVhhg+AyWAjleRoCRPLk8sVYDLYyNbLV3i8oiVMRIsyGWxky2TmCBPRokwGG9kymTnCRLQok8FGtl6+wuMVLWEiWpTJYCOV5GgJE9GiTIbTCzYWK9TLAz01YSJalMnsdCPvhJowES3KZHaWd5x/RDmevlAQJqJFmUxl7NhwiYIwES3KZCpjx4ZLFISJaCEbpoJHuURBmIgWsmEqeJRLFIRG5GwB4yemgke5REForFHZMBU8yiUKQmONGj8x9bkHBm6fKQiNNSobpoIHhJrQWKOyoXX6YXUJCDWhsUZlQ2vsUEJNaKxR2dAaO5RQExprVDa0xg4l1ITGGpUNrbFDCTWhsUb9+wc3X9hZrPjtR3i+ZaAmNNa8M5mdbkQlR0soLc6IvLt6ZWd5Bzy/PF3TEko2ckA/MCWUbOSAfmBKKNnIXiYzRyjZyF4mM0co2Yh6uAXulmxcP6Ee35gjlGxEDT0wdmy4xAFCyUZU+B1YLdi4feYAoWQjauj5bkLJRuD17f6G7yaUbARc4ghCyUbAJY4glGwEXOIIQslGwCWOIOz88vPpBeASRxB2gke5xBGEneBRLnEEYSd4lEscQdgJHuUSR/gfPZfiQdGaN1MAAAAASUVORK5CYII=", "T": "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABm0lEQVRYCZXBwQnYBhBE0T9tGNKCVIRht6icU9QupAipBYPrsHQcMxe9J17HxXfnzUO8jovvzpuHeB0X3503D/E6Lr47bx7idVx8d948xOu4+O68eYjXcfHdefMQr+Piu/PmIV7HxXfnzUO8jovvzpuHeB0X3503D/H65z/+8vMH7vf//OXfXzxENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3htolENoXbJhLZFG6bSGRTuG0ikU3hton+ALMMgkEjMHfgAAAAAElFTkSuQmCC"};
+// ── SCREENSHOT: bomb_boomed's reader (window.BombLogic.logic, bomb-logic.js) ──
+// The symbol tiles are read by shape; the stage comes from the pager dots under the grid when they
+// can be read, otherwise the stage field the picture was pasted into (or the next one to fill).
+const LG = window.BombLogic.logic;
 
-
-
-let _ltLoaded = null;
-function _loadLT() {
-  if (_ltLoaded) return _ltLoaded;
-  const SZ = 64;
-  _ltLoaded = Promise.all(Object.entries(_LT).map(([sym, b64]) => new Promise(res => {
-    const img = new Image();
-    img.onload = () => {
-      const c = document.createElement('canvas'); c.width = c.height = SZ;
-      const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, SZ, SZ);
-      const d = ctx.getImageData(0, 0, SZ, SZ).data;
-      const g = new Float32Array(SZ * SZ);
-      for (let i = 0; i < SZ * SZ; i++) g[i] = (d[i*4] + d[i*4+1] + d[i*4+2]) / 3;
-      res([sym, g]);
-    };
-    img.src = 'data:image/png;base64,' + b64;
-  }))).then(pairs => Object.fromEntries(pairs));
-  return _ltLoaded;
+function readLogicPicture(img, fallbackStage) {
+  let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  const MAXDIM = 1200;
+  if (w > MAXDIM || h > MAXDIM) {
+    const scale = MAXDIM / Math.max(w, h);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+  }
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+  const { text } = LG.readLogicGrid(data, w, h);
+  const { idx, count } = LG.detectStage(data, w, h);
+  const say = (n, msg, color) => {
+    const st = document.getElementById(`logicOcrStatus-${n}`);
+    if (st) { st.textContent = msg; st.style.color = color; }
+  };
+  if (!text) { say(fallbackStage, 'Could not read the grid — type it', '#ff9800'); return; }
+  const stage = count > 0 ? Math.min(idx, 4) + 1 : fallbackStage;
+  const inp = document.getElementById(`logicStageInput-${stage}`);
+  if (!inp) return;
+  inp.value = text;
+  handleLogicStageInput({ target: inp });
+  logicState.nextStage = Math.min(5, stage + 1); // the next picture fills the next stage
+  const unsure = text.includes('?');
+  say(stage, `Read${count > 0 ? ` (stage ${stage} of ${count}, from the dots)` : ''}: ${text}${unsure ? ' — ⚠ fix the ?' : ''}`, unsure ? '#ff9800' : '#3ddc84');
 }
 
-function _ncc(a, b) {
-  let ma = 0, mb = 0;
-  for (let i = 0; i < a.length; i++) { ma += a[i]; mb += b[i]; }
-  ma /= a.length; mb /= b.length;
-  let num = 0, da = 0, db = 0;
-  for (let i = 0; i < a.length; i++) {
-    const ai = a[i] - ma, bi = b[i] - mb;
-    num += ai * bi; da += ai * ai; db += bi * bi;
-  }
-  return (da === 0 || db === 0) ? 0 : num / Math.sqrt(da * db);
-}
-
-function _cellGray(pixels, W, cx, cy, cw, ch) {
-  const SZ = 64;
-  
-  // Find maximum pixel value in this cell first
-  let maxVal = 0;
-  for (let y = 0; y < ch; y++) {
-    for (let x = 0; x < cw; x++) {
-      const i = ((cy + y) * W + cx + x) * 4;
-      const g = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
-      if (g > maxVal) maxVal = g;
-    }
-  }
-  
-  // Calculate dynamic threshold
-  const T = Math.max(100, Math.min(160, maxVal * 0.7));
-  
-  let x0 = cw, x1 = 0, y0 = ch, y1 = 0;
-  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
-    const i = ((cy + y) * W + cx + x) * 4;
-    const g = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
-    if (g > T) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  }
-  if (x0 > x1) return null;
-  const sw = x1 - x0 + 1, sh = y1 - y0 + 1, side = Math.max(sw, sh);
-  const sq = new Float32Array(side * side);
-  const px = Math.floor((side - sw) / 2), py = Math.floor((side - sh) / 2);
-  for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
-    const i = ((cy + y0 + y) * W + cx + x0 + x) * 4;
-    const g = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
-    sq[(py + y) * side + (px + x)] = g > T ? 255 : 0;
-  }
-  const out = new Float32Array(SZ * SZ);
-  for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) {
-    out[y * SZ + x] = sq[Math.floor(y * side / SZ) * side + Math.floor(x * side / SZ)];
-  }
-  const wf = out.filter(v => v > 100).length / (SZ * SZ);
-  return wf < 0.025 ? null : out;
-}
-
-async function _runLogicOCR(imageData) {
-  const tmpl = await _loadLT();
-  const { data, width: W, height: H } = imageData;
-  
-  // 1. Auto-detect crop level based on image width
-  let x0_base, x1_base, y0_base, y1_base;
-  if (W < 500) {
-    x0_base = 0;
-    x1_base = W;
-    y0_base = H > 120 ? Math.floor(H * 0.12) : 0;
-    y1_base = H > 120 ? Math.floor(H * 0.90) : H;
-  } else {
-    x0_base = Math.floor(W * 0.08);
-    x1_base = Math.floor(W * 0.92);
-    y0_base = Math.floor(H * 0.17);
-    y1_base = Math.floor(H * 0.85);
-  }
-  
-  // 2. Find bounding box of all white pixels inside base area
-  let minX = W, maxX = 0;
-  for (let y = y0_base; y < y1_base; y++) {
-    for (let x = x0_base; x < x1_base; x++) {
-      const i = (y * W + x) * 4;
-      const g = (data[i] + data[i+1] + data[i+2]) / 3;
-      if (g > 120) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-      }
-    }
-  }
-  
-  // Fallback if no white pixels found
-  if (minX > maxX) {
-    minX = x0_base;
-    maxX = x1_base;
-  }
-  
-  const x0 = minX;
-  const x1 = maxX;
-  const cw = x1 - x0 + 1;
-  const cellW = cw / 5;
-  const y0 = y0_base;
-  const y1 = y1_base;
-  
-  // 3. Row detection using pixel density in the [x0, x1] horizontal span
-  const rowD = [];
-  for (let y = y0; y < y1; y++) {
-    let n = 0;
-    for (let x = x0; x < x1; x++) {
-      const i = (y * W + x) * 4;
-      if ((data[i]+data[i+1]+data[i+2])/3 > 120) n++;
-    }
-    rowD.push(n);
-  }
-  
-  const segs = [];
-  let inR = false, rs = 0;
-  for (let i = 0; i < rowD.length; i++) {
-    if (!inR && rowD[i] > 2) { inR = true; rs = i; }
-    else if (inR && rowD[i] <= 2) {
-      let gap = 0;
-      for (let j = i; j < Math.min(i + 10, rowD.length); j++) if (rowD[j] <= 2) gap++;
-      if (gap >= 10) { inR = false; segs.push([rs, i]); }
-    }
-  }
-  if (inR) segs.push([rs, rowD.length]);
-  if (!segs.length) return null;
-  
-  const symMap = {'NOT':'¬','AND':'∧','OR':'∨','->':'⇒','alpha':'α','beta':'β'};
-  const tokens = [];
-  
-  for (const [rs2, re] of segs) {
-    const pad = 4;
-    const rowY = Math.max(0, y0 + rs2 - pad);
-    const rowH = Math.min(H - rowY, re - rs2 + 2 * pad);
-    for (let c = 0; c < 5; c++) {
-      const cellX = Math.floor(x0 + c * cellW);
-      const gray = _cellGray(data, W, cellX, rowY, Math.floor(cellW), rowH);
-      if (!gray) continue;
-      let best = null, bestS = 0.60;
-      for (const [sym, tg] of Object.entries(tmpl)) {
-        const s = _ncc(gray, tg);
-        if (s > bestS) { bestS = s; best = sym; }
-      }
-      if (best) tokens.push(symMap[best] || best);
-    }
-  }
-  return tokens.length ? tokens.join(' ') : null;
+function logicFileToImage(file, cb) {
+  const i = new Image();
+  i.onload = () => { cb(i); URL.revokeObjectURL(i.src); };
+  i.src = URL.createObjectURL(file);
 }
 
 function handleLogicImagePaste(e, stageNum) {
-  const processImg = (img) => {
-    if (!img) return;
-    const c = document.createElement('canvas');
-    c.width = img.width; c.height = img.height;
-    c.getContext('2d').drawImage(img, 0, 0);
-    const id = c.getContext('2d').getImageData(0, 0, c.width, c.height);
-    _runLogicOCR(id).then(expr => {
-      if (!expr) return;
-      const inp = document.getElementById(`logicStageInput-${stageNum}`);
-      if (!inp) return;
-      inp.value = expr;
-      handleLogicStageInput({ target: inp });
-      const statusEl = document.getElementById(`logicOcrStatus-${stageNum}`);
-      if (statusEl) { statusEl.textContent = 'Read: ' + expr; statusEl.style.color = '#3ddc84'; }
-    });
-  };
-
-  if (window.BombDragDrop) {
-    window.BombDragDrop.handleDataTransfer(e.clipboardData || e.dataTransfer, (file, img) => {
-      if (img) processImg(img);
-      else if (file) {
-        const r = new FileReader();
-        r.onload = ev => {
-          const i = new Image();
-          i.onload = () => processImg(i);
-          i.src = ev.target.result;
-        };
-        r.readAsDataURL(file);
-      }
-    });
+  const items = [...((e.clipboardData || e.dataTransfer || {}).items || [])];
+  const it = items.find(x => x.type && x.type.startsWith('image/'));
+  if (it) {
+    e.preventDefault();
+    const f = it.getAsFile();
+    if (f) logicFileToImage(f, img => readLogicPicture(img, stageNum));
     return;
   }
-
-  const items = e.clipboardData && e.clipboardData.items;
-  if (!items) return;
-  for (const item of items) {
-    if (!item.type.startsWith('image/')) continue;
-    const file = item.getAsFile();
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => processImg(img);
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-    e.preventDefault();
-    break;
+  // a pasted Discord link: the helper fetches it and hands back the picture
+  if (window.BombDragDrop) {
+    window.BombDragDrop.handleDataTransfer(e.clipboardData || e.dataTransfer, (file, img) => {
+      if (img) readLogicPicture(img, stageNum);
+      else if (file) logicFileToImage(file, im => readLogicPicture(im, stageNum));
+    });
   }
 }
+
+window.handleLogicFile = function (input) {
+  const f = input.files && input.files[0];
+  if (f) logicFileToImage(f, img => readLogicPicture(img, logicState.nextStage || 1));
+  input.value = '';
+};
+
+// A picture pasted anywhere on the Logic page (not into a field)
+document.addEventListener('paste', (e) => {
+  if (!document.getElementById('logicSection')?.classList.contains('active')) return;
+  const el = document.activeElement;
+  if (el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT')) return;
+  handleLogicImagePaste(e, logicState.nextStage || 1);
+});
+
+window.copyLogicAnswer = function (el) {
+  const t = logicState.answer;
+  if (!t) return;
+  try {
+    navigator.clipboard.writeText(t).then(() => {
+      el.textContent = '✓ Copied';
+      setTimeout(() => { el.textContent = `📋 ${logicState.answer}`; }, 1200);
+    }).catch(() => {});
+  } catch (e) {}
+};
 
 // Attach to window
 window.initLogicModule = initLogicModule;
