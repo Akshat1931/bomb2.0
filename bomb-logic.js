@@ -1,4 +1,4 @@
-// GENERATED from bomb_boomed (2026-11-23 17:43) by scripts/build-conso-logic.mjs — do not edit here.
+// GENERATED from bomb_boomed (2026-11-23 17:59) by scripts/build-conso-logic.mjs — do not edit here.
 // window.BombLogic.<module>.<function>: the same image readers and solvers as bomb_boomed.
 var __BombLogic = (() => {
   var __defProp = Object.defineProperty;
@@ -3290,19 +3290,354 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     tiles.length = 0;
     tiles.push(...keys.sort((a, b) => b.n - a.n).slice(0, 4));
     if (tiles.length >= 4) {
+      const midY = tiles.reduce((s, t) => s + t.cy, 0) / tiles.length;
       tiles.sort((a, b) => {
-        const at2 = a.cy < H * 0.5, bt = b.cy < H * 0.5;
+        const at2 = a.cy < midY, bt = b.cy < midY;
         return at2 !== bt ? at2 ? -1 : 1 : a.cx - b.cx;
       });
     }
     const out = [null, null, null, null];
     for (let i = 0; i < Math.min(4, tiles.length); i++) {
-      const t = tiles[i], mh = Math.floor(t.bh * 0.32), mw = Math.floor(t.bw * 0.32);
-      const mg = Math.max(4, Math.round(Math.min(t.bw, t.bh) * 0.12));
-      const res = syReadBox(img, t.x, t.y, t.bw, t.bh, mg, 120, (y, x) => y < mh && x < mw);
+      const t = tiles[i];
+      const res = syReadKeypadTile(img, t);
       if (res && res.symbol !== "?") out[i] = res.symbol;
     }
     return { buttons: out, tiles: tiles.length };
+  }
+  var SY_KEYPAD = {
+    OMEGA: [
+      // 15 tiles
+      "0000000000000000",
+      "0002661002651000",
+      "0038500000167200",
+      "0287100000028710",
+      "0594000000005940",
+      "0892000000003970",
+      "0892000000003980",
+      "0892000000003970",
+      "0594000000005930",
+      "0187200000038710",
+      "0027720000376100",
+      "0001354004420000",
+      "0221126006211320",
+      "0687777017778840",
+      "0488885006888730",
+      "0000000000000000"
+    ],
+    YAT: [
+      // 16 tiles
+      "0000000000000000",
+      "0016888740000000",
+      "0003798410000000",
+      "0122697322000000",
+      "0663697357100000",
+      "0630496027100000",
+      "0100497113100000",
+      "0000499767631000",
+      "0000497323687200",
+      "0000496000169600",
+      "0000496000059800",
+      "0000496000059800",
+      "0000496000169700",
+      "0001697213687200",
+      "0026777776531000",
+      "0000000000000000"
+    ],
+    COPYRIGHT: [
+      // 13 tiles
+      "0000000000000000",
+      "0000144554311000",
+      "0003531112453100",
+      "0036211222126210",
+      "0162148768502520",
+      "0340495104600440",
+      "0521871001200270",
+      "0612961000000170",
+      "0612961000000270",
+      "0522872101200370",
+      "0331594114601530",
+      "0151158658512500",
+      "0024112222125100",
+      "0002521112351000",
+      "0000134544200000",
+      "0000000000000000"
+    ],
+    LAMBDA_STROKE: [
+      // 15 tiles
+      "0000000000000000",
+      "0157631200000000",
+      "0386577510000000",
+      "0252377300000000",
+      "0012687200000000",
+      "0004437400000000",
+      "0000038610000000",
+      "0000169820000000",
+      "0000386650000000",
+      "0001673352000000",
+      "0004851164000000",
+      "0016720045100000",
+      "0048400026314500",
+      "0167200004647700",
+      "0142000001576300",
+      "0000000000000000"
+    ],
+    OT: [
+      // 19 tiles
+      "0000000000000000",
+      "0000255200100000",
+      "0004841025763000",
+      "0048400175248300",
+      "0287100582017710",
+      "0594001870005930",
+      "0793002970005940",
+      "0892003960005950",
+      "0792003970005950",
+      "0693002971006940",
+      "0395001893028820",
+      "0068200597259500",
+      "0027720179887100",
+      "0001564359995440",
+      "0000023443345310",
+      "0000000000000000"
+    ],
+    PSI: [
+      // 15 tiles
+      "0000000000000000",
+      "0320001650000230",
+      "0571001880000750",
+      "0392000870002930",
+      "0393000870003930",
+      "0393000870004930",
+      "0294000870005920",
+      "0185000870006810",
+      "0048200870028400",
+      "0003544884453000",
+      "0000112881110000",
+      "0000000870000000",
+      "0000001880000000",
+      "0000003883000000",
+      "0000000000000000",
+      "0000000000000000"
+    ],
+    DOUBLE_CROSS: [
+      // 11 tiles
+      "0000000000000000",
+      "0000001001541000",
+      "0000157314984000",
+      "0000279878972000",
+      "0000158999950000",
+      "0000002799984100",
+      "0000001699999600",
+      "0046313896579600",
+      "0279888972014200",
+      "0158999950000000",
+      "0002799984100000",
+      "0001699999610000",
+      "0003896579610000",
+      "0015983014200000",
+      "0002650000000000",
+      "0000000000000000"
+    ],
+    STAR_SOLID: [
+      // 16 tiles
+      "0000000000000000",
+      "0000000120000000",
+      "0000000450000000",
+      "0000001781000000",
+      "0000003882000000",
+      "0222226996322220",
+      "0378889999888730",
+      "0037999999997300",
+      "0002599999962000",
+      "0000189999810000",
+      "0000289999930000",
+      "0000498558950000",
+      "0000773103771000",
+      "0001510000151000",
+      "0000100000010000",
+      "0000000000000000"
+    ],
+    STAR_HOLLOW: [
+      // 24 tiles
+      "0000000000000000",
+      "0000000340000000",
+      "0000000750000000",
+      "0000001771000000",
+      "0000004442000000",
+      "0233337117333320",
+      "0596553004556950",
+      "0036200000036300",
+      "0002540000452000",
+      "0000270000520000",
+      "0000340330520000",
+      "0000635555360000",
+      "0001973013680000",
+      "0002820000273000",
+      "0001000000000000",
+      "0000000000000000"
+    ],
+    ZHE: [
+      // 16 tiles
+      "0000000000000000",
+      "0685015663017850",
+      "0445301850054430",
+      "0001501840150000",
+      "0000511840330000",
+      "0000241841610000",
+      "0000077987400000",
+      "0000572853830000",
+      "0003931840681000",
+      "0018601840185000",
+      "0058101850039200",
+      "0463014662006860",
+      "0000000000000580",
+      "0000000000000170",
+      "0000000000000050",
+      "0000000000000000"
+    ],
+    KOPPA: [
+      // 9 tiles
+      "0000000000000000",
+      "0000037887400000",
+      "0000583113860000",
+      "0003920000293000",
+      "0006700000067000",
+      "0009500000059000",
+      "0009400000059000",
+      "0009500000059000",
+      "0006700000066000",
+      "0002930000393000",
+      "0000485224850000",
+      "0000026997300000",
+      "0000000570000000",
+      "0000000570000000",
+      "0000000450000000",
+      "0000000000000000"
+    ],
+    INV_QUESTION: [
+      // 15 tiles
+      "0000000000000000",
+      "0000000373000000",
+      "0000000495000000",
+      "0000000141000000",
+      "0000000000000000",
+      "0000000061000000",
+      "0000000071000000",
+      "0000001671000000",
+      "0000038510000000",
+      "0000296000000000",
+      "0000592000000000",
+      "0000892000000000",
+      "0000594002710000",
+      "0000188316910000",
+      "0000015877400000",
+      "0000000000000000"
+    ]
+  };
+  var SY_KEYPAD_TPL = {};
+  for (const [k, rows] of Object.entries(SY_KEYPAD)) {
+    const v = Float32Array.from(rows.join(""), Number);
+    const mean = v.reduce((a, x) => a + x, 0) / 256;
+    let ss = 0;
+    for (let i = 0; i < 256; i++) {
+      v[i] -= mean;
+      ss += v[i] * v[i];
+    }
+    SY_KEYPAD_TPL[k] = { vec: v, norm: Math.sqrt(ss) };
+  }
+  function syReadKeypadTile(img, t) {
+    const { data, width: W2 } = img, w = t.bw, h = t.bh;
+    const mg = Math.max(4, Math.round(Math.min(w, h) * 0.12));
+    const cornerW = Math.floor(w * 0.32), cornerH = Math.floor(h * 0.32);
+    const gray = (x, y) => syGray(data, ((t.y + y) * W2 + t.x + x) * 4);
+    const inTile = (x, y) => y >= mg && y < h - mg && x >= mg && x < w - mg && !(y < cornerH && x < cornerW);
+    const vals = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (inTile(x, y)) vals.push(gray(x, y));
+    if (!vals.length) return null;
+    vals.sort((a, b) => a - b);
+    const ink = vals[Math.floor(vals.length * 0.01)], paper = vals[Math.floor(vals.length * 0.6)];
+    if (paper - ink < 40) return null;
+    const thr = paper - 0.5 * (paper - ink);
+    const m = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (inTile(x, y) && gray(x, y) < thr) m[y * w + x] = 1;
+    const lab = new Int32Array(w * h), keep = /* @__PURE__ */ new Set(), stack = [];
+    const c0 = 0.3 * w, c1 = 0.7 * w, r0 = 0.3 * h, r1 = 0.7 * h;
+    let id = 0;
+    for (let p = 0; p < w * h; p++) {
+      if (!m[p] || lab[p]) continue;
+      lab[p] = ++id;
+      stack.push(p);
+      let x0 = w, x1 = -1, y0 = h, y1 = -1;
+      while (stack.length) {
+        const q = stack.pop(), qx = q % w, qy = q / w | 0;
+        if (qx < x0) x0 = qx;
+        if (qx > x1) x1 = qx;
+        if (qy < y0) y0 = qy;
+        if (qy > y1) y1 = qy;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = qx + dx, ny = qy + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const r = ny * w + nx;
+          if (m[r] && !lab[r]) {
+            lab[r] = id;
+            stack.push(r);
+          }
+        }
+      }
+      if (x1 >= c0 && x0 <= c1 && y1 >= r0 && y0 <= r1) keep.add(id);
+    }
+    let minX = w, maxX = -1, minY = h, maxY = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (keep.has(lab[y * w + x])) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    if (maxX < 0) return null;
+    const inkAt = (x, y) => keep.has(lab[y * w + x]) ? Math.min(1, Math.max(0, (paper - gray(x, y)) / (paper - ink))) : 0;
+    const bw = maxX - minX + 1, bh = maxY - minY + 1;
+    const sc = Math.min(14 / bw, 14 / bh), tw = Math.max(1, Math.round(bw * sc)), th = Math.max(1, Math.round(bh * sc));
+    const ox = Math.floor((16 - tw) / 2), oy = Math.floor((16 - th) / 2);
+    const v = new Float32Array(256);
+    for (let ty = 0; ty < th; ty++) for (let tx = 0; tx < tw; tx++) {
+      const ya = ty / sc, yb = Math.min(bh, (ty + 1) / sc), xa = tx / sc, xb = Math.min(bw, (tx + 1) / sc);
+      let sum = 0, area = 0;
+      for (let y = Math.floor(ya); y < Math.ceil(yb); y++) for (let x = Math.floor(xa); x < Math.ceil(xb); x++) {
+        const a = (Math.min(y + 1, yb) - Math.max(y, ya)) * (Math.min(x + 1, xb) - Math.max(x, xa));
+        if (a > 0) {
+          sum += inkAt(minX + x, minY + y) * a;
+          area += a;
+        }
+      }
+      v[(oy + ty) * 16 + ox + tx] = area ? sum / area : 0;
+    }
+    const mean = v.reduce((a, x) => a + x, 0) / 256;
+    let ss = 0;
+    for (let i = 0; i < 256; i++) {
+      v[i] -= mean;
+      ss += v[i] * v[i];
+    }
+    const norm = Math.sqrt(ss);
+    if (!norm) return null;
+    let best = "?", bs = -2;
+    for (const [k, tp] of Object.entries(SY_KEYPAD_TPL)) {
+      let dot = 0;
+      for (let i = 0; i < 256; i++) dot += v[i] * tp.vec[i];
+      if (dot / (norm * tp.norm) > bs) {
+        bs = dot / (norm * tp.norm);
+        best = k;
+      }
+    }
+    if (best === "STAR_SOLID" || best === "STAR_HOLLOW") {
+      const cx = (minX + maxX) / 2, cy = minY + 0.55 * (maxY - minY), r = Math.max(1, 0.08 * bw);
+      let sum = 0, n = 0;
+      for (let y = Math.round(cy - r); y <= Math.round(cy + r); y++) for (let x = Math.round(cx - r); x <= Math.round(cx + r); x++) {
+        sum += gray(x, y);
+        n++;
+      }
+      best = paper - sum / n > 0.5 * (paper - ink) ? "STAR_SOLID" : "STAR_HOLLOW";
+    }
+    return { symbol: best, score: bs };
   }
 
   // src/modules/button/buttonSolver.js
