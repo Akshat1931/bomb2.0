@@ -1,4 +1,4 @@
-// GENERATED from bomb_boomed (2026-11-23 17:59) by scripts/build-conso-logic.mjs — do not edit here.
+// GENERATED from bomb_boomed (2026-11-24 12:11) by scripts/build-conso-logic.mjs — do not edit here.
 // window.BombLogic.<module>.<function>: the same image readers and solvers as bomb_boomed.
 var __BombLogic = (() => {
   var __defProp = Object.defineProperty;
@@ -133,16 +133,16 @@ var __BombLogic = (() => {
     live.forEach((con) => {
       for (let i = 1; i < con.cells.length; i++) parent.set(find(con.cells[i].name), find(con.cells[0].name));
     });
-    const groups = /* @__PURE__ */ new Map();
+    const groups2 = /* @__PURE__ */ new Map();
     live.forEach((con) => {
       const g = find(con.cells[0].name);
-      if (!groups.has(g)) groups.set(g, { cells: /* @__PURE__ */ new Map(), cons: [] });
-      const grp = groups.get(g);
+      if (!groups2.has(g)) groups2.set(g, { cells: /* @__PURE__ */ new Map(), cons: [] });
+      const grp = groups2.get(g);
       grp.cons.push(con);
       con.cells.forEach((c) => grp.cells.set(c.name, c));
     });
     const MAX_NODES = 2e6;
-    for (const grp of groups.values()) {
+    for (const grp of groups2.values()) {
       const cells = Array.from(grp.cells.values());
       if (cells.length > 64) continue;
       const idx = new Map(cells.map((c, i) => [c.name, i]));
@@ -312,15 +312,15 @@ var __BombLogic = (() => {
       let flagPx = 0;
       const cellPixels = [];
       for (let py = cy0; py < cy1 && py < h; py++) {
-        for (let px = cx0; px < cx1 && px < w; px++) {
-          const idx = (py * w + px) * 4;
+        for (let px2 = cx0; px2 < cx1 && px2 < w; px2++) {
+          const idx = (py * w + px2) * 4;
           const pr = data[idx], pg = data[idx + 1], pb = data[idx + 2];
           rSum += pr;
           gSum += pg;
           bSum += pb;
           count++;
           if (pr > 160 && pg < 70 && pb < 70) flagPx++;
-          cellPixels.push({ px, py, pr, pg, pb });
+          cellPixels.push({ px: px2, py, pr, pg, pb });
         }
       }
       if (!count) return "#";
@@ -362,18 +362,18 @@ var __BombLogic = (() => {
           hue = Math.round(hue * 60);
           if (hue < 0) hue += 360;
         }
-        const sat = maxC > 0 ? delta / maxC : 0;
-        if (hue >= 245 && hue <= 305 && sat > 0.16 || pb > pg + 15 && pr > pg + 10) {
+        const sat2 = maxC > 0 ? delta / maxC : 0;
+        if (hue >= 245 && hue <= 305 && sat2 > 0.16 || pb > pg + 15 && pr > pg + 10) {
           purplePx++;
-        } else if (hue >= 185 && hue <= 242 && sat > 0.16 || pb > pr + 20 && pg >= pr - 8 && pb > pg + 8) {
+        } else if (hue >= 185 && hue <= 242 && sat2 > 0.16 || pb > pr + 20 && pg >= pr - 8 && pb > pg + 8) {
           bluePx++;
-        } else if (hue >= 85 && hue <= 165 && sat > 0.16 || pg > pr + 15 && pg > pb + 5) {
+        } else if (hue >= 85 && hue <= 165 && sat2 > 0.16 || pg > pr + 15 && pg > pb + 5) {
           greenPx++;
-        } else if ((hue >= 340 || hue <= 20) && sat > 0.2 || pr > pg + 25 && pr > pb + 25) {
+        } else if ((hue >= 340 || hue <= 20) && sat2 > 0.2 || pr > pg + 25 && pr > pb + 25) {
           redPx++;
-        } else if (hue >= 20 && hue <= 50 && sat > 0.25 || pr > pg + 15 && pg > pb + 15) {
+        } else if (hue >= 20 && hue <= 50 && sat2 > 0.25 || pr > pg + 15 && pg > pb + 15) {
           amberPx++;
-        } else if (hue >= 165 && hue <= 188 && sat > 0.16 || pg > pr + 15 && pb > pr + 15) {
+        } else if (hue >= 165 && hue <= 188 && sat2 > 0.16 || pg > pr + 15 && pb > pr + 15) {
           tealPx++;
         }
       }
@@ -486,8 +486,8 @@ var __BombLogic = (() => {
         const cy1 = Math.round(minY + (r + 1) * cellH - cellH * 0.25);
         let rS = 0, gS = 0, bS = 0, cnt = 0;
         for (let py = cy0; py < cy1 && py < h; py++) {
-          for (let px = cx0; px < cx1 && px < w; px++) {
-            const idx = (py * w + px) * 4;
+          for (let px2 = cx0; px2 < cx1 && px2 < w; px2++) {
+            const idx = (py * w + px2) * 4;
             rS += data[idx];
             gS += data[idx + 1];
             bS += data[idx + 2];
@@ -785,8 +785,8 @@ var __BombLogic = (() => {
     const isBrightBackground = brightCount >= numPixels * 0.5;
     const binary = new Uint8Array(numPixels);
     for (let i = 0; i < numPixels; i++) {
-      const isInk4 = isBrightBackground ? lumArray[i] < threshold : lumArray[i] >= threshold;
-      binary[i] = isInk4 ? 0 : 255;
+      const isInk5 = isBrightBackground ? lumArray[i] < threshold : lumArray[i] >= threshold;
+      binary[i] = isInk5 ? 0 : 255;
     }
     const processed = dilatePasses > 0 ? applyMorphologicalDilation(binary, width, height, dilatePasses) : binary;
     for (let i = 0; i < numPixels; i++) {
@@ -813,17 +813,17 @@ var __BombLogic = (() => {
     s = s.replace(/0/g, "O").replace(/1/g, "I").replace(/5/g, "S").replace(/8/g, "B").replace(/2/g, "Z").replace(/6/g, "G");
     return s.replace(/[^A-Z]/g, "").charAt(0);
   }
-  async function recognizeCell(worker, padCanvas) {
+  async function recognizeCell(worker2, padCanvas) {
     const psms = ["10", "6"];
     const candidates2 = [];
     for (const psm of psms) {
       try {
-        await worker.setParameters({
+        await worker2.setParameters({
           tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ012568",
           tessedit_pageseg_mode: psm,
           user_defined_dpi: "150"
         });
-        const { data } = await worker.recognizeWithin(2500, padCanvas);
+        const { data } = await worker2.recognizeWithin(2500, padCanvas);
         const res = { letter: sanitizeSearchLetter(data?.text), conf: Number(data?.confidence ?? 0) };
         if (res.letter) {
           candidates2.push(res);
@@ -860,14 +860,14 @@ var __BombLogic = (() => {
     }));
     const rawResults = reads.filter((r) => r && r.letter);
     if (!rawResults.length) return { letter: "?", confidence: 0 };
-    const groups = {};
+    const groups2 = {};
     for (const r of rawResults) {
-      const g = groups[r.letter] || (groups[r.letter] = { letter: r.letter, count: 0, confs: [], maxConf: 0 });
+      const g = groups2[r.letter] || (groups2[r.letter] = { letter: r.letter, count: 0, confs: [], maxConf: 0 });
       g.count++;
       g.confs.push(r.conf);
       g.maxConf = Math.max(g.maxConf, r.conf);
     }
-    const options = Object.values(groups).map((g) => ({
+    const options = Object.values(groups2).map((g) => ({
       ...g,
       score: g.count * 60 + g.maxConf + g.confs.reduce((a, b) => a + b, 0) / g.count
     }));
@@ -907,11 +907,11 @@ var __BombLogic = (() => {
       stack.push(s);
       lab[s] = next;
       while (stack.length) {
-        const p = stack.pop(), px = p % w, py = p / w | 0;
+        const p = stack.pop(), px2 = p % w, py = p / w | 0;
         area++;
-        if (px === 0 || py === 0 || px === w - 1 || py === h - 1) edge = true;
+        if (px2 === 0 || py === 0 || px2 === w - 1 || py === h - 1) edge = true;
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const nx = px + dx, ny = py + dy;
+          const nx = px2 + dx, ny = py + dy;
           if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
           const q = ny * w + nx;
           if (ink[q] && !lab[q]) {
@@ -1088,6 +1088,46 @@ var __BombLogic = (() => {
     return { foundMatches, uniqueWords, hitCells, totalWords: wordSet.size };
   }
 
+  // src/modules/search/searchWords.js
+  var searchWords_exports = {};
+  __export(searchWords_exports, {
+    MASTER_SEARCH_WORDS: () => MASTER_SEARCH_WORDS
+  });
+  var MASTER_SEARCH_WORDS = [
+    "ABLE ACID ALSO ARCH AREA ATOM BAKE BALL BAND BANK BASE BATH BEAM BEAR BEAT BELL BELT BEST BIRD BLUE",
+    "BOAT BODY BOLD BOOK BOOT BOWL BURN CAFE CAGE CAKE CALL CALM CAMP CAPE CARD CARE CART CASE CAST CAVE",
+    "CELL CHAT CHEF CHIP CITY CLAY CLIP CLUB COAL COAT CODE COIN COLD COMB COOK COOL COPY CORE CORN COST",
+    "CREW CROP CUBE CURE CURL DARK DATA DAWN DEAL DECK DEEP DESK DIAL DICE DIET DIRT DISH DOCK DOOR DOVE",
+    "DRAW DROP DRUM DUCK DUNE DUST DUTY EACH EARN EAST EASY EDGE EMIT EPIC EVEN EXAM EXIT FACE FACT FAIR",
+    "FALL FARM FAST FATE FEAR FEED FEEL FEET FELL FELT FILE FILL FILM FIND FINE FIRE FIRM FISH FLAG FLAT",
+    "FLOW FOAM FOLD FOLK FONT FOOD FOOT FORK FORM FORT FOUL FREE FROG FROM FUEL FULL FUSE GAIN GAME GATE",
+    "GAVE GEAR GIFT GIRL GIVE GLAD GLOW GOAL GOLD GOLF GONE GOOD GRAB GRAY GREW GRID GRIM GROW GULF GUST",
+    "HACK HAIL HAIR HALF HALL HALT HAND HANG HARD HARM HARP HASH HATE HAVE HAWK HAZE HEAD HEAL HEAP HEAR",
+    "HEAT HELD HELP HERO HIDE HIGH HILL HINT HIRE HOLD HOLE HOME HOOK HOPE HORN HOST HOUR HUGE HUNT HURT",
+    "ICON IDEA IDLE INCH INTO IRON ITEM JACK JADE JAZZ JOIN JOKE JUMP JURY JUST KEEN KEEP KEPT KICK KILL",
+    "KIND KING KISS KITE KNEE KNOT KNOW LACE LACK LAID LAKE LAMP LAND LANE LAST LATE LAVA LAWN LEAD LEAF",
+    "LEAN LEFT LEND LENS LESS LIFE LIFT LIKE LIME LINE LINK LION LIST LIVE LOAD LOAN LOCK LOFT LOGO LONG",
+    "LOOK LOOP LORD LOSE LOSS LOST LOVE LUCK LUMP LUNG MADE MAIL MAIN MAKE MALE MALL MANY MAPLE MARK MARS",
+    "MASK MASS MATE MATH MAZE MEAL MEAN MEAT MEET MELT MEMO MENU MESH MESS MILD MILE MILK MILL MIND MINE",
+    "MINT MISS MIST MODE MOLD MOON MORE MOSS MOST MOVE MUCH MULE MUST MUTE MYTH NAIL NAME NAVY NEAR NEAT",
+    "NECK NEED NEST NEWS NEXT NICE NICK NINE NODE NONE NOON NORM NOSE NOTE NOUN NOVA NUMB OATH OBEY ODDS",
+    "OKAY ONCE ONLY ONTO OPEN ORAL OVEN OVER PACE PACK PAGE PAID PAIN PAIR PALM PANE PARK PART PASS PAST",
+    "PEAK PEAR PEEL PEER PICK PIER PILE PINE PINK PIPE PLAN PLAY PLOT PLUG PLUS POEM POET POLE POLL POND",
+    "POOL POOR PORT POST POUR PRAY PREY PULL PUMP PURE PUSH QUIT RACE RACK RAFT RAGE RAID RAIL RAIN RANK",
+    "RARE RATE READ REAL REAR REED REEL RELY RENT REST RICE RICH RIDE RING RISE RISK ROAD ROAR ROBE ROCK",
+    "ROLE ROLL ROOF ROOM ROOT ROPE ROSE RUIN RULE RUSH RUST SAFE SAIL SAKE SALE SALT SAME SAND SAVE SCAN",
+    "SEAL SEAT SEED SEEK SEEM SEEN SELF SELL SEND SENT SHIP SHOP SHOT SHOW SHUT SICK SIDE SIGN SILK SING",
+    "SINK SITE SIZE SKIN SKIP SLAB SLAM SLAP SLIM SLIP SLOT SLOW SNAP SNOW SOAK SOAP SOFA SOFT SOIL SOLD",
+    "SOLE SOME SONG SOON SORT SOUL SOUP SOUR SPAN SPIN SPOT STAR STAY STEM STEP STEW STOP SUCH SUIT SURE",
+    "SURF SWAN SWIM TAIL TAKE TALE TALK TALL TANK TAPE TASK TEAM TEAR TELL TENT TERM TEST TEXT THAN THAT",
+    "THEM THEN THEY THIN THIS TICK TIDE TILE TILL TIME TINY TIRE TOAD TOLD TOLL TONE TOOK TOOL TORN TOSS",
+    "TOUR TOWN TRAP TREE TREK TRIM TRIP TRUE TUBE TUNE TURN TWIN TYPE TYPO UNIT UPON URGE USED USER VAIN",
+    "VALE VAST VEIL VEIN VENT VERB VERY VEST VICE VIEW VINE VISA VOID VOTE WADE WAGE WAIT WAKE WALK WALL",
+    "WANT WARD WARM WARN WASH WAVE WEAK WEAR WEED WEEK WELL WENT WERE WEST WHAT WHEN WHIP WIDE WIFE WILD",
+    "WILL WIND WINE WING WINK WIPE WIRE WISE WISH WITH WOLF WOOD WOOL WORD WORK WORM WORN WRAP YARD YARN",
+    "YEAR YELL YOGA YOKE YOUR ZERO ZONE ZOOM"
+  ].join(" ");
+
   // src/modules/password/passwordSolver.js
   var passwordSolver_exports = {};
   __export(passwordSolver_exports, {
@@ -1200,18 +1240,18 @@ var __BombLogic = (() => {
         colInk[p % W2]++;
       }
     }
-    const runs3 = [];
+    const runs4 = [];
     let start = -1;
     for (let x = 0; x <= W2; x++) {
       const on = x < W2 && colInk[x] > 0;
       if (on && start < 0) start = x;
       if (!on && start >= 0) {
-        runs3.push([start, x - 1]);
+        runs4.push([start, x - 1]);
         start = -1;
       }
     }
     const merged = [];
-    for (const r of runs3) {
+    for (const r of runs4) {
       const last = merged[merged.length - 1];
       if (last && r[0] - last[1] <= 2) last[1] = r[1];
       else merged.push([...r]);
@@ -1264,12 +1304,12 @@ var __BombLogic = (() => {
       return { ok: false, reason: `Found ${boxes.length} letters instead of 5 \u2014 type the row instead.` };
     }
     onStatus("Starting OCR\u2026");
-    const worker = await ensureOCRWorker();
+    const worker2 = await ensureOCRWorker();
     onStatus("Reading the row\u2026");
     let line = "", lineConf = 0;
     try {
-      await worker.setParameters({ tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", tessedit_pageseg_mode: "7" });
-      const { data } = await worker.recognize(glyphCanvas(mask, W2, boxes, 28));
+      await worker2.setParameters({ tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", tessedit_pageseg_mode: "7" });
+      const { data } = await worker2.recognize(glyphCanvas(mask, W2, boxes, 28));
       line = clean(data && data.text);
       lineConf = Number(data && data.confidence || 0);
     } catch (e) {
@@ -1424,9 +1464,9 @@ var __BombLogic = (() => {
     let yTop = h, yBot = 0;
     const halfMinDist = Math.floor(minDist / 2);
     for (let y = 0; y < h; y++) {
-      for (const px of peaks) {
-        const x0 = Math.max(0, px - halfMinDist);
-        const x1 = Math.min(w, px + halfMinDist);
+      for (const px2 of peaks) {
+        const x0 = Math.max(0, px2 - halfMinDist);
+        const x1 = Math.min(w, px2 + halfMinDist);
         let rowHasMatch = false;
         for (let x = x0; x < x1; x++) {
           const idx = y * w + x;
@@ -1449,9 +1489,9 @@ var __BombLogic = (() => {
     const initChars = [];
     const goalChars = [];
     const halfTrackW = Math.max(4, Math.floor(minDist * 0.45));
-    for (const px of peaks) {
-      const x0 = Math.max(0, px - halfTrackW);
-      const x1 = Math.min(w, px + halfTrackW);
+    for (const px2 of peaks) {
+      const x0 = Math.max(0, px2 - halfTrackW);
+      const x1 = Math.min(w, px2 + halfTrackW);
       let greenYSum = 0, greenCount = 0;
       for (let y = yTop; y <= yBot; y++) {
         for (let x = x0; x < x1; x++) {
@@ -1512,21 +1552,21 @@ var __BombLogic = (() => {
   var VennCore = function() {
     "use strict";
     var SLOT_ORDER = { c3: ["T", "L", "R"], c2h: ["L", "R"], c2v: ["T", "B"] };
-    var GW2 = 12, GH2 = 16;
+    var GW3 = 12, GH3 = 16;
     var TEMPLATES = { A: [], B: [], C: [] };
     function addTemplate(letter, grid) {
       if (TEMPLATES[letter]) TEMPLATES[letter].push(grid);
     }
     function prep(img) {
       var W2 = img.width, H = img.height, d = img.data;
-      var lum2 = new Float32Array(W2 * H), sat = new Float32Array(W2 * H);
+      var lum6 = new Float32Array(W2 * H), sat2 = new Float32Array(W2 * H);
       for (var i = 0, p = 0; i < W2 * H; i++, p += 4) {
         var r = d[p], g = d[p + 1], b = d[p + 2];
-        lum2[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+        lum6[i] = 0.299 * r + 0.587 * g + 0.114 * b;
         var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-        sat[i] = mx ? (mx - mn) / mx : 0;
+        sat2[i] = mx ? (mx - mn) / mx : 0;
       }
-      return { W: W2, H, lum: lum2, sat };
+      return { W: W2, H, lum: lum6, sat: sat2 };
     }
     function isBright(P, x, y) {
       if (x < 0 || y < 0 || x >= P.W || y >= P.H) return false;
@@ -1697,9 +1737,9 @@ var __BombLogic = (() => {
       var cxm = Math.round((bx0 + bx1) / 2), cym = Math.round((by0 + by1) / 2), W2 = P.W, H = P.H;
       function scan(x, y, dx, dy, maxd2) {
         for (var t2 = 0; t2 <= maxd2; t2++) {
-          var px = Math.round(x + dx * t2), py = Math.round(y + dy * t2);
-          if (px < 0 || py < 0 || px >= W2 || py >= H) return -1;
-          if (P.lum[py * W2 + px] < 24) return t2;
+          var px2 = Math.round(x + dx * t2), py = Math.round(y + dy * t2);
+          if (px2 < 0 || py < 0 || px2 >= W2 || py >= H) return -1;
+          if (P.lum[py * W2 + px2] < 24) return t2;
         }
         return -1;
       }
@@ -1771,30 +1811,30 @@ var __BombLogic = (() => {
       });
     }
     function resampleGlyph(cov, w, h) {
-      var out = new Float32Array(GW2 * GH2), SS = 4;
-      for (var gy = 0; gy < GH2; gy++) for (var gx = 0; gx < GW2; gx++) {
+      var out = new Float32Array(GW3 * GH3), SS = 4;
+      for (var gy = 0; gy < GH3; gy++) for (var gx = 0; gx < GW3; gx++) {
         var s = 0;
         for (var sy = 0; sy < SS; sy++) for (var sx = 0; sx < SS; sx++) {
-          var px = Math.min(w - 1, Math.floor((gx + (sx + 0.5) / SS) / GW2 * w));
-          var py = Math.min(h - 1, Math.floor((gy + (sy + 0.5) / SS) / GH2 * h));
-          s += cov[py * w + px];
+          var px2 = Math.min(w - 1, Math.floor((gx + (sx + 0.5) / SS) / GW3 * w));
+          var py = Math.min(h - 1, Math.floor((gy + (sy + 0.5) / SS) / GH3 * h));
+          s += cov[py * w + px2];
         }
-        out[gy * GW2 + gx] = s / (SS * SS);
+        out[gy * GW3 + gx] = s / (SS * SS);
       }
       return out;
     }
     function gridToStr(g) {
       var rows = [];
-      for (var y = 0; y < GH2; y++) {
+      for (var y = 0; y < GH3; y++) {
         var r = "";
-        for (var x = 0; x < GW2; x++) r += Math.min(9, Math.round(g[y * GW2 + x] * 9));
+        for (var x = 0; x < GW3; x++) r += Math.min(9, Math.round(g[y * GW3 + x] * 9));
         rows.push(r);
       }
       return rows.join("");
     }
     function strToGrid(s) {
-      var g = new Float32Array(GW2 * GH2);
-      for (var i = 0; i < GW2 * GH2; i++) g[i] = (s.charCodeAt(i) - 48) / 9;
+      var g = new Float32Array(GW3 * GH3);
+      for (var i = 0; i < GW3 * GH3; i++) g[i] = (s.charCodeAt(i) - 48) / 9;
       return g;
     }
     function ncc(a, b) {
@@ -1862,8 +1902,8 @@ var __BombLogic = (() => {
       if (h < 0.12 * c.r || h > 0.95 * c.r || w > 1.2 * c.r || w < 3) return null;
       var bg = bgs.length ? median(bgs) : 34, cov = new Float32Array(w * h);
       for (var yy = 0; yy < h; yy++) for (var xx = 0; xx < w; xx++) {
-        var px = bx0 + xx, py = by0 + yy;
-        var l = px >= 0 && py >= 0 && px < W2 && py < H ? P.lum[py * W2 + px] : bg;
+        var px2 = bx0 + xx, py = by0 + yy;
+        var l = px2 >= 0 && py >= 0 && px2 < W2 && py < H ? P.lum[py * W2 + px2] : bg;
         cov[yy * w + xx] = Math.max(0, Math.min(1, (l - bg) / (255 - bg)));
       }
       return { grid: resampleGlyph(cov, w, h), bbox: [bx0, by0, bx1, by1] };
@@ -2025,8 +2065,8 @@ var __BombLogic = (() => {
       resampleGlyph,
       TEMPLATES,
       SLOT_ORDER,
-      GW: GW2,
-      GH: GH2,
+      GW: GW3,
+      GH: GH3,
       _ncc: ncc
     };
   }();
@@ -2042,6 +2082,38 @@ var __BombLogic = (() => {
     parseRules: () => parseRules,
     solveCore: () => solveCore
   });
+
+  // src/utils/discordText.js
+  var discordText_exports = {};
+  __export(discordText_exports, {
+    discordPlain: () => discordPlain
+  });
+  var KEEP = "\0";
+  function discordPlain(text) {
+    if (text == null) return "";
+    const src = String(text);
+    if (!/[*_~|`>#\-\[\\]/.test(src)) return src;
+    return src.split(/\r?\n/).flatMap((line) => {
+      if (/^\s*```\w*\s*$/.test(line)) return [];
+      let l = line.replace(/\\([\\*_~`|>#\-\[\]()])/g, (m, c) => `${KEEP}${c.charCodeAt(0)}${KEEP}`);
+      l = l.replace(/^```\w*\s*|```\s*$/g, "");
+      l = l.replace(/^\s*>>>\s?/, "").replace(/^\s*>\s/, "").replace(/^\s*>$/, "");
+      l = l.replace(/^\s*-#\s+/, "").replace(/^\s*#{1,3}\s+/, "");
+      l = l.replace(/^(\s*)[-*•]\s+/, "$1");
+      let before;
+      do {
+        before = l;
+        l = l.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1").replace(/~~(.+?)~~/g, "$1").replace(/\|\|(.+?)\|\|/g, "$1");
+        l = l.replace(/(^|[\s(\[{"'])\*(\S(?:[^*\n]*?\S)?)\*(?=$|[\s.,:;!?)\]}"'=–-])/g, "$1$2");
+        l = l.replace(/(^|[^\w])_(\S(?:[^_\n]*?\S)?)_(?![\w])/g, "$1$2");
+      } while (l !== before);
+      l = l.replace(/`([^`]*)`/g, "$1");
+      l = l.replace(/\[([^\]]+)\]\((?:https?:)?[^)\s]+\)/g, "$1");
+      return [l.replace(new RegExp(`${KEEP}(\\d+)${KEEP}`, "g"), (m, c) => String.fromCharCode(Number(c)))];
+    }).join("\n");
+  }
+
+  // src/modules/wof/wofSolver.js
   var DEFAULT_RULES = `Step 1. The display word tells you which button label to ask for:
 
     top left: NOTHING, READ, IDK, NOT, THEY'RE, YOU, YOUR
@@ -2085,6 +2157,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
   var POS_NAMES = ["TOP LEFT", "TOP RIGHT", "MIDDLE LEFT", "MIDDLE RIGHT", "BOTTOM LEFT", "BOTTOM RIGHT"];
   var BLANK = "(BLANK)";
   function parseRules(text) {
+    text = discordPlain(text);
     const R = { posOfWord: {}, step2: {}, displayWords: [], buttonLabels: [] };
     let mode = 1, npos = 0;
     const seenPos = {};
@@ -2180,7 +2253,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     [232, 291, 124, 36]
   ];
   var WL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ'?";
-  async function readRegion(worker, src, W2, H, reg, vocab) {
+  async function readRegion(worker2, src, W2, H, reg, vocab) {
     const sx = W2 / 440, sy = H / 440;
     const x = Math.round(reg[0] * sx), y = Math.round(reg[1] * sy);
     const w = Math.max(1, Math.round(reg[2] * sx)), h = Math.max(1, Math.round(reg[3] * sy));
@@ -2191,12 +2264,12 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     const cx = c.getContext("2d", { willReadFrequently: true });
     cx.imageSmoothingQuality = "high";
     cx.drawImage(src, x, y, w, h, 0, 0, c.width, c.height);
-    const px = cx.getImageData(0, 0, c.width, c.height).data;
+    const px2 = cx.getImageData(0, 0, c.width, c.height).data;
     let bright = 0;
-    for (let i = 0; i < px.length; i += 16) {
-      if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] > 110) bright++;
+    for (let i = 0; i < px2.length; i += 16) {
+      if (0.299 * px2[i] + 0.587 * px2[i + 1] + 0.114 * px2[i + 2] > 110) bright++;
     }
-    const ink = bright / (px.length / 16);
+    const ink = bright / (px2.length / 16);
     preprocessCellCanvas(cx, c.width, c.height, "otsu", 0);
     const P = 30;
     const pad = document.createElement("canvas");
@@ -2209,8 +2282,8 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     let best = { w: "", d: 99, amb: false };
     for (const psm of ["7", "6"]) {
       try {
-        await worker.setParameters({ tessedit_char_whitelist: WL, tessedit_pageseg_mode: psm, user_defined_dpi: "300" });
-        const { data } = await worker.recognize(pad);
+        await worker2.setParameters({ tessedit_char_whitelist: WL, tessedit_pageseg_mode: psm, user_defined_dpi: "300" });
+        const { data } = await worker2.recognize(pad);
         const r = matchWord(data.text, vocab);
         if (r.d < best.d || r.d === best.d && !r.amb && best.amb) best = r;
         if (best.d === 0 && !best.amb) break;
@@ -2223,7 +2296,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
   async function wofReadImage(img, rules, onStatus = () => {
   }) {
     onStatus("Starting OCR engine\u2026");
-    const worker = await ensureOCRWorker();
+    const worker2 = await ensureOCRWorker();
     const W2 = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
     const src = document.createElement("canvas");
     src.width = W2;
@@ -2232,7 +2305,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     onStatus("Reading display and buttons\u2026");
     const dv = rules.displayWords.filter((w) => w !== BLANK);
     const [dr, ...btnReads] = await Promise.all([
-      readRegion(worker, src, W2, H, REG_DISP, dv),
+      readRegion(worker2, src, W2, H, REG_DISP, dv),
       ...REG_BTN.map(async (reg) => readRegion(await ensureOCRWorker(), src, W2, H, reg, rules.buttonLabels))
     ]);
     let disp, warnDisp;
@@ -2277,6 +2350,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
   var GREEK_VARS = ["\u03B1", "\u03B2", "\u03B3", "\u03B4"];
   var STAGE_SYMBOLS = ["\u03B1", "\u03B2", "\u03B3", "\u03B4", ""];
   function parseManualText(text) {
+    text = discordPlain(text);
     const vars = {};
     const re = /\b([PQRST])\s*[:=]\s*(TRUE|FALSE|T|F|1|0)\b/gi;
     let m;
@@ -2520,13 +2594,13 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       for (let y = 0; y < h; y++) c += m[y * w + x];
       if (c / h > stem) stem = c / h;
     }
-    const runs3 = [];
+    const runs4 = [];
     for (let y = 0; y < h; y++) {
       let r = 0;
       for (let x = 0; x <= w; x++) {
         if (x < w && m[y * w + x]) r++;
         else if (r) {
-          runs3.push(r);
+          runs4.push(r);
           r = 0;
         }
       }
@@ -2536,13 +2610,13 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       for (let y = 0; y <= h; y++) {
         if (y < h && m[y * w + x]) r++;
         else if (r) {
-          runs3.push(r);
+          runs4.push(r);
           r = 0;
         }
       }
     }
-    runs3.sort((a, b) => a - b);
-    const stroke = runs3.length ? runs3[runs3.length >> 1] / g.tileH : NaN;
+    runs4.sort((a, b) => a - b);
+    const stroke = runs4.length ? runs4[runs4.length >> 1] / g.tileH : NaN;
     const pts = [];
     for (let y = Math.floor(0.1 * h); y < Math.ceil(0.9 * h); y++) {
       for (let x = 0; x < w; x++) if (m[y * w + x]) {
@@ -2710,25 +2784,25 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       }
     }
     if (!n) return { idx: 0, count: 0 };
-    const cx = sx / n, cy = Math.round(sy / n), px = (x, y) => {
+    const cx = sx / n, cy = Math.round(sy / n), px2 = (x, y) => {
       const i = (y * w + x) * 4;
       return (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1e3;
     };
-    const panel = px(Math.round(cx), Math.max(0, cy - Math.round(0.06 * h)));
-    const runs3 = [];
+    const panel = px2(Math.round(cx), Math.max(0, cy - Math.round(0.06 * h)));
+    const runs4 = [];
     let start = -1, last = -9;
     for (let x = Math.floor(0.1 * w); x < Math.floor(0.9 * w); x++) {
-      const dot = Math.abs(px(x, cy) - panel) > 6;
+      const dot = Math.abs(px2(x, cy) - panel) > 6;
       if (dot) {
         if (start < 0) start = x;
         last = x;
       } else if (start >= 0 && x - last > 3) {
-        runs3.push([start, last]);
+        runs4.push([start, last]);
         start = -1;
       }
     }
-    if (start >= 0) runs3.push([start, last]);
-    const dots = runs3.filter((r) => r[1] - r[0] >= 0.012 * w);
+    if (start >= 0) runs4.push([start, last]);
+    const dots = runs4.filter((r) => r[1] - r[0] >= 0.012 * w);
     if (dots.length >= 2) {
       let idx = 0, best = 1e9;
       dots.forEach((r, i) => {
@@ -2843,7 +2917,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
       if (r * 0.299 + g * 0.587 + b * 0.114 < 85 && Math.max(r, g, b) < 110) bin[i] = 1;
     }
-    const seen = new Uint8Array(W2 * H), stack = new Int32Array(W2 * H * 2), blobs = [];
+    const seen = new Uint8Array(W2 * H), stack = new Int32Array(W2 * H * 2), blobs3 = [];
     for (let y = 0; y < H; y++) for (let x = 0; x < W2; x++) {
       const p = y * W2 + x;
       if (bin[p] !== 1 || seen[p]) continue;
@@ -2873,9 +2947,9 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
         }
       }
       const w = maxX - minX + 1, h = maxY - minY + 1;
-      if (w >= 5 && w <= 70 && h >= 8 && h <= 70 && n >= 25 && n <= 1500) blobs.push({ minX, minY, maxX, maxY, w, h, cx: sx / n, cy: sy / n });
+      if (w >= 5 && w <= 70 && h >= 8 && h <= 70 && n >= 25 && n <= 1500) blobs3.push({ minX, minY, maxX, maxY, w, h, cx: sx / n, cy: sy / n });
     }
-    return blobs.map((b) => {
+    return blobs3.map((b) => {
       const cell = new Uint8Array(480);
       for (let r = 0; r < 24; r++) {
         const yy = Math.min(b.maxY, b.minY + Math.floor(r * b.h / 24));
@@ -2937,16 +3011,16 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       const i = (y * W2 + x) * 4;
       return [data[i], data[i + 1], data[i + 2]];
     };
-    const isRed = (r, g, b) => r > 170 && g < 120 && b < 120;
+    const isRed2 = (r, g, b) => r > 170 && g < 120 && b < 120;
     const isBlue = (r, g, b) => b > 170 && r < 120 && b - r > 90;
-    const isWhite = (r, g, b) => r > 215 && g > 215 && b > 215;
+    const isWhite2 = (r, g, b) => r > 215 && g > 215 && b > 215;
     const isYellow2 = (r, g, b) => r > 200 && g > 170 && b < 175 && r - b > 60;
     const yA = Math.round(H * 0.42), yB = Math.round(H * 0.66), rows = yB - yA;
     const xA = Math.round(W2 * 0.08), xB = Math.round(W2 * 0.92);
     const hits = new Array(W2).fill(0);
     for (let x = xA; x < xB; x++) for (let y = yA; y < yB; y++) {
       const [r, g, b] = at2(x, y);
-      if (isRed(r, g, b) || isBlue(r, g, b) || isWhite(r, g, b)) hits[x]++;
+      if (isRed2(r, g, b) || isBlue(r, g, b) || isWhite2(r, g, b)) hits[x]++;
     }
     const cols = [];
     let cur = null, gap = 0;
@@ -2976,9 +3050,9 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       let nr = 0, nb = 0, nw = 0;
       for (let x = c.x0; x <= c.x1; x++) for (let y = yA; y < yB; y++) {
         const [r, g, b] = at2(x, y);
-        if (isRed(r, g, b)) nr++;
+        if (isRed2(r, g, b)) nr++;
         else if (isBlue(r, g, b)) nb++;
-        else if (isWhite(r, g, b)) nw++;
+        else if (isWhite2(r, g, b)) nw++;
       }
       const tot = nr + nb + nw, color = nr > tot * 0.15 && nb > tot * 0.15 ? "striped" : nr > nb && nr > nw ? "red" : nb > nw ? "blue" : "white";
       const xc = Math.round((c.x0 + c.x1) / 2);
@@ -3091,14 +3165,14 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       v[i] -= mean;
       ss += v[i] * v[i];
     }
-    const norm = Math.sqrt(ss);
-    if (norm === 0) return { symbol: "?", score: 0 };
+    const norm2 = Math.sqrt(ss);
+    if (norm2 === 0) return { symbol: "?", score: 0 };
     let best = "?", bs = -999;
     for (const [k, t] of Object.entries(SY_TPL)) {
       if (!t.norm) continue;
       let dot = 0;
       for (let i = 0; i < 256; i++) dot += v[i] * t.vec[i];
-      const s = dot / (norm * t.norm);
+      const s = dot / (norm2 * t.norm);
       if (s > bs) {
         bs = s;
         best = k;
@@ -3179,7 +3253,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       if (k > 0 && (!splitByHeaders || headerAbove[k])) group++;
       const bh = b.y2 - b.y1;
       const colGap = Math.max(4, Math.round(bh * 0.06));
-      const runs3 = [];
+      const runs4 = [];
       let s = -1, last = -1;
       for (let x = 0; x < W2; x++) {
         let n = 0;
@@ -3188,13 +3262,13 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
           if (s < 0) s = x;
           last = x;
         } else if (s >= 0 && x - last > colGap) {
-          runs3.push([s, last + 1]);
+          runs4.push([s, last + 1]);
           s = -1;
         }
       }
-      if (s >= 0) runs3.push([s, last + 1]);
-      if (!runs3.length) runs3.push([0, W2]);
-      for (const [x1, x2] of runs3) {
+      if (s >= 0) runs4.push([s, last + 1]);
+      if (!runs4.length) runs4.push([0, W2]);
+      for (const [x1, x2] of runs4) {
         const pw = x2 - x1;
         const k2 = pw / bh > 1.6 ? Math.round(pw / bh) : 1;
         for (let q = 0; q < k2; q++) {
@@ -3211,7 +3285,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
     return { rects, hasHeader, groups: used.length };
   }
   function syReadPanels(img) {
-    const { rects, hasHeader, groups } = syLayoutPanels(img);
+    const { rects, hasHeader, groups: groups2 } = syLayoutPanels(img);
     const panels = [];
     for (const { x: x1, y: y1, w: pw, h: bh, group } of rects) {
       const cw = pw / 5, ch = bh / 5;
@@ -3230,7 +3304,7 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       }
       if (cells.some(Boolean)) panels.push({ x: x1, y: y1, w: pw, h: bh, group, cells, counts });
     }
-    return { panels, hasHeader, groups };
+    return { panels, hasHeader, groups: groups2 };
   }
   function syReadGrids(img) {
     const { panels } = syReadPanels(img);
@@ -3617,14 +3691,14 @@ Step 2. Find that label's list below. Tell the Defuser to press the first word i
       v[i] -= mean;
       ss += v[i] * v[i];
     }
-    const norm = Math.sqrt(ss);
-    if (!norm) return null;
+    const norm2 = Math.sqrt(ss);
+    if (!norm2) return null;
     let best = "?", bs = -2;
     for (const [k, tp] of Object.entries(SY_KEYPAD_TPL)) {
       let dot = 0;
       for (let i = 0; i < 256; i++) dot += v[i] * tp.vec[i];
-      if (dot / (norm * tp.norm) > bs) {
-        bs = dot / (norm * tp.norm);
+      if (dot / (norm2 * tp.norm) > bs) {
+        bs = dot / (norm2 * tp.norm);
         best = k;
       }
     }
@@ -3894,6 +3968,7 @@ Serial: E1ZQGHV1`;
   }
   var RULE_RE = /^\s*(?:[-*•]\s*)?(?:\(?\d+[.)]\s*)?\**\s*(.+?)\s*\**\s*[:=–—-]+\s*\**\s*(\d+(?:\.\d+)?)\s*\**\s*(?:s|sec|secs|seconds?)\b\**\.?\s*$/i;
   function parseChecklist(text) {
+    text = discordPlain(text);
     const rules = [];
     const facts = {};
     for (const rawLine of String(text || "").split(/\r?\n/)) {
@@ -3984,14 +4059,14 @@ Serial: E1ZQGHV1`;
     const ctx = cv.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, W2, H);
     const d = ctx.getImageData(0, 0, W2, H).data;
-    const px = (x, y) => {
+    const px2 = (x, y) => {
       const i = (y * W2 + x) * 4;
       return [d[i], d[i + 1], d[i + 2]];
     };
     const tally = /* @__PURE__ */ new Map();
     for (let y = Math.floor(H * 0.2); y < H * 0.85; y += 3) {
       for (const x of [Math.floor(W2 * 0.12), Math.floor(W2 * 0.88)]) {
-        const p = px(x, y);
+        const p = px2(x, y);
         const k = p.map((v) => v >> 3).join(",");
         tally.set(k, (tally.get(k) || 0) + 1);
       }
@@ -4005,7 +4080,7 @@ Serial: E1ZQGHV1`;
     });
     const bg = bgKey ? bgKey.split(",").map((v) => Number(v) * 8 + 4) : [31, 34, 40];
     const x0 = Math.floor(W2 * 0.06), x1 = Math.ceil(W2 * 0.94), y0 = Math.floor(H * 0.18), y1 = Math.ceil(H * 0.9);
-    const isFg = (x, y) => dist(px(x, y), bg) > 38;
+    const isFg = (x, y) => dist(px2(x, y), bg) > 38;
     let sx = Math.floor(W2 / 2), sy = Math.floor(H / 2);
     if (!isFg(sx, sy)) {
       let found = false;
@@ -4033,7 +4108,7 @@ Serial: E1ZQGHV1`;
       if (x > bx1) bx1 = x;
       if (y < by0) by0 = y;
       if (y > by1) by1 = y;
-      const p = px(x, y), bk = colorBucket(...p);
+      const p = px2(x, y), bk = colorBucket(...p);
       buckets[bk] = buckets[bk] || { n: 0, r: 0, g: 0, b: 0 };
       buckets[bk].n++;
       buckets[bk].r += p[0];
@@ -4070,7 +4145,7 @@ Serial: E1ZQGHV1`;
     const out = sctx.createImageData(tw, th);
     let ink = 0;
     for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
-      const p = px(tx0 + x, ty0 + y), o = (y * tw + x) * 4;
+      const p = px2(tx0 + x, ty0 + y), o = (y * tw + x) * 4;
       const on = dist(p, btnRGB) > 80;
       if (on) ink++;
       const v = on ? 0 : 255;
@@ -4092,14 +4167,14 @@ Serial: E1ZQGHV1`;
     for (let y = dy0; y < dy1; y++) for (let x = x0; x < x1; x++) {
       const k = y * W2 + x;
       if (dseen[k]) continue;
-      const isDot = (xx, yy) => dist(px(xx, yy), bg) > 22;
+      const isDot = (xx, yy) => dist(px2(xx, yy), bg) > 22;
       if (!isDot(x, y)) continue;
       const st = [k];
       dseen[k] = 1;
       let n = 0, ax = 0, ar = 0, ag = 0, ab = 0, minx = x, maxx = x, miny = y, maxy = y;
       while (st.length) {
         const q = st.pop(), qx = q % W2, qy = q / W2 | 0;
-        const pp = px(qx, qy);
+        const pp = px2(qx, qy);
         n++;
         ax += qx;
         ar += pp[0];
@@ -4140,11 +4215,11 @@ Serial: E1ZQGHV1`;
     if (res.hasInk) {
       try {
         onStatus("Reading the label\u2026");
-        const worker = await ensureOCRWorker();
+        const worker2 = await ensureOCRWorker();
         let best = { w: "", d: 99, amb: true };
         for (const psm of ["8", "7"]) {
-          await worker.setParameters({ tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", tessedit_pageseg_mode: psm, user_defined_dpi: "300" });
-          const { data } = await worker.recognize(res.labelCanvas);
+          await worker2.setParameters({ tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", tessedit_pageseg_mode: psm, user_defined_dpi: "300" });
+          const { data } = await worker2.recognize(res.labelCanvas);
           const txt = String(data.text || "").trim();
           const r = matchWord(txt, vocab);
           if (r.d < best.d) {
@@ -4258,6 +4333,7 @@ Serial: E1ZQGHV1`;
     return { st, name: PN_INT[st], distance, octaveDropped: distance > 12 };
   }
   function pnParseCodes(t) {
+    t = discordPlain(t);
     const m = {};
     const re = /(Minor 2nd|Major 2nd|Minor 3rd|Major 3rd|Perfect 4th|Tritone|Perfect 5th|Minor 6th|Major 6th|Minor 7th|Major 7th|Octave)\s*`?\s*([\d.]+)/gi;
     let r;
@@ -4313,11 +4389,11 @@ Serial: E1ZQGHV1`;
       for (let x = xL; x <= xR; x++) {
         const i = y * w + x;
         if (seen[i] || L[i] <= bt) continue;
-        const st = [i], px = [];
+        const st = [i], px2 = [];
         seen[i] = 1;
         while (st.length) {
           const j = st.pop();
-          px.push(j);
+          px2.push(j);
           const jx = j % w, jy = (j - jx) / w;
           for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
             const nx = jx + dx, ny = jy + dy;
@@ -4329,13 +4405,13 @@ Serial: E1ZQGHV1`;
             }
           }
         }
-        if (px.length >= 6) comps.push(px);
+        if (px2.length >= 6) comps.push(px2);
       }
     }
-    const info = comps.map((px) => {
+    const info = comps.map((px2) => {
       let x0 = w, x1 = 0, y0 = h, y1 = 0;
       const ry = {};
-      for (const j of px) {
+      for (const j of px2) {
         const x = j % w, y = (j - x) / w;
         x0 = Math.min(x0, x);
         x1 = Math.max(x1, x);
@@ -4346,7 +4422,7 @@ Serial: E1ZQGHV1`;
         r.b = Math.max(r.b, x);
         r.n++;
       }
-      return { x0, x1, y0, y1, ry, px, n: px.length };
+      return { x0, x1, y0, y1, ry, px: px2, n: px2.length };
     }).sort((p, q) => p.x0 - q.x0);
     const ci = info.findIndex((c) => c.n > s * s * 0.5 && c.y1 - c.y0 > s);
     if (ci < 0) return null;
@@ -4587,10 +4663,10 @@ Serial: E1ZQGHV1`;
           for (let k = 0; k < n; k++) lzw.push(b[i++]);
         }
         i++;
-        const px = CX - left, py = CY - top;
+        const px2 = CX - left, py = CY - top;
         let bright = prevBright, rgb = prevRgb;
-        if (ct && px >= 0 && px < fw && py >= 0 && py < fh) {
-          const ci = lzwGetPixelIndex(lzw, minCS, py * fw + px);
+        if (ct && px2 >= 0 && px2 < fw && py >= 0 && py < fh) {
+          const ci = lzwGetPixelIndex(lzw, minCS, py * fw + px2);
           if (ci >= 0 && ci * 3 + 2 < ct.length) {
             const r = ct[ci * 3], g = ct[ci * 3 + 1], bv = ct[ci * 3 + 2];
             bright = 0.299 * r + 0.587 * g + 0.114 * bv;
@@ -4645,8 +4721,8 @@ Serial: E1ZQGHV1`;
         break;
       }
       if (!entry) break;
-      for (const px of entry) {
-        if (outPos === targetIdx) return px;
+      for (const px2 of entry) {
+        if (outPos === targetIdx) return px2;
         outPos++;
       }
       if (prev !== null) {
@@ -4908,11 +4984,11 @@ Serial: E1ZQGHV1`;
   function mzWallsFromData(data, W2, H, rect = { x: 0, y: 0, w: W2, h: H }) {
     const { x: ox, y: oy, w, h } = rect;
     const N2 = MAZE_SIZE;
-    const lum2 = new Uint8Array(w * h), lt = new Uint8Array(w * h);
+    const lum6 = new Uint8Array(w * h), lt = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const j = ((oy + y) * W2 + ox + x) * 4, r = data[j], g = data[j + 1], b = data[j + 2];
       const L = 0.299 * r + 0.587 * g + 0.114 * b;
-      lum2[y * w + x] = L;
+      lum6[y * w + x] = L;
       lt[y * w + x] = r > 150 && g > 150 && b > 150 && L > 165 ? 1 : 0;
     }
     const x0 = Math.floor(w * 0.08), x1 = Math.floor(w * 0.92), y0 = Math.floor(h * 0.18), y1 = Math.floor(h * 0.96);
@@ -4947,7 +5023,7 @@ Serial: E1ZQGHV1`;
       gh = 240 * h / 440;
     }
     const cw = gw / N2, ch = gh / N2, TOL = Math.max(2, Math.round(0.17 * cw)), DARK = 140, NEED = 0.7;
-    const dark = (x, y) => lum2[y * w + x] < DARK;
+    const dark = (x, y) => lum6[y * w + x] < DARK;
     const vWall = (r, c) => {
       const xl = Math.round(gx + (c + 1) * cw), ya = Math.round(gy + (r + 0.28) * ch), yb = Math.round(gy + (r + 0.72) * ch);
       let best = 0;
@@ -5020,15 +5096,15 @@ Serial: E1ZQGHV1`;
     let rSX = 0, rSY = 0, rCnt = 0;
     let ySX = 0, ySY = 0, yCnt = 0;
     for (let py = 0; py < h; py++) {
-      for (let px = 0; px < w; px++) {
-        const idx = (py * w + px) * 4;
+      for (let px2 = 0; px2 < w; px2++) {
+        const idx = (py * w + px2) * 4;
         const r = data[idx], g = data[idx + 1], b = data[idx + 2];
         if (r > 180 && g < 100 && b < 100) {
-          rSX += px;
+          rSX += px2;
           rSY += py;
           rCnt++;
         } else if (r > 180 && g > 180 && b < 100) {
-          ySX += px;
+          ySX += px2;
           ySY += py;
           yCnt++;
         }
@@ -5414,6 +5490,7 @@ ${dirs[d].join("\n")}`);
   });
   var KEY = "bombvision_knob_rules";
   function parseKnobRules(text) {
+    text = discordPlain(text);
     const rules = { UP: [], DOWN: [], LEFT: [], RIGHT: [] };
     let curDir = null;
     const lines = String(text || "").split(/\r?\n/);
@@ -5567,10 +5644,10 @@ ${dirs[d].join("\n")}`);
       const r = data[i], g = data[i + 1], b = data[i + 2];
       cls2[p] = isLit(r, g, b) ? 1 : isUnlit(r, g, b) ? 2 : 0;
     }
-    const blobs = lampBlobs(cls2, W2, H).sort((a, b) => a.cy - b.cy);
-    if (blobs.length === 12) {
-      const top = blobs.slice(0, 6).sort((a, b) => a.cx - b.cx), bot = blobs.slice(6).sort((a, b) => a.cx - b.cx);
-      const size = blobs[0].size;
+    const blobs3 = lampBlobs(cls2, W2, H).sort((a, b) => a.cy - b.cy);
+    if (blobs3.length === 12) {
+      const top = blobs3.slice(0, 6).sort((a, b) => a.cx - b.cx), bot = blobs3.slice(6).sort((a, b) => a.cx - b.cx);
+      const size = blobs3[0].size;
       const flat = (row) => row[5].cy - row[0].cy < size * 0.5 && Math.abs(row[0].cy - row[5].cy) < size;
       const sameRows = Math.min(...bot.map((b) => b.cy)) - Math.max(...top.map((t) => t.cy)) > size;
       if (flat(top) && flat(bot) && sameRows) {
@@ -5610,9 +5687,9 @@ ${dirs[d].join("\n")}`);
     const leds = readKnobLeds(ctx.getImageData(0, 0, W2, H).data, W2, H);
     if (leds) return leds.state;
     try {
-      const worker = await ensureOCRWorker();
-      await worker.setParameters({ tessedit_char_whitelist: "XO01 \n\r	", tessedit_pageseg_mode: "6", user_defined_dpi: "150" });
-      const { data } = await worker.recognize(canvas);
+      const worker2 = await ensureOCRWorker();
+      await worker2.setParameters({ tessedit_char_whitelist: "XO01 \n\r	", tessedit_pageseg_mode: "6", user_defined_dpi: "150" });
+      const { data } = await worker2.recognize(canvas);
       const text = data.text.toUpperCase().replace(/[01]/g, (m) => m === "1" ? "X" : "O");
       const matches = text.match(/[XO]{6}/g);
       if (matches && matches.length >= 2) {
@@ -5641,15 +5718,15 @@ ${dirs[d].join("\n")}`);
       lab[s] = id;
       let x0 = w, y0 = h, x1 = -1, y1 = -1, n = 0;
       while (st.length) {
-        const p = st.pop(), px = p % w, py = p / w | 0;
+        const p = st.pop(), px2 = p % w, py = p / w | 0;
         n++;
-        if (px < x0) x0 = px;
-        if (px > x1) x1 = px;
+        if (px2 < x0) x0 = px2;
+        if (px2 > x1) x1 = px2;
         if (py < y0) y0 = py;
         if (py > y1) y1 = py;
         for (const q of [p - 1, p + 1, p - w, p + w]) {
           if (q < 0 || q >= w * h) continue;
-          if (q === p - 1 && px === 0 || q === p + 1 && px === w - 1) continue;
+          if (q === p - 1 && px2 === 0 || q === p + 1 && px2 === w - 1) continue;
           if (mask[q] && !lab[q]) {
             lab[q] = id;
             st.push(q);
@@ -5826,6 +5903,7 @@ Black
 * ninth black occurrence: cut if connected to C.`;
   var WS_ORD = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9 };
   function wsParseManual(text) {
+    text = discordPlain(text);
     const out = {};
     for (const raw of text.split(/\r?\n/)) {
       const line = raw.trim().replace(/^[*\u2022\-]+/, "").trim().toLowerCase();
@@ -5899,19 +5977,19 @@ Black
   }
   function wsReadImage(img) {
     const { data: d, width: W2, height: H } = img;
-    const px = (x, y) => {
+    const px2 = (x, y) => {
       const i = (y * W2 + x) * 4;
       return [d[i], d[i + 1], d[i + 2]];
     };
-    const lum2 = [];
+    const lum6 = [];
     for (let y = Math.floor(H * 0.35); y <= Math.floor(H * 0.65); y += 3) {
       for (let x = Math.floor(W2 * 0.35); x <= Math.floor(W2 * 0.65); x += 3) {
-        const [r, g, b] = px(x, y), av = (r + g + b) / 3, ch = Math.max(r, g, b) - Math.min(r, g, b);
-        if (av >= 15 && av <= 75 && ch < 20) lum2.push(av);
+        const [r, g, b] = px2(x, y), av = (r + g + b) / 3, ch = Math.max(r, g, b) - Math.min(r, g, b);
+        if (av >= 15 && av <= 75 && ch < 20) lum6.push(av);
       }
     }
-    lum2.sort((a, b) => a - b);
-    const darkMed = lum2.length ? lum2[Math.floor(lum2.length / 2)] : 40;
+    lum6.sort((a, b) => a - b);
+    const darkMed = lum6.length ? lum6[Math.floor(lum6.length / 2)] : 40;
     const kind = (r, g, b) => {
       const av = (r + g + b) / 3, ch = Math.max(r, g, b) - Math.min(r, g, b);
       if (r > 105 && r - g > 25 && r - b > 25) return "red";
@@ -5937,7 +6015,7 @@ Black
           for (let dy = -tol; dy <= tol; dy++) for (let dx = -1; dx <= 1; dx++) {
             const X = Math.round(x + dx), YY = Math.round(y + dy);
             if (X < 0 || X >= W2 || YY < 0 || YY >= H) continue;
-            const kd = kind(...px(X, YY));
+            const kd = kind(...px2(X, YY));
             if (kd) seen[kd] = 1;
           }
           for (const kd in seen) hit[kd]++;
@@ -5953,7 +6031,7 @@ Black
     const bins = [0, 0, 0, 0, 0];
     for (let y = Math.floor(H * 0.77); y <= Math.floor(H * 0.88); y++) {
       for (let x = Math.floor(W2 * 0.33); x <= Math.floor(W2 * 0.67); x++) {
-        const [r, g, b] = px(x, y);
+        const [r, g, b] = px2(x, y);
         if (r > 200 && g > 140 && g < 215 && b < 150 && r - b > 70) {
           const xf = x / W2;
           let bd = Infinity, bi = -1;
@@ -6039,7 +6117,7 @@ Black
       }
     }
     const min_pixels = Math.max(6, Math.round(W2 * H * 7e-4));
-    const blobs = [];
+    const blobs3 = [];
     const stack = [];
     for (let start = 0; start < mask.length; start++) {
       if (mask[start] !== 1) continue;
@@ -6050,23 +6128,23 @@ Black
       stack.push(start);
       while (stack.length > 0) {
         const p = stack.pop();
-        const px = p % W2;
-        const py = (p - px) / W2;
+        const px2 = p % W2;
+        const py = (p - px2) / W2;
         count++;
-        sum_x += px;
+        sum_x += px2;
         sum_y += py;
         for (const q of [p - 1, p + 1, p - W2, p + W2]) {
           if (q < 0 || q >= mask.length || mask[q] !== 1) continue;
-          if (Math.abs(q % W2 - px) > 1) continue;
+          if (Math.abs(q % W2 - px2) > 1) continue;
           mask[q] = 2;
           stack.push(q);
         }
       }
       if (count >= min_pixels) {
-        blobs.push({ x: sum_x / count, y: sum_y / count, n: count });
+        blobs3.push({ x: sum_x / count, y: sum_y / count, n: count });
       }
     }
-    return blobs;
+    return blobs3;
   }
   function countColourPixels(data, W2, H) {
     const { x0, x1, y0, y1 } = getPlayArea(W2, H);
@@ -6079,17 +6157,17 @@ Black
     }
     return count;
   }
-  function orderSlots(blobs) {
+  function orderSlots(blobs3) {
     let center_x = 0;
     let center_y = 0;
-    for (const blob of blobs) {
+    for (const blob of blobs3) {
       center_x += blob.x;
       center_y += blob.y;
     }
-    center_x /= blobs.length;
-    center_y /= blobs.length;
+    center_x /= blobs3.length;
+    center_y /= blobs3.length;
     const angleOf = (blob) => (Math.atan2(blob.x - center_x, -(blob.y - center_y)) + 2 * Math.PI + Math.PI / 6) % (2 * Math.PI);
-    const sorted = blobs.slice().sort((a, b) => angleOf(a) - angleOf(b));
+    const sorted = blobs3.slice().sort((a, b) => angleOf(a) - angleOf(b));
     const slots = [];
     for (const blob of sorted) {
       slots.push({ x: blob.x, y: blob.y });
@@ -6134,12 +6212,12 @@ Black
       for (const side of [1, -1]) {
         let cost2 = 0;
         for (let k = 0; k < frame_count; k++) {
-          const blobs = move_frames[k];
+          const blobs3 = move_frames[k];
           const t = (k + 1) / (frame_count + 1);
           const expected = [getArcPoint(A, B, t, side), getArcPoint(B, A, t, side)];
           for (const point of expected) {
             let nearest = Infinity;
-            for (const blob of blobs) {
+            for (const blob of blobs3) {
               nearest = Math.min(nearest, dist3(blob, point));
             }
             cost2 += nearest;
@@ -6183,16 +6261,16 @@ Black
     }
     if (first_rest < 0) return { ok: false, reason: "could not find the six keys \u2014 is this a Limbo GIF?" };
     const slots = orderSlots(frame_blobs[first_rest]);
-    const isAtSlot = (blobs, slot) => {
-      for (const blob of blobs) {
+    const isAtSlot = (blobs3, slot) => {
+      for (const blob of blobs3) {
         if (dist3(blob, slot) <= tolerance) return true;
       }
       return false;
     };
-    const isRestFrame = (blobs) => {
-      if (blobs.length !== 6) return false;
+    const isRestFrame = (blobs3) => {
+      if (blobs3.length !== 6) return false;
       for (const slot of slots) {
-        if (!isAtSlot(blobs, slot)) return false;
+        if (!isAtSlot(blobs3, slot)) return false;
       }
       return true;
     };
@@ -6240,8 +6318,8 @@ Black
       const moved_slots = [];
       for (let k = 0; k < slots.length; k++) {
         let off_count = 0;
-        for (const blobs of move_frames) {
-          if (!isAtSlot(blobs, slots[k])) off_count++;
+        for (const blobs3 of move_frames) {
+          if (!isAtSlot(blobs3, slots[k])) off_count++;
         }
         if (off_count * 2 >= move_frames.length && off_count > 0) moved_slots.push(k);
       }
@@ -6572,13 +6650,13 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
     return words.filter((w) => (length == null || w.length === length) && guesses.every((g) => positionsOf(w, g.letter).join() === [...g.positions].sort((a, b) => a - b).join()));
   }
   function outcomes(cands, letter) {
-    const groups = /* @__PURE__ */ new Map();
+    const groups2 = /* @__PURE__ */ new Map();
     for (const w of cands) {
       const k = positionsOf(w, letter).join();
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k).push(w);
+      if (!groups2.has(k)) groups2.set(k, []);
+      groups2.get(k).push(w);
     }
-    return [...groups.entries()].map(([k, ws]) => ({ positions: k ? k.split(",").map(Number) : [], words: ws })).sort((a, b) => (b.positions.length ? 1 : 0) - (a.positions.length ? 1 : 0) || b.words.length - a.words.length);
+    return [...groups2.entries()].map(([k, ws]) => ({ positions: k ? k.split(",").map(Number) : [], words: ws })).sort((a, b) => (b.positions.length ? 1 : 0) - (a.positions.length ? 1 : 0) || b.words.length - a.words.length);
   }
   var LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   function bestGuess(cands, memo = /* @__PURE__ */ new Map()) {
@@ -6587,8 +6665,8 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
     if (memo.has(key)) return memo.get(key);
     const options = [];
     for (const L of LETTERS) {
-      const groups = outcomes(cands, L);
-      if (groups.length >= 2) options.push({ letter: L, groups });
+      const groups2 = outcomes(cands, L);
+      if (groups2.length >= 2) options.push({ letter: L, groups: groups2 });
     }
     if (!options.length) {
       memo.set(key, null);
@@ -6831,15 +6909,15 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
     const first = !state.prev || changed;
     const known = new Set(guesses.flatMap((g) => g.positions));
     const fresh = filled.map((f, i) => f && !known.has(i) ? i : -1).filter((i) => i >= 0);
-    const groups = [];
+    const groups2 = [];
     for (const i of fresh) {
       const g = shot.slots[i].glyph;
-      const grp = groups.find((gr) => glyphScore2(gr.glyph, g) >= SAME_SHAPE);
+      const grp = groups2.find((gr) => glyphScore2(gr.glyph, g) >= SAME_SHAPE);
       if (grp) grp.positions.push(i);
-      else groups.push({ positions: [i], glyph: g });
+      else groups2.push({ positions: [i], glyph: g });
     }
     let pendingUsed = false;
-    for (const grp of groups) {
+    for (const grp of groups2) {
       const used = new Set(guesses.map((g) => g.letter));
       const fits = (X) => !used.has(X) && candidates(state.words, [...guesses, { letter: X, positions: grp.positions }], L).length > 0;
       const listHasWords = candidates(state.words, guesses, L).length > 0;
@@ -6875,7 +6953,7 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       learned.push({ letter, glyph: grp.glyph });
       events.push({ type: "hit", letter, positions: grp.positions, how });
     }
-    if (!groups.length) {
+    if (!groups2.length) {
       const grew = state.prev && !changed && shot.figure.ink > state.prev.ink + PART_INK;
       if (grew) {
         const used = new Set(guesses.map((g) => g.letter));
@@ -7053,9 +7131,9 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       lab[s] = n;
       st.push(s);
       while (st.length) {
-        const p = st.pop(), px = p % W2, py = (p - px) / W2;
+        const p = st.pop(), px2 = p % W2, py = (p - px2) / W2;
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const x = px + dx, y = py + dy;
+          const x = px2 + dx, y = py + dy;
           if (x < 0 || y < 0 || x >= W2 || y >= H) continue;
           const q = y * W2 + x;
           if (mask[q] && !lab[q]) {
@@ -7263,11 +7341,11 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       const p = ((y + sy0) * W2 + x + sx0) * 4;
       if (Math.min(data[p], data[p + 1], data[p + 2]) > 200) star[y * sw + x] = 1;
     }
-    const blobs = glyphBoxes(star, sw, sh, 0, Math.max(3, Math.round(W2 * H * 4e-5)));
-    const sizes = blobs.map((b) => b.n).sort((a, b) => a - b);
+    const blobs3 = glyphBoxes(star, sw, sh, 0, Math.max(3, Math.round(W2 * H * 4e-5)));
+    const sizes = blobs3.map((b) => b.n).sort((a, b) => a - b);
     const med2 = sizes.length ? sizes[sizes.length >> 1] : 0;
-    const bigBlobs = blobs.filter((b) => b.n > med2 * 2.4).length;
-    const starBlobs = blobs.map((b) => ({ x: sx0 + (b.x0 + b.x1) / 2, y: sy0 + (b.y0 + b.y1) / 2, n: b.n }));
+    const bigBlobs = blobs3.filter((b) => b.n > med2 * 2.4).length;
+    const starBlobs = blobs3.map((b) => ({ x: sx0 + (b.x0 + b.x1) / 2, y: sy0 + (b.y0 + b.y1) / 2, n: b.n }));
     const by0 = Math.round(H * 0.705), by1 = Math.round(H * 0.885);
     const edges = [0.1, 0.295, 0.5, 0.705, 0.9].map((f) => Math.round(W2 * f));
     const buttons = [];
@@ -7297,7 +7375,7 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       const glyph = normGlyph(ink, w, b);
       buttons.push({ glyph, box: { x0: b.x0 + x0, y0: b.y0 + by0, x1: b.x1 + x0, y1: b.y1 + by0 }, ...nameGlyph(glyph, refs) });
     }
-    return { stars: blobs.length, starBlobs, bigBlobs, buttons };
+    return { stars: blobs3.length, starBlobs, bigBlobs, buttons };
   }
 
   // src/modules/astrology/astrologySolver.js
@@ -7354,6 +7432,7 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
     return l.count >= 20 && Object.keys(l.byCount).length >= 5;
   }
   function parseStarList(text) {
+    text = discordPlain(text);
     const byCount = {}, unknown = [];
     let count = 0;
     String(text || "").split(/\r?\n/).forEach((line) => {
@@ -7897,17 +7976,17 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       lab[s] = id;
       let x0 = w, y0 = h, x1 = -1, y1 = -1, n = 0, sx = 0, sy = 0;
       while (st.length) {
-        const p = st.pop(), px = p % w, py = p / w | 0;
+        const p = st.pop(), px2 = p % w, py = p / w | 0;
         n++;
-        sx += px;
+        sx += px2;
         sy += py;
-        if (px < x0) x0 = px;
-        if (px > x1) x1 = px;
+        if (px2 < x0) x0 = px2;
+        if (px2 > x1) x1 = px2;
         if (py < y0) y0 = py;
         if (py > y1) y1 = py;
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
           if (!conn8 && dx && dy) continue;
-          const nx = px + dx, ny = py + dy;
+          const nx = px2 + dx, ny = py + dy;
           if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
           const q = ny * w + nx;
           if (mask[q] && !lab[q]) {
@@ -7924,10 +8003,10 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
     const P = findPanel(data, W2, H);
     const w = P.x1 - P.x0 + 1, h = P.y1 - P.y0 + 1;
     if (w < 40 || h < 40) return { ok: false, error: "Circuit panel not found" };
-    const px = (x, y) => ((P.y0 + y) * W2 + P.x0 + x) * 4;
+    const px2 = (x, y) => ((P.y0 + y) * W2 + P.x0 + x) * 4;
     const ink = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const i = px(x, y);
+      const i = px2(x, y);
       const d = Math.max(Math.abs(data[i] - PANEL[0]), Math.abs(data[i + 1] - PANEL[1]), Math.abs(data[i + 2] - PANEL[2]));
       ink[y * w + x] = d > 22 ? 1 : 0;
     }
@@ -7941,11 +8020,11 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       }
       for (let p = 0; p < w * h; p++) if (fill[hl[p]]) solid[p] = 1;
     }
-    const sat = new Int32Array((w + 1) * (h + 1));
+    const sat2 = new Int32Array((w + 1) * (h + 1));
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      sat[(y + 1) * (w + 1) + x + 1] = solid[y * w + x] + sat[y * (w + 1) + x + 1] + sat[(y + 1) * (w + 1) + x] - sat[y * (w + 1) + x];
+      sat2[(y + 1) * (w + 1) + x + 1] = solid[y * w + x] + sat2[y * (w + 1) + x + 1] + sat2[(y + 1) * (w + 1) + x] - sat2[y * (w + 1) + x];
     }
-    const boxSum = (x0, y0, x1, y1) => sat[(y1 + 1) * (w + 1) + x1 + 1] - sat[y0 * (w + 1) + x1 + 1] - sat[(y1 + 1) * (w + 1) + x0] + sat[y0 * (w + 1) + x0];
+    const boxSum = (x0, y0, x1, y1) => sat2[(y1 + 1) * (w + 1) + x1 + 1] - sat2[y0 * (w + 1) + x1 + 1] - sat2[(y1 + 1) * (w + 1) + x0] + sat2[y0 * (w + 1) + x0];
     const core = new Uint8Array(w * h);
     const side = 2 * r + 1, need = side * side * 0.82;
     for (let y = r; y < h - r; y++) for (let x = r; x < w - r; x++) {
@@ -7960,7 +8039,7 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       if (long / short < 1.3 || short < r * 2.5) continue;
       const hist = /* @__PURE__ */ new Map();
       for (let y = y0 + 2; y <= y1 - 2; y++) for (let x = x0 + 2; x <= x1 - 2; x++) {
-        const i = px(x, y);
+        const i = px2(x, y);
         const k = data[i] >> 3 << 10 | data[i + 1] >> 3 << 5 | data[i + 2] >> 3;
         hist.set(k, (hist.get(k) || 0) + 1);
       }
@@ -7976,14 +8055,14 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
       if ((rgb[0] - PANEL[0]) ** 2 + (rgb[1] - PANEL[1]) ** 2 + (rgb[2] - PANEL[2]) ** 2 < 40 ** 2) continue;
       let flat = 0, area = 0;
       for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-        const i = px(x, y);
+        const i = px2(x, y);
         area++;
         if ((data[i] - rgb[0]) ** 2 + (data[i + 1] - rgb[1]) ** 2 + (data[i + 2] - rgb[2]) ** 2 <= 1600) flat++;
       }
       if (flat < area * 0.4) continue;
       let tx0 = w, ty0 = h, tx1 = -1, ty1 = -1;
       for (let y = Math.max(0, y0 - 2); y <= Math.min(h - 1, y1 + 2); y++) for (let x = Math.max(0, x0 - 2); x <= Math.min(w - 1, x1 + 2); x++) {
-        const i = px(x, y);
+        const i = px2(x, y);
         if ((data[i] - rgb[0]) ** 2 + (data[i + 1] - rgb[1]) ** 2 + (data[i + 2] - rgb[2]) ** 2 > 1600) continue;
         if (x < tx0) tx0 = x;
         if (x > tx1) tx1 = x;
@@ -8001,22 +8080,22 @@ PATTERED TATTERED BUMBLING TRICKING BLANKING`;
     const inRes = (x, y) => resistors.some((q) => {
       if (x >= q.x0 - 2 && x <= q.x1 + 2 && y >= q.y0 - 2 && y <= q.y1 + 2) return true;
       const R = q.rough;
-      return x >= R.x0 - 1 && x <= R.x1 + 1 && y >= R.y0 - 1 && y <= R.y1 + 1 && !wireColour(px(x, y));
+      return x >= R.x0 - 1 && x <= R.x1 + 1 && y >= R.y0 - 1 && y <= R.y1 + 1 && !wireColour(px2(x, y));
     });
     const cond = new Uint8Array(w * h), amber = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       if (!ink[y * w + x] || inRes(x, y)) continue;
       cond[y * w + x] = 1;
-      const i = px(x, y);
+      const i = px2(x, y);
       if (isAmber(data[i], data[i + 1], data[i + 2])) amber[y * w + x] = 1;
     }
     const { lab, comps: wires } = components2(cond, w, h);
     const nodeAt = (q, end) => {
       const midX = q.x0 + q.x1 >> 1, midY = q.y0 + q.y1 >> 1;
-      const spread = q.horizontal ? q.y1 - q.y0 >> 1 : q.x1 - q.x0 >> 1;
+      const spread2 = q.horizontal ? q.y1 - q.y0 >> 1 : q.x1 - q.x0 >> 1;
       const votes = /* @__PURE__ */ new Map();
       for (let d = 2; d <= r * 3 + 4; d++) {
-        for (let s = -spread; s <= spread; s++) {
+        for (let s = -spread2; s <= spread2; s++) {
           let x, y;
           if (q.horizontal) {
             x = end ? q.x1 + d : q.x0 - d;
@@ -8277,6 +8356,7 @@ Gray = 12 \u03A9`;
   var CIRCUIT_COLORS = ["red", "orange", "yellow", "green", "blue", "violet", "white", "gray"];
   var ALIAS = { purple: "violet", grey: "gray", silver: "gray" };
   function parseCircuitManual(text) {
+    text = discordPlain(text);
     const out = {};
     const re = /\b([a-z]+)\s*[=:–-]\s*(\d+(?:\.\d+)?)/gi;
     let m;
@@ -8442,10 +8522,10 @@ Gray = 12 \u03A9`;
   var LAMBDA = 0.3;
   var rnd = (v) => Math.floor(v + 0.5);
   function segDist(r, g, b) {
-    const px = r - LIGHT_SQUARE[0], py = g - LIGHT_SQUARE[1], pz = b - LIGHT_SQUARE[2];
-    let t = (px * SEG[0] + py * SEG[1] + pz * SEG[2]) / SEG_L2;
+    const px2 = r - LIGHT_SQUARE[0], py = g - LIGHT_SQUARE[1], pz = b - LIGHT_SQUARE[2];
+    let t = (px2 * SEG[0] + py * SEG[1] + pz * SEG[2]) / SEG_L2;
     t = t < 0 ? 0 : t > 1 ? 1 : t;
-    const dx = px - t * SEG[0], dy = py - t * SEG[1], dz = pz - t * SEG[2];
+    const dx = px2 - t * SEG[0], dy = py - t * SEG[1], dz = pz - t * SEG[2];
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
   function findRuns(counts, thr, minLen, gap) {
@@ -8677,11 +8757,3412 @@ Gray = 12 \u03A9`;
     return { cv, data: ctx.getImageData(0, 0, W2, H).data, W: W2, H };
   }
 
+  // src/modules/chess/chessEngine.js
+  var chessEngine_exports = {};
+  __export(chessEngine_exports, {
+    ENGINE_URLS: () => ENGINE_URLS,
+    SUPERSEDED: () => SUPERSEDED,
+    askEngine: () => askEngine,
+    attachEngineForTests: () => attachEngineForTests,
+    cancelSearch: () => cancelSearch,
+    kingInCheck: () => kingInCheck,
+    legalSan: () => legalSan,
+    moveValue: () => moveValue,
+    multiPvCollector: () => multiPvCollector,
+    parseFen: () => parseFen,
+    scoreAllMoves: () => scoreAllMoves,
+    startEngine: () => startEngine,
+    stopEngineListener: () => stopEngineListener,
+    toFen: () => toFen
+  });
+
+  // conso:conso-stockfish-source
+  var INLINE_ENGINE = "inline:stockfish";
+  var loadStockfishSource = () => fetch("https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js").then((r) => {
+    if (!r.ok) throw new Error("stockfish.js " + r.status);
+    return r.text();
+  });
+
+  // src/modules/chess/chessEngine.js
+  var ENGINE_URLS = [
+    INLINE_ENGINE,
+    "/stockfish.js",
+    "stockfish.js",
+    "https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js"
+  ];
+  var worker = null;
+  var engineReady = null;
+  var lastStatus = "Engine offline";
+  var statusListeners = /* @__PURE__ */ new Set();
+  var busy = false;
+  var active = null;
+  var idleWaiters = [];
+  function emitStatus(text) {
+    lastStatus = text;
+    statusListeners.forEach((fn) => {
+      try {
+        fn(text);
+      } catch (e) {
+      }
+    });
+  }
+  function onEngineLine(line) {
+    if (line.startsWith("bestmove")) {
+      busy = false;
+      const a = active;
+      active = null;
+      const waiters = idleWaiters;
+      idleWaiters = [];
+      if (a) a.onBest(line.split(" ")[1]);
+      waiters.forEach((f) => f());
+      return;
+    }
+    if (active) active.onLine(line);
+  }
+  function whenIdle(ms) {
+    if (!busy) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const f = () => {
+        clearTimeout(t);
+        resolve(true);
+      };
+      const t = setTimeout(() => {
+        idleWaiters = idleWaiters.filter((x) => x !== f);
+        resolve(false);
+      }, ms);
+      idleWaiters.push(f);
+    });
+  }
+  function dropEngine() {
+    if (worker) {
+      try {
+        worker.terminate();
+      } catch (e) {
+      }
+    }
+    worker = null;
+    engineReady = null;
+    busy = false;
+    active = null;
+    const waiters = idleWaiters;
+    idleWaiters = [];
+    waiters.forEach((f) => f());
+  }
+  function startEngine(onStatusChange) {
+    if (onStatusChange) {
+      statusListeners.add(onStatusChange);
+      onStatusChange(lastStatus);
+    }
+    if (engineReady) return engineReady;
+    const onStatus = emitStatus;
+    engineReady = (async () => {
+      onStatus("Loading Stockfish\u2026");
+      for (const url of ENGINE_URLS) {
+        try {
+          let source = "";
+          try {
+            source = url === INLINE_ENGINE ? await loadStockfishSource() : await (await fetch(url)).text();
+          } catch (e) {
+          }
+          if (source) {
+            const blobUrl = URL.createObjectURL(new Blob([source], { type: "application/javascript" }));
+            worker = new Worker(blobUrl);
+          } else {
+            worker = new Worker(url);
+          }
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("timeout")), 5e3);
+            worker.onmessage = (event) => {
+              if (String(event.data).includes("readyok")) {
+                clearTimeout(timeout);
+                resolve();
+              }
+            };
+            worker.onerror = reject;
+            worker.postMessage("uci");
+            worker.postMessage("isready");
+          });
+          busy = false;
+          active = null;
+          worker.onmessage = (event) => onEngineLine(String(event.data));
+          onStatus("Stockfish ready \u2713");
+          return true;
+        } catch (error) {
+          if (worker) {
+            try {
+              worker.terminate();
+            } catch (e) {
+            }
+          }
+          worker = null;
+        }
+      }
+      onStatus("\u26A0 Engine load failed (check network/stockfish.js)");
+      return false;
+    })();
+    return engineReady;
+  }
+  function attachEngineForTests(w) {
+    worker = w;
+    busy = false;
+    active = null;
+    idleWaiters = [];
+    current = null;
+    worker.onmessage = (event) => onEngineLine(String(event.data));
+    engineReady = Promise.resolve(true);
+  }
+  function stopEngineListener(onStatusChange) {
+    statusListeners.delete(onStatusChange);
+  }
+  var SUPERSEDED = Symbol("superseded");
+  var current = null;
+  async function search(fen, milliseconds, owner, multiPV, onLine) {
+    if (!worker) await startEngine();
+    if (!worker) return null;
+    while (current && current.owner !== owner) await current.done;
+    if (current) current.cancel(SUPERSEDED);
+    let markDone;
+    const me = { owner, done: new Promise((r) => {
+      markDone = r;
+    }) };
+    current = me;
+    return new Promise((resolve) => {
+      let settled = false;
+      let timer = 0;
+      let mine = null;
+      const finish = (val) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (mine && active === mine) {
+          active = null;
+          try {
+            worker.postMessage("stop");
+          } catch (e) {
+          }
+        }
+        if (current === me) current = null;
+        markDone();
+        resolve(val);
+      };
+      me.cancel = finish;
+      (async () => {
+        if (!await whenIdle(5e3)) {
+          dropEngine();
+          await startEngine();
+        }
+        if (settled) return;
+        if (!worker) {
+          finish(null);
+          return;
+        }
+        let stopSent = false;
+        const stop = () => {
+          if (!stopSent && active === mine) {
+            stopSent = true;
+            worker.postMessage("stop");
+          }
+        };
+        mine = { onLine: (line) => {
+          if (onLine) onLine(line, stop);
+        }, onBest: (uci) => finish(uci) };
+        active = mine;
+        busy = true;
+        worker.postMessage("ucinewgame");
+        worker.postMessage(`setoption name MultiPV value ${multiPV}`);
+        worker.postMessage("position fen " + fen);
+        worker.postMessage("go movetime " + milliseconds);
+        timer = setTimeout(() => finish(null), milliseconds + 4e3);
+      })();
+    });
+  }
+  function cancelSearch(owner) {
+    if (current && current.owner === owner && current.cancel) current.cancel(SUPERSEDED);
+  }
+  function askEngine(fen, milliseconds, onInfo, owner = "default", { settle = false } = {}) {
+    let lastPv = "";
+    let stable = 0;
+    return search(fen, milliseconds, owner, 1, (line, stop) => {
+      if (!line.startsWith("info") || !line.includes(" score ")) return;
+      const depth = (line.match(/ depth (\d+)/) || [])[1] || "";
+      const cp = (line.match(/score cp (-?\d+)/) || [])[1] || "";
+      const mate = (line.match(/score mate (-?\d+)/) || [])[1] || "";
+      if (onInfo) onInfo({ depth, cp, mate });
+      if (mate && +mate > 0 && +depth >= Math.min(12, +mate * 2 + 2)) {
+        stop();
+        return;
+      }
+      if (settle) {
+        const pv = (line.match(/ pv (\S+)/) || [])[1] || "";
+        if (pv) {
+          stable = pv === lastPv ? stable + 1 : 0;
+          lastPv = pv;
+        }
+        if (+depth >= 14 && stable >= 6) stop();
+      }
+    });
+  }
+  function legalSan(fen, uci) {
+    if (!uci) return null;
+    if (typeof window === "undefined" || typeof window.Chess === "undefined") return uci;
+    try {
+      const m = new window.Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+      return m ? m.san : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  var moveValue = (m) => m.mate != null ? m.mate > 0 ? 1e5 - m.mate : -1e5 - m.mate : m.cp;
+  function multiPvCollector() {
+    const slots = /* @__PURE__ */ new Map();
+    return {
+      line(text) {
+        if (!text.startsWith("info") || !text.includes(" multipv ")) return null;
+        const idx = +((text.match(/ multipv (\d+)/) || [])[1] || 0);
+        const uci = (text.match(/ pv (\S+)/) || [])[1];
+        const cp = text.match(/score cp (-?\d+)/), mate = text.match(/score mate (-?\d+)/);
+        if (!idx || !uci || !cp && !mate) return null;
+        const m = { uci, depth: +((text.match(/ depth (\d+)/) || [])[1] || 0), cp: cp ? +cp[1] : null, mate: mate ? +mate[1] : null };
+        slots.set(idx, m);
+        return m;
+      },
+      /** every move once, worst first */
+      moves() {
+        const byMove = /* @__PURE__ */ new Map();
+        [...slots.keys()].sort((a, b) => a - b).forEach((k) => {
+          const m = slots.get(k);
+          byMove.set(m.uci, { ...m, value: moveValue(m) });
+        });
+        return [...byMove.values()].sort((a, b) => a.value - b.value);
+      }
+    };
+  }
+  async function scoreAllMoves(fen, milliseconds, onInfo, owner = "default") {
+    const col = multiPvCollector();
+    const best = await search(fen, milliseconds, owner, 256, (line) => {
+      const m = col.line(line);
+      if (m && onInfo) onInfo({ depth: m.depth });
+    });
+    if (best === SUPERSEDED || best === null) return best;
+    return col.moves();
+  }
+  function toFen(boardState, side = "w") {
+    const ranks = [];
+    for (let row = 0; row < 8; row++) {
+      let text = "";
+      let empty = 0;
+      for (let col = 0; col < 8; col++) {
+        const piece = boardState[row * 8 + col];
+        if (!piece) {
+          empty++;
+          continue;
+        }
+        if (empty) text += empty;
+        empty = 0;
+        text += piece;
+      }
+      if (empty) text += empty;
+      ranks.push(text);
+    }
+    return ranks.join("/") + (side === "b" ? " b" : " w") + " - - 0 1";
+  }
+  function kingInCheck(board, color) {
+    const white = color === "w";
+    const kingSq = board.indexOf(white ? "K" : "k");
+    if (kingSq < 0) return false;
+    const kr = Math.floor(kingSq / 8), kc = kingSq % 8;
+    const enemy = (ch) => Boolean(ch) && (white ? ch === ch.toLowerCase() : ch === ch.toUpperCase());
+    const at2 = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8 ? board[r * 8 + c] : null;
+    const is = (ch, type) => enemy(ch) && ch.toLowerCase() === type;
+    const pr = white ? kr - 1 : kr + 1;
+    if (is(at2(pr, kc - 1), "p") || is(at2(pr, kc + 1), "p")) return true;
+    for (const [dr, dc] of [[1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1]]) {
+      if (is(at2(kr + dr, kc + dc), "n")) return true;
+    }
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if ((dr || dc) && is(at2(kr + dr, kc + dc), "k")) return true;
+      }
+    }
+    const slide = (dirs, types) => dirs.some(([dr, dc]) => {
+      for (let r = kr + dr, c = kc + dc; r >= 0 && r < 8 && c >= 0 && c < 8; r += dr, c += dc) {
+        const ch = board[r * 8 + c];
+        if (!ch) continue;
+        return enemy(ch) && types.includes(ch.toLowerCase());
+      }
+      return false;
+    });
+    return slide([[1, 0], [-1, 0], [0, 1], [0, -1]], "rq") || slide([[1, 1], [1, -1], [-1, 1], [-1, -1]], "bq");
+  }
+  function parseFen(fen) {
+    const placement = (fen || "").trim().split(/\s+/)[0] || "";
+    const rows = placement.split("/");
+    if (rows.length !== 8) return null;
+    const newMerged = Array(64).fill("");
+    const newWhite = Array(64).fill("");
+    const newBlack = Array(64).fill("");
+    rows.forEach((text, row) => {
+      let col = 0;
+      for (const ch of text) {
+        if (/\d/.test(ch)) {
+          col += Number(ch);
+        } else if (col < 8) {
+          const idx = row * 8 + col;
+          newMerged[idx] = ch;
+          if (ch === ch.toUpperCase()) newWhite[idx] = ch;
+          else newBlack[idx] = ch;
+          col++;
+        }
+      }
+    });
+    return { merged: newMerged, white: newWhite, black: newBlack };
+  }
+
+  // src/core/leftPage.js
+  var leftPage_exports = {};
+  __export(leftPage_exports, {
+    leftSinceLastAction: () => leftSinceLastAction
+  });
+  var lastActAt = -Infinity;
+  var lastLeftAt = -Infinity;
+  var now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    const act = () => {
+      lastActAt = now();
+    };
+    const left = () => {
+      lastLeftAt = now();
+    };
+    for (const ev of ["pointerdown", "touchstart", "keydown", "paste", "drop", "change", "input"]) window.addEventListener(ev, act, true);
+    window.addEventListener("blur", left);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") left();
+    });
+  }
+  function leftSinceLastAction(actAt = lastActAt, leftAt = lastLeftAt, hidden = typeof document !== "undefined" && document.visibilityState === "hidden") {
+    return hidden || leftAt > actAt;
+  }
+
+  // src/modules/blackjack/blackjackSolver.js
+  var blackjackSolver_exports = {};
+  __export(blackjackSolver_exports, {
+    RANKS: () => RANKS,
+    TABLE_DEALERS: () => TABLE_DEALERS,
+    bjAdvice: () => bjAdvice,
+    bustChance: () => bustChance,
+    handTotal: () => handTotal,
+    rankValue: () => rankValue,
+    tableRows: () => tableRows
+  });
+  var RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  var rankValue = (r) => r === "A" ? 11 : ["10", "J", "Q", "K"].includes(r) ? 10 : Number(r);
+  function handTotal(ranks) {
+    let t = 0, aces = 0;
+    for (const r of ranks) {
+      if (r === "A") {
+        aces++;
+        t += 1;
+      } else t += rankValue(r);
+    }
+    const soft = aces > 0 && t + 10 <= 21;
+    return { total: soft ? t + 10 : t, soft };
+  }
+  var dealerName = (d) => d === 11 ? "A" : String(d);
+  function decide(total, soft, d) {
+    if (total >= 21) return { action: "STAND", why: total === 21 ? "21 \u2014 stand" : "" };
+    if (soft) {
+      if (total >= 19) return { action: "STAND", why: `soft ${total}: always stand` };
+      if (total === 18) return d <= 8 ? { action: "STAND", why: "soft 18: stand against 2\u20138" } : { action: "HIT", why: "soft 18: hit against 9, 10, A" };
+      return { action: "HIT", why: `soft ${total}: always hit (an ace can't make you bust)` };
+    }
+    if (total >= 17) return { action: "STAND", why: `${total}: always stand` };
+    if (total <= 11) return { action: "HIT", why: `${total}: always hit (no card can make you bust)` };
+    if (total === 12) return d >= 4 && d <= 6 ? { action: "STAND", why: "12: stand against 4\u20136 (the dealer is likely to bust)" } : { action: "HIT", why: "12: hit against 2, 3 and 7\u2013A" };
+    return d <= 6 ? { action: "STAND", why: `${total}: stand against 2\u20136 (the dealer is likely to bust)` } : { action: "HIT", why: `${total}: hit against 7\u2013A` };
+  }
+  function bjAdvice(player, dealer) {
+    if (!player || !player.length) return null;
+    const { total, soft } = handTotal(player);
+    if (total > 21) return { action: null, total, soft, bust: true, why: `${total} \u2014 bust` };
+    if (dealer) {
+      const d = rankValue(dealer);
+      return { ...decide(total, soft, d), total, soft, bust: false, dealer: dealerName(d) };
+    }
+    const all = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((d) => decide(total, soft, d));
+    if (all.every((a) => a.action === all[0].action)) return { ...all[0], total, soft, bust: false };
+    return { action: null, total, soft, bust: false, needsDealer: true, why: "depends on the dealer\u2019s card" };
+  }
+  function bustChance(player) {
+    if (!player || !player.length) return 0;
+    return RANKS.filter((r) => handTotal([...player, r]).total > 21).length / RANKS.length;
+  }
+  var TABLE_DEALERS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  function tableRows() {
+    const rows = [];
+    rows.push({ label: "\u2264 11", total: 11, soft: false });
+    for (let t = 12; t <= 16; t++) rows.push({ label: String(t), total: t, soft: false });
+    rows.push({ label: "17+", total: 17, soft: false });
+    rows.push({ label: "soft \u2264 17", total: 17, soft: true });
+    rows.push({ label: "soft 18", total: 18, soft: true });
+    rows.push({ label: "soft 19+", total: 19, soft: true });
+    return rows.map((r) => ({ ...r, cells: TABLE_DEALERS.map((d) => decide(r.total, r.soft, d).action) }));
+  }
+
+  // src/modules/blackjack/blackjackVision.js
+  var blackjackVision_exports = {};
+  __export(blackjackVision_exports, {
+    GH: () => GH,
+    GW: () => GW,
+    classifyRank: () => classifyRank,
+    decodeShape: () => decodeShape,
+    encodeShape: () => encodeShape,
+    inkGlyph: () => inkGlyph2,
+    readBlackjack: () => readBlackjack,
+    shapeScore: () => shapeScore
+  });
+
+  // src/modules/blackjack/blackjackRefs.js
+  var RANK_REFS = [
+    { rank: "7", font: "game", aspect: 0.75, fp: "399999999997599999999972973333379930320000069710000000698400000001796000000003996000000027992000000059990000000099970000000099930000000099930000000699930000000699720000000699300000000697100000" },
+    { rank: "5", font: "game", aspect: 0.7, fp: "005999999960009999999940009995333300009951000000009930000000009930000000049976666200069999999700046400279972000000039996000000017996464000006996699600039984489731359960029997999920003599995300" },
+    { rank: "6", font: "game", aspect: 0.714, fp: "000001396000000035996000000499932000003998200000015994000000079990000000099999999300299999999950699933339990699900009990699900009996699900009996299900009996099933339990059999999950013799997310" },
+    { rank: "10", font: "dejavu22", aspect: 1.625, fp: "000000000000000000000000000000000000000000000000366200025630479300285494069300790099069300990099069300990099069300790099379530285494666660025630000000000000000000000000000000000000000000000000" },
+    { rank: "2", font: "dejavu22", aspect: 0.688, fp: "006999993000699999999930693000699930630000069993000000069993000000069993000000069993000000069993000000699930000006999300000069993000000699930000006999300000069993000000699999999993699999999993" },
+    { rank: "3", font: "dejavu22", aspect: 0.688, fp: "006999993000699999999930630000699993000000069993000000069993000000069993000000699930006999999300006999999930000000699993000000069993000000006993000000069993000000699993699999999930006999993000" },
+    { rank: "4", font: "dejavu22", aspect: 0.813, fp: "000001333300000015999900000039999900000279999900002797799900003972699900009960699900099600699900996000699900996000699900999999999999666666899966000000699900000000699900000000699900000000233300" },
+    { rank: "5", font: "dejavu22", aspect: 0.75, fp: "099999999900099999999900099000000000099000000000099000000000099000000000099999990000099999999900000000099990000000099990000000009999000000009999000000099990900000099990999999999900009999990000" },
+    { rank: "6", font: "dejavu22", aspect: 0.75, fp: "000009999000009999999990099990000090099900000000999000000000999009999000999999999900999990099990999900009999999900009999999900009999999900009999999900009999099990099990009999999900000099990000" },
+    { rank: "7", font: "dejavu22", aspect: 0.688, fp: "699999999993699999999993000000069993000000069993000000699930000000699930000006999300000006999300000006999300000069993000000069993000000699930000000699930000000699300000006999300000006993000000" },
+    { rank: "8", font: "dejavu22", aspect: 0.75, fp: "000999990000099999999900999900099990999900009990999000009990999900009990099900099990009999999000009999999900999900099990999000009999999000009999999000009999999900099990099999999990000999990000" },
+    { rank: "9", font: "dejavu22", aspect: 0.813, fp: "000133310000003599953100069973379700099720069960699600027990999600006996999600006999099600069999099960069999009999999999000266626990000000027990000000279960033333799700035999953100001333310000" },
+    { rank: "A", font: "dejavu22", aspect: 1.063, fp: "000000000000000000000000000046640000000179971000000399993000000397793000003994499300007990099700009970079900049976679940069866668960179600006971397200002793664000000466000000000000000000000000" },
+    { rank: "J", font: "dejavu22", aspect: 0.35, fp: "000003996000000003996000000003996000000003996000000003996000000003996000000003996000000003996000000003996000000003996000000003996000000003996000000003996000000015994000000479990000000697330000" },
+    { rank: "K", font: "dejavu22", aspect: 0.938, fp: "000000000000333100003331999300049951999300489710999315994000999359970000999799510000999997100000999999510000999799950000999359994000999315998400999300489951999300049995333100003333000000000000" },
+    { rank: "Q", font: "dejavu22", aspect: 0.842, fp: "000000000000002379995200048953379862399600006993399400000999799000000999999000000999999000000999599000000999399600000999289710027993027976689951000069999000000000289710000000027972000000000000" },
+    { rank: "10", font: "dejavu30", aspect: 1.636, fp: "000000000000000000000000000000000000000000000000366200015620779300198794039300591078039300690069039300690069039300591078679760198794666660015620000000000000000000000000000000000000000000000000" },
+    { rank: "2", font: "dejavu30", aspect: 0.682, fp: "135999973100399999999740399999999960260000499993000000059993000000059993000000099982000000499960000005999700000049997100000489932000029998200000289992000000399999999993399999999993399999999993" },
+    { rank: "3", font: "dejavu30", aspect: 0.727, fp: "033999995310099999999970099999999990040000289996000000069996000000179990000333599970000999999310000999999950000333379994000000027996200000006996662000048996699999999994499999999860033999953200" },
+    { rank: "4", font: "dejavu30", aspect: 0.773, fp: "000002666600000009999900000049999900000398899900002796699900007992699900029930699900289710699900596000699900992000699900999999999999999999999999999999999999000000699900000000699900000000466600" },
+    { rank: "5", font: "dejavu30", aspect: 0.773, fp: "266666666640399999999960399999999960399600000000399600000000399866640000399999999920399999999982264000479993000000039997000000039999000000039997660000479993999999999960379999999520000266640000" },
+    { rank: "6", font: "dejavu30", aspect: 0.773, fp: "000006662000003599999971049999999993179974000062399930000000399712662000999999999920999999999982999970028999999930006999799930006999399930006999399970028995049999999982005999999920000046640000" },
+    { rank: "7", font: "dejavu30", aspect: 0.727, fp: "699999999996699999999996699999999996000000069994000000069990000000399930000000599820000000999600000006999400000028999000000039995000000159972000000399930000000999600000002999400000006999000000" },
+    { rank: "8", font: "dejavu30", aspect: 0.773, fp: "000266662000179999999920399999999982399930039993399930039993399930039993047999999740007999999700179976679971799710039997999600006999999600017999999820039999399999999982139999999920000266662000" },
+    { rank: "9", font: "dejavu30", aspect: 0.773, fp: "000266600000029999999500289999999940999820079971999600039993999600039993999600039999999820079999399999999999179999999999000266217993000000059993260000499971399999999700179999995100002666200000" },
+    { rank: "A", font: "dejavu30", aspect: 1, fp: "000000000000000000000000000399960000000499993000001799994000003995797100005991399300006990199500039930099600099953359930199999999970399766668991797100004993996000003997000000000000000000000000" },
+    { rank: "J", font: "dejavu30", aspect: 0.357, fp: "000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000002999000000339997000000999971000000999300000" },
+    { rank: "K", font: "dejavu30", aspect: 0.909, fp: "000000000000666000026662999000179950999002799510999028995000999179950000999799510000999999000000999999200000999689830000999049982000999004999200999000489830999000049982666000004666000000000000" },
+    { rank: "Q", font: "dejavu30", aspect: 0.846, fp: "000000000000002689986200059999999710399820068991799400005993997100003997996000003999996000003999997100003997799400006993299843368971047999999610001379997100000000199500000000028950000000000000" },
+    { rank: "10", font: "lib22", aspect: 1.4, fp: "000000000000000000000000000000000000013100003310279300049972759300092177039300690069039300690069039300690069039300690069039300092177999990049970333330003310000000000000000000000000000000000000" },
+    { rank: "2", font: "lib22", aspect: 0.667, fp: "000099990000039999999930399990099993399930039993133300009993000000009993000000069951000000699510000003996200000039960000001399600000015996000000159990000000399990000000399999999993399999999993" },
+    { rank: "3", font: "lib22", aspect: 0.667, fp: "000099990000039999999930399990099993399930039993133300009993000000009951000006669510000009999300000006699510000000069951000000009993133300009993399930039993399990099993039999999930000099990000" },
+    { rank: "4", font: "lib22", aspect: 0.733, fp: "000000399600000006999600000069999600000069999600000485599600004893399600006951399600048510399600379300399600997200399600995333599733999999999999666666799866000000399600000000399600000000399600" },
+    { rank: "5", font: "lib22", aspect: 0.667, fp: "039999999993039999999993039900000000039900000000039900000000279906666200399969999720399993399972266660069993000000006893000000000693133300003793399930039993399990099993039999999930000099990000" },
+    { rank: "6", font: "lib22", aspect: 0.667, fp: "000009990000003999999930039990099930039930039930279900003310399906666200399969999720399993399972399960069993399900006893399900000693279900003793039930039993039990099993003999999930000099990000" },
+    { rank: "7", font: "lib22", aspect: 0.667, fp: "399999999993399999999993000000009993000000009951000000069930000000099510000000699300000006993100000009990000000039960000000099900000000099900000000099600000000099000000003999000000003999000000" },
+    { rank: "8", font: "lib22", aspect: 0.667, fp: "000099990000039999999930399990009993399930009993399900009993159960009951015996669510003999999300015966669531159900009993399900006893399900003793399900009993399900009993039999999930000099990000" },
+    { rank: "9", font: "lib22", aspect: 0.667, fp: "000099990000039999999930399990099930399930039972399900009993399900009993399900009993399960069993279993399993027999966893002666603793013300009993039930039972039990099930039999999300000099990000" },
+    { rank: "A", font: "lib22", aspect: 0.933, fp: "000000000000000023320000000069960000000489984000000690996000000690096000003970099300015930079300039930039720039976679930099999999930099300003990396000002893996000000699332000000233000000000000" },
+    { rank: "J", font: "lib22", aspect: 0.667, fp: "000009999993000009999993000000099993000000039993000000009993000000009993000000009993000000009993000000009993000000009993132000009993397300039972399930399930399990999930039999999300003999990000" },
+    { rank: "K", font: "lib22", aspect: 0.867, fp: "000000000000990000006990990000069900990000699300990015972000990159720000993599300000999999300000999759720000997215972000992001797200990000699700990000069900990000006990990000000699000000000000" },
+    { rank: "Q", font: "lib22", aspect: 0.789, fp: "000066660000004699996400159740047951399300003993795100001597993000000399993000000399993000000399597200002799399300003995028973379820004699998400000035992000000003994000000000489972000000046620" },
+    { rank: "10", font: "lib30", aspect: 1.429, fp: "000000000000000000000000000000000000003200002310159600038972749600284077209600391069009600690059009600690059009600391069009600284077999996038951333332002300000000000000000000000000000000000000" },
+    { rank: "2", font: "lib30", aspect: 0.667, fp: "000379995200002999999720048995359982069820006993046400006993000000006993000000039960000000599840000004999200000069993000000599640000004995000000048951000000179953333331399999999993399999999993" },
+    { rank: "3", font: "lib30", aspect: 0.667, fp: "000379995200002999999720048995359982289820006993046400006993000000006993000000039960000069997400000069997400000000039960000000006993266400006993399600006993069995359982027999999720002379995200" },
+    { rank: "4", font: "lib30", aspect: 0.714, fp: "000001799930000003999930000007999930000039399930000298299930000696099930003990099930039900099930079500099930099300099930697333399952699999999996699999999996000000099930000000099930000000099930" },
+    { rank: "5", font: "lib30", aspect: 0.714, fp: "099999999930099999999930099933333310099900000000099900000000099906664000099999999300099996699950033330039990000000003996000000003996466200003992699700007990099993399970059999999510013399993100" },
+    { rank: "6", font: "lib30", aspect: 0.667, fp: "000137995200000599999720004995359982069930004640069820000000069600000000399600999000399779999960399995359982399930006993289600000993069820004993069930006993006995359982002999999720000379995200" },
+    { rank: "7", font: "lib30", aspect: 0.667, fp: "399999999993399999999993133333337993000000017960000000039840000000279600000000999000000002997000000006993000000069960000000069840000000289600000000399600000000399600000000399200000000399000000" },
+    { rank: "8", font: "lib30", aspect: 0.714, fp: "001399993100015999999510079933399970099900009990099900009990099900009990039900099930002899998200026899998620099900009990699300007992699300003996699300007992099933339990059999999950013399993310" },
+    { rank: "9", font: "lib30", aspect: 0.667, fp: "000379973200002999999720048995359960179820006993399600006993399600006993399600006993069930017993069976679993006999993993000266402993000000006993004400006971069953599840027999999200002599973000" },
+    { rank: "A", font: "lib30", aspect: 0.952, fp: "000000000000000023310000000069950000000289960000000593793000000993397000004960179000006950069600028930049600039999999930069866668940069200006960399000000982993000000795331000000133000000000000" },
+    { rank: "J", font: "lib30", aspect: 0.619, fp: "000009999990000009999990000003339990000000003990000000003990000000003990000000003990000000003990000000003990000000003990001300005990067900009990099900009990079997399970015999999510001399993100" },
+    { rank: "K", font: "lib30", aspect: 0.905, fp: "000000000000664000004662996000059940996000499500996005997000996069940000996289500000999999500000999779940000998007993000996003997000996000299700996000028920996000006982664000000666000000000000" },
+    { rank: "Q", font: "lib30", aspect: 0.778, fp: "000026660000004999999620059960069990399200002993399000000997795000000399993000000399399000000599399000000995199700002991079973379970000699998400000039952000000003994000000000499990000000046660" },
+    { rank: "10", font: "noto22", aspect: 1.533, fp: "000000000000000000000000000000000000000000000000019600049930599600397493639600571083009600660067009600660067009600571083009600397493009600049930000000000000000000000000000000000000000000000000" },
+    { rank: "2", font: "noto22", aspect: 0.733, fp: "000699960000069999999600999930399960375310159960021000039960000000039960000000279960000000399720000002598400000027984000000279840000002797400000027972000000069930000000999999999999999999999999" },
+    { rank: "3", font: "noto22", aspect: 0.667, fp: "003999999300399999999930039900099993013300039993000000009993000000069951002666693310003999996620002666669951000000009993000000009993000000009993132000039993396000099993399999999930003999990000" },
+    { rank: "4", font: "noto22", aspect: 0.733, fp: "000000399600000006999600000006999600000048999600000485599600000693399600004851399600048510399600379300399600999300399600999533599733999999999999666666799866000000399600000000399600000000399600" },
+    { rank: "5", font: "noto22", aspect: 0.667, fp: "039999999930039999999930039990000000039990000000039930000000039966660000039999996620039933999972026600669993000000009993000000009993000000009993133300339993399900999993399999999930039999990000" },
+    { rank: "6", font: "noto22", aspect: 0.733, fp: "000006999960000699999960006999600000048953200000069510000000689304664000999768998640999995599960999762279973999300027999999300003999999300015986689531159960069993399960006999999600000069996000" },
+    { rank: "7", font: "noto22", aspect: 0.733, fp: "999999999999999999999999000000039960000000039960000000039720000000279600000000399600000004797200000006996000000027984000000069960000000279840000000699600000000699600000006993000000006993000000" },
+    { rank: "8", font: "noto22", aspect: 0.733, fp: "000699960000069999999600069930399960689510159960379300039960069720279720027976797200006999996000027997797200379762279720999300027973999300003999999510135986999930399960069999999600000699996000" },
+    { rank: "9", font: "noto22", aspect: 0.733, fp: "000699960000069999999600999930399960999510159960999300015960999300003986999300027999999766679999689999987986046666643960000000015960000000159960000023599840000069999600069999996000069999600000" },
+    { rank: "A", font: "noto22", aspect: 1, fp: "000000000000000000000000000059990000000099990000000497794000000696696000002760069600006960049600006986669820028999999930159966667951399700003993399300003993799300001597000000000000000000000000" },
+    { rank: "J", font: "noto22", aspect: 0.3, fp: "000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000002993000000268971000000399320000" },
+    { rank: "K", font: "noto22", aspect: 0.8, fp: "666000000666999000006993999000069930999000699900999006999300999009993000999669930000999999900000999999960000999339996000999003999000999000399600999000099960999000039990999000003996333000000333" },
+    { rank: "Q", font: "noto22", aspect: 0.833, fp: "000033330000002399993200028973379820279920025972399300002799599300000399999300000399999300000399399300001599399500003997159940047993017986689951000066687200000000069710000000029972000000003331" },
+    { rank: "10", font: "noto30", aspect: 1.409, fp: "000000000000000000000000000000000000002300003300019900079991498900295295626900590078006900660069006900660069006900390078006900295295006900079991002300003300000000000000000000000000000000000000" },
+    { rank: "2", font: "noto30", aspect: 0.682, fp: "003379973100049999999700069993799940006200039960000000039960000000039960000000059960000000499920000003999300000007997100000049972000001799700000007997100000179993333331399999999993399999999993" },
+    { rank: "3", font: "noto30", aspect: 0.682, fp: "023799973100069999999700069953799940004000039960000000039960000000059940000233399700000699973100000467999520000001359960000000039982000000039993000000039971399533799940399999999700135999973100" },
+    { rank: "4", font: "noto30", aspect: 0.682, fp: "000000299900000002899900000003999900000029999900000069599900000698299900001794099900007990099900029720099900289300099900399766699962399999999993133333799931000000099900000000099900000000099900" },
+    { rank: "5", font: "noto30", aspect: 0.636, fp: "039999999600039999999600039973333200059600000000099600000000099733310000099999953000099999999400026000799930000000179930000000069970000000069970000000289930099337999820099999999400037999733000" },
+    { rank: "6", font: "noto30", aspect: 0.682, fp: "000023799900000489999900002899933300029974000000069930000000069303333100179329999500399789999940399970027993399510003993399300003993289930003993069970027971009997399940007999999700001339973100" },
+    { rank: "7", font: "noto30", aspect: 0.682, fp: "399999999993399999999993133333359993000000039960000000079920000000299900000000699700000000699300000003996000000007972000000009960000000069940000000489900000000699300000001799300000003997100000" },
+    { rank: "8", font: "noto30", aspect: 0.682, fp: "001379973100007999999700049997399940069930039960069930039960049992299940007997799700001799997100005998899500049952299940289510059982399300003993399720027993069993399960049999999940003379973300" },
+    { rank: "9", font: "noto30", aspect: 0.682, fp: "001379973100007999999700049993799900179720039960399300015982399300003993399510015993179970479993049999987993003799523993000233103971000000039960000000479920003339999300009999986200009997320000" },
+    { rank: "A", font: "noto30", aspect: 0.909, fp: "000000000000000026640000000069993000000179795000000399399000000993289200002993069600006971069820017960039930039986679950059999999960069820004993289600000995399200000599666000000266000000000000" },
+    { rank: "J", font: "noto30", aspect: 0.321, fp: "000000696000000000696000000000696000000000696000000000696000000000696000000000696000000000696000000000696000000000696000000000696000000000696000000000696000000005994000000469990000000699510000" },
+    { rank: "K", font: "noto30", aspect: 0.727, fp: "699000002996699000048992699000289950699000599600699004999200699039972000699159820000699799820000699999951000699737993000699206997000699000799600699000399820699000069990699000048992699000002996" },
+    { rank: "Q", font: "noto30", aspect: 0.741, fp: "002379973000028997799620289731159960599400004993999000000995995000000999993000000999995000000999999000000999599400004993289720159960029986799920002379999200000000289700000000059940000000017982" },
+    { rank: "10", font: "notoxb22", aspect: 1.533, fp: "000000000000000000000000000000000000000000000000019600049930599600397693959600582095309600660099009600660099009600582095009600397693009600049930000000000000000000000000000000000000000000000000" },
+    { rank: "2", font: "notoxb22", aspect: 0.733, fp: "000699960000069999999600999999999960379533359960023100039960000000039960000000279960000004799720000027998400000279984000002799840000027997400000379995333333999999999999999999999999999999999999" },
+    { rank: "3", font: "notoxb22", aspect: 0.733, fp: "006999996000999999999960069999999960023333359960000000039960000466679720004899973200006999986400004666799720000000279973000000039999000000039986333333359960999999999960999999999600069999960000" },
+    { rank: "4", font: "notoxb22", aspect: 0.733, fp: "000000399600000006999600000006999600000048999600000489999600004895599600006951399600048930399600379720399600999533599733999999999999999999999999666666799866000000399600000000399600000000399600" },
+    { rank: "5", font: "notoxb22", aspect: 0.667, fp: "039999999930039999999930039999999930039993333310039990000000039996666200039999999720039999999972026666669993000000009993000000009993000000009993133333339993399999999993399999999930003999990000" },
+    { rank: "6", font: "notoxb22", aspect: 0.733, fp: "000006999960000699999960006999999960048953333320069930000000689514664000999768998640999999999960999976679973999720027999999300015999999510039999689953359986069999999960006999999600000069996000" },
+    { rank: "7", font: "notoxb22", aspect: 0.733, fp: "999999999999999999999999999999999999333333359973000000279960000000399720000004799600000006997200000006996000000027984000000069960000000279960000000699840000000699600000006999600000006993000000" },
+    { rank: "8", font: "notoxb22", aspect: 0.733, fp: "000699996000069999999600069999999960689953359960379930039960069972279960027997799720006999997200027999997320379976679960999720027973999300015999999533359986999999999960069999999960000699996000" },
+    { rank: "9", font: "notoxb22", aspect: 0.733, fp: "000699960000069999999600999999999960999953359960999510039986999300039999999720039999999976679999689999987999046897655986000462039960000000159960023333599840069999999600069999996000069999600000" },
+    { rank: "A", font: "notoxb22", aspect: 1, fp: "000000000000000000000000000099992000000099996000000497796000000696698400002796069600006984069710028960029930039986669930159999999993399966667993399500003997799300003999000000000000000000000000" },
+    { rank: "J", font: "notoxb22", aspect: 0.3, fp: "000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000000993000000002993000000137993000000399971000000395320000" },
+    { rank: "K", font: "notoxb22", aspect: 0.8, fp: "666000000666999000006993999000069990999000699930999006999300999009993000999669990000999999990000999999996000999939999000999303999600999000399900999000099960999000039996999000009999333000003333" },
+    { rank: "Q", font: "notoxb22", aspect: 0.833, fp: "000033330000002399993310028999999972279933339993399700003999599300003999999300003999999300003999399500003999399900005997159966669993017999999951000066689710000000069930000000029972000000003331" },
+    { rank: "10", font: "notoxb30", aspect: 1.409, fp: "000000000000000000000000000000000000002310003300019930079991499930297496776930390099106930690099006930690099006930390099006930297496006930079991002310003300000000000000000000000000000000000000" },
+    { rank: "2", font: "notoxb30", aspect: 0.682, fp: "003379973100049999999700069999999940049720079971003100039993000000059960000000099960000000499920000005999700000049997100000489972000005999700000009997100000179999999993399999999993399999999993" },
+    { rank: "3", font: "notoxb30", aspect: 0.682, fp: "023799973100069999999740069999999960006200079960000000039960000000299940000233799700000699973100000699999520000233399960000000059982000000039993220000079993399999999940399999999700135999973100" },
+    { rank: "4", font: "notoxb30", aspect: 0.727, fp: "000000599600000004999600000006999600000159999600000399999600002997399600006993399600028971399600099600399600499200399600699666799864699999999996699999999996000000399600000000399600000000399600" },
+    { rank: "5", font: "notoxb30", aspect: 0.636, fp: "039999999600039999999600039999999600099960000000099960000000099973310000099999953000099999999400066666799930000000179970000000069990000000069990040000289950099999999820099999999400037999733000" },
+    { rank: "6", font: "notoxb30", aspect: 0.682, fp: "000023799960000489999960002899999960029994000000069950000000069933797300179959999920399999999960399970039993399930015993399930003993289930015993069970039993009999999960007999999740001339973100" },
+    { rank: "7", font: "notoxb30", aspect: 0.682, fp: "399999999993399999999993399999999993000000059960000000099960000000299900000000699700000002899300000005998200000009996000000009972000000069960000000489920000001799700000003999300000003999300000" },
+    { rank: "8", font: "notoxb30", aspect: 0.682, fp: "001379973300007999999940049999999960069970079960069930039960049993399940007999999700001799997100005999999500049993399940289950059982399930003993399930027993069999999982049999999940003379997300" },
+    { rank: "9", font: "notoxb30", aspect: 0.682, fp: "001379973100007999999700049999999940179970079971399930039993399930039993399950059993179996699993049999987993003799523993000233127993000000059960000000499920009999999700009999986200009999520000" },
+    { rank: "A", font: "notoxb30", aspect: 0.955, fp: "000000000000000033330000000099990000000499996000000696697000000996499000000992099400006990079600017960069930039999999950079999999990099933335992399300003993599300002999333100000333000000000000" },
+    { rank: "J", font: "notoxb30", aspect: 0.357, fp: "000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000999000000000995000000002993000000337993000000999971000000999300000" },
+    { rank: "K", font: "notoxb30", aspect: 0.773, fp: "664000026666996000059982996000499960996001799700996007995100996049993000997379940000999999900000999999960000999959982000998407999300996002899500996000699900996000099971996000059993664000026666" },
+    { rank: "Q", font: "notoxb30", aspect: 0.741, fp: "002379973200028999999820289953359982599600006993999000000999999000000999999000000999999000000999999000000999599600006993289953359982029999999920002379999200000000289700000000059951000000017997" }
+  ];
+
+  // src/modules/blackjack/blackjackVision.js
+  var isWhite = (r, g, b) => Math.min(r, g, b) > 225;
+  var isBack = (r, g, b) => b > g && g > r + 15 && b - r > 35 && Math.max(r, g, b) < 115;
+  var isRed = (r, g, b) => r > 170 && g < 110 && b < 140;
+  var isInk4 = (r, g, b) => Math.max(r, g, b) < 120 || isRed(r, g, b);
+  function blobs(mask, W2, H, minArea) {
+    const seen = new Uint8Array(W2 * H), stack = new Int32Array(W2 * H), out = [];
+    for (let p0 = 0; p0 < W2 * H; p0++) {
+      if (!mask[p0] || seen[p0]) continue;
+      let sp = 0, n = 0, x0 = W2, x1 = -1, y0 = H, y1 = -1;
+      stack[sp++] = p0;
+      seen[p0] = 1;
+      while (sp) {
+        const p = stack[--sp], x = p % W2, y = (p - x) / W2;
+        n++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+        if (x > 0 && mask[p - 1] && !seen[p - 1]) {
+          seen[p - 1] = 1;
+          stack[sp++] = p - 1;
+        }
+        if (x < W2 - 1 && mask[p + 1] && !seen[p + 1]) {
+          seen[p + 1] = 1;
+          stack[sp++] = p + 1;
+        }
+        if (y > 0 && mask[p - W2] && !seen[p - W2]) {
+          seen[p - W2] = 1;
+          stack[sp++] = p - W2;
+        }
+        if (y < H - 1 && mask[p + W2] && !seen[p + W2]) {
+          seen[p + W2] = 1;
+          stack[sp++] = p + W2;
+        }
+      }
+      if (n >= minArea) out.push({ x0, y0, x1: x1 + 1, y1: y1 + 1, n });
+    }
+    return out;
+  }
+  var inkGlyph2 = (data, W2, x0, y0, x1, y1, ink = isInk4) => inkGlyph(data, W2, x0, y0, x1, y1, ink);
+  var refCache3 = null;
+  var builtIn2 = () => refCache3 = refCache3 || RANK_REFS.map((r) => ({ rank: r.rank, aspect: r.aspect, v: decodeShape(r.fp) }));
+  function classifyRank(glyph, learned = {}) {
+    const refs = builtIn2().concat(Object.entries(learned).flatMap(([rank2, list]) => list.map((fp) => ({ rank: rank2, aspect: glyph.aspect, v: decodeShape(fp) }))));
+    const best = {};
+    for (const r of refs) {
+      const s = shapeScore(glyph.v, r.v) - 0.5 * Math.abs(Math.log(glyph.aspect / r.aspect));
+      if (!(r.rank in best) || s > best[r.rank]) best[r.rank] = s;
+    }
+    const ranked = Object.entries(best).sort((a, b) => b[1] - a[1]);
+    if (!ranked.length) return { rank: null, score: 0, margin: 0 };
+    const [rank, score] = ranked[0];
+    const other = ranked.find(([r]) => rankValue(r) !== rankValue(rank));
+    return { rank, score, margin: other ? score - other[1] : 1 };
+  }
+  function readBlackjack(data, W2, H, learned = {}) {
+    const white = new Uint8Array(W2 * H), back = new Uint8Array(W2 * H);
+    for (let p = 0, i = 0; p < W2 * H; p++, i += 4) {
+      if (isWhite(data[i], data[i + 1], data[i + 2])) white[p] = 1;
+      else if (isBack(data[i], data[i + 1], data[i + 2])) back[p] = 1;
+    }
+    const minArea = W2 * H * 0.012;
+    const cardLike = (b) => {
+      const r = (b.y1 - b.y0) / (b.x1 - b.x0);
+      return r > 1.1 && r < 1.9;
+    };
+    const up = blobs(white, W2, H, minArea * 0.6).filter((b) => cardLike(b) && b.n > (b.x1 - b.x0) * (b.y1 - b.y0) * 0.6);
+    const down = blobs(back, W2, H, minArea * 0.3).filter((b) => cardLike(b));
+    if (!up.length && !down.length) return { ok: false, reason: "no cards found" };
+    const faceUp = up.map((b) => {
+      const w = b.x1 - b.x0, h = b.y1 - b.y0;
+      const rx0 = b.x0 + 1, rx1 = b.x0 + Math.round(w * 0.6), ry0 = b.y0 + 1, ry1 = b.y0 + Math.round(h * 0.6);
+      let top = -1, bottom = -1, red = 0, dark = 0;
+      for (let y = ry0; y < ry1; y++) {
+        let n = 0;
+        for (let x = rx0; x < rx1; x++) {
+          const p = (y * W2 + x) * 4;
+          if (isInk4(data[p], data[p + 1], data[p + 2])) {
+            n++;
+            if (isRed(data[p], data[p + 1], data[p + 2])) red++;
+            else dark++;
+          }
+        }
+        if (n && top < 0) top = y;
+        if (n) bottom = y;
+        if (!n && top >= 0 && y - bottom > Math.max(1, h * 0.02)) break;
+      }
+      const glyph = top >= 0 ? inkGlyph2(data, W2, rx0, top, rx1, bottom + 1) : null;
+      const c = glyph ? classifyRank(glyph, learned) : { rank: null, score: 0, margin: 0 };
+      return { box: b, glyph, red: red > dark, ...c };
+    });
+    const all = faceUp.map((c) => ({ ...c, cy: (c.box.y0 + c.box.y1) / 2 }));
+    const rowH = all.length ? Math.max(...all.map((c) => c.box.y1 - c.box.y0)) * 0.5 : 0;
+    all.sort((a, b) => Math.abs(a.cy - b.cy) < rowH ? a.box.x0 - b.box.x0 : a.cy - b.cy);
+    let row = 0;
+    all.forEach((c, i) => {
+      if (i && Math.abs(c.cy - all[i - 1].cy) >= rowH) row++;
+      c.row = row;
+    });
+    return { ok: true, faceUp: all, faceDown: down.length, defuser: down.length > 0 };
+  }
+
+  // src/core/sectionsData.js
+  var sectionsData_exports = {};
+  __export(sectionsData_exports, {
+    KNOWN_MODULE_NAMES: () => KNOWN_MODULE_NAMES,
+    SECTIONS_DATA: () => SECTIONS_DATA,
+    SECTIONS_RAW: () => SECTIONS_RAW
+  });
+  var KNOWN_MODULE_NAMES = {
+    // Implemented modules in bomb_boomed:
+    "Maze": { id: "maze", isImplemented: true, shared: true },
+    "Password": { id: "password", isImplemented: true, shared: true },
+    "Switches": { id: "switches", isImplemented: true },
+    "Search": { id: "search", isImplemented: true },
+    "Knobs": { id: "knob", isImplemented: true },
+    "Piano": { id: "piano", isImplemented: true, shared: true },
+    "Who's On First": { id: "wof", isImplemented: true, shared: true },
+    "Wire Sequences": { id: "wireseq", isImplemented: true, shared: true },
+    "Complex Wires": { id: "complexwires", isImplemented: true },
+    "Logic": { id: "logic", isImplemented: true },
+    "Chess": { id: "chess", isImplemented: true, shared: true },
+    "Mines": { id: "mines", isImplemented: true },
+    "Symbols": { id: "symbols", isImplemented: true, shared: true },
+    "Simon Says": { id: "simons", isImplemented: true, shared: true },
+    "Rubik's Cube": { id: "cube", isImplemented: true },
+    "Diagram": { id: "diagram", isImplemented: true, shared: true },
+    "Morse Code": { id: "morse", isImplemented: true, shared: true },
+    "Queens": { id: "queens", isImplemented: true },
+    "The Button": { id: "button", isImplemented: true, shared: true },
+    "Balance": { id: "balance", isImplemented: true },
+    "Circuit": { id: "circuit", isImplemented: true, shared: true },
+    "Limbo": { id: "limbo", isImplemented: true },
+    "Astrology": { id: "astrology", isImplemented: true, shared: true },
+    "Pipes": { id: "pipes", isImplemented: true },
+    "Hangman": { id: "hangman", isImplemented: true },
+    "Blackjack": { id: "blackjack", isImplemented: true },
+    "Batteries": { id: "batteries", isImplemented: true, shared: true },
+    "Wire Placement": { id: "wireplace", isImplemented: true, shared: true },
+    "Laundry": { id: "laundry", isImplemented: true },
+    "Battleship": { id: "battleship", isImplemented: true },
+    // Modules not yet implemented or KTANE/GTA variants:
+    // "Wires" is standard regular wires (or complex wires as fallback if desired, but as a distinct module it's missing)
+    "Wires": { id: "wires", isImplemented: false, shared: true },
+    "Memory": { id: "memory", isImplemented: false, shared: true },
+    "Pressure": { id: "pressure", isImplemented: false },
+    "Breaker": { id: "breaker", isImplemented: false },
+    // on the boards, no solver yet
+    "Bluescreen": { id: "bluescreen", isImplemented: false },
+    "Echo": { id: "echo", isImplemented: false },
+    "The Eye": { id: "theeye", isImplemented: false }
+  };
+  var SECTIONS_RAW = [
+    {
+      title: "Section 1",
+      missions: [
+        { id: "1.1", label: "1.1", modules: ["The Button", "Wires", "Switches"] },
+        { id: "1.2", label: "1.2", modules: ["Wires", "Memory", "The Button"] },
+        { id: "1.3", label: "1.3", modules: ["Maze", "Password", "Wires"] },
+        { id: "1.4", label: "1.4", modules: ["Symbols", "Search", "The Button"] }
+      ]
+    },
+    {
+      title: "Section 2",
+      missions: [
+        { id: "2.1", label: "2.1", modules: ["The Button", "Memory", "Password"] },
+        { id: "2.2", label: "2.2", modules: ["Logic", "Balance", "Diagram"] },
+        { id: "2.3", label: "2.3", modules: ["Password", "Memory", "Switches", "Diagram"] },
+        { id: "2.4", label: "2.4", modules: ["Wires", "The Button", "Switches"] },
+        { id: "2.5", label: "2.5", modules: ["Wires", "The Button", "Memory", "Logic", "Password", "Switches"] }
+      ]
+    },
+    {
+      title: "Section 3",
+      missions: [
+        { id: "3.1", label: "3.1", modules: ["Wire Sequences", "Wires", "The Button"] },
+        { id: "3.2", label: "3.2", modules: ["Wire Sequences", "Memory", "Simon Says", "Search"] },
+        { id: "3.3", label: "3.3", modules: ["Simon Says", "The Button", "Wires", "Switches"] },
+        { id: "3.4", label: "3.4", modules: ["Wire Sequences", "Search", "Memory", "Circuit", "Symbols"] },
+        { id: "3.5", label: "3.5", modules: ["Simon Says", "Simon Says", "Wire Sequences", "Memory"] },
+        { id: "3.6", label: "3.6", modules: ["Memory", "Simon Says", "Wire Sequences", "The Button", "Maze", "Switches", "Search", "Balance"] }
+      ]
+    },
+    {
+      title: "Section 4",
+      missions: [
+        { id: "4.1", label: "4.1", modules: ["The Button", "The Button", "Wires", "Wires", "Switches", "Switches"] },
+        { id: "4.2", label: "4.2", modules: ["Maze", "Maze", "Memory", "Search"] },
+        { id: "4.3", label: "4.3", modules: ["Memory", "Memory", "Memory", "The Button", "Switches", "Diagram", "Maze", "Search", "Wires"] },
+        { id: "4.4", label: "4.4", modules: ["Password", "Password", "Memory", "Memory", "The Button", "The Button"] },
+        { id: "4.5", label: "4.5", modules: ["Diagram", "Diagram", "Logic", "Logic", "Balance", "Balance"] },
+        { id: "4.6", label: "4.6", modules: ["Simon Says", "Simon Says", "Simon Says", "Simon Says", "Simon Says", "Simon Says"] }
+      ]
+    },
+    {
+      title: "Section 5",
+      missions: [
+        { id: "5.1", label: "5.1", modules: ["Pressure", "Wires", "The Button", "Switches", "Memory", "Password"] },
+        { id: "5.2", label: "5.2", modules: ["Breaker", "Wires", "The Button", "Switches", "Memory", "Maze"] },
+        { id: "5.3", label: "5.3", modules: ["Knobs", "Wires", "The Button", "Switches", "Password", "Search"] },
+        { id: "5.4", label: "5.4", modules: ["Pressure", "Breaker", "Knobs", "Memory", "Search", "Maze", "Switches", "The Button", "Wire Sequences"] },
+        { id: "5.5", label: "5.5", modules: ["Pressure", "Breaker", "Wire Sequences", "Simon Says", "Logic", "Balance", "Symbols"] },
+        { id: "5.6", label: "5.6", modules: ["Pressure", "Memory", "Password", "Wire Sequences"] }
+      ]
+    },
+    {
+      title: "Section 6",
+      missions: [
+        { id: "6.1", label: "6.1", modules: ["Piano", "Piano", "Pressure", "Symbols", "Memory", "Wires"] },
+        { id: "6.2", label: "6.2", modules: ["Morse Code", "Morse Code", "Breaker", "Search", "Password", "The Button"] },
+        { id: "6.3", label: "6.3", modules: ["Who's On First", "Simon Says", "Memory", "Wire Sequences", "Maze", "Search"] },
+        { id: "6.4", label: "6.4", modules: ["Chess", "Chess", "Chess", "Chess", "Chess", "Knobs"] },
+        { id: "6.5", label: "6.5", modules: ["Rubik's Cube", "Password", "Piano", "Morse Code", "Wire Sequences", "Logic"] },
+        { id: "6.6", label: "6.6", modules: ["Rubik's Cube", "Piano", "Morse Code", "Symbols", "Wire Sequences", "Simon Says"] },
+        { id: "6.7", label: "6.7", modules: ["Piano", "Piano", "Morse Code", "Morse Code", "Rubik's Cube", "Symbols", "Logic", "Diagram", "Wire Sequences"] },
+        { id: "6.8", label: "6.8", modules: ["Memory", "Memory", "Memory", "Logic", "Logic", "Wire Sequences", "Wire Sequences", "Breaker"] }
+      ]
+    },
+    {
+      title: "Section 7",
+      missions: [
+        { id: "7.1", label: "7.1", modules: ["Maze", "Maze", "Maze", "Maze", "Maze", "Maze", "Maze", "Maze"] },
+        { id: "7.2", label: "7.2", modules: ["Wire Sequences", "Wire Sequences", "Wire Sequences", "Wire Sequences", "Wire Sequences", "Wire Sequences"] },
+        { id: "7.3", label: "7.3", modules: ["Password", "Password", "Password", "Password", "Password", "Password", "Password", "Password", "Password"] },
+        { id: "7.4", label: "7.4", modules: ["Pressure", "Memory", "Wire Sequences", "Password", "Morse Code", "Search", "Diagram", "Maze", "Piano", "Logic", "Circuit", "Knobs", "Symbols", "Simon Says", "Rubik's Cube", "Chess"] }
+      ]
+    }
+  ];
+  var SECTIONS_DATA = SECTIONS_RAW.map((sec) => ({
+    ...sec,
+    missions: sec.missions.map((m) => ({
+      ...m,
+      modules: m.modules.filter((name) => KNOWN_MODULE_NAMES[name] && KNOWN_MODULE_NAMES[name].isImplemented)
+    }))
+  }));
+
+  // src/modules/batteries/batteriesSolver.js
+  var batteriesSolver_exports = {};
+  __export(batteriesSolver_exports, {
+    BATTERY_KINDS: () => BATTERY_KINDS,
+    BOMB_START: () => BOMB_START,
+    SAMPLE_BATTERIES: () => SAMPLE_BATTERIES,
+    SAMPLE_TABLE: () => SAMPLE_TABLE,
+    cellKey: () => cellKey,
+    describeCondition: () => describeCondition,
+    describeWindows: () => describeWindows,
+    digitsLabel: () => digitsLabel,
+    evalCondition: () => evalCondition,
+    fmtClock: () => fmtClock,
+    fmtVolts: () => fmtVolts,
+    kindLabel: () => kindLabel,
+    matchModuleName: () => matchModuleName,
+    oddVolts: () => oddVolts,
+    parseCell: () => parseCell,
+    parseCondition: () => parseCondition,
+    showsDigits: () => showsDigits,
+    solveBatteries: () => solveBatteries,
+    splitWords: () => splitWords,
+    timerWindows: () => timerWindows
+  });
+  var BATTERY_KINDS = {
+    yellow: { label: "Yellow", volts: 1.5, round: true, size: 1 },
+    orange: { label: "Orange", volts: 1.5, round: true, size: 2 },
+    red: { label: "Red", volts: 1.5, round: true, size: 3 },
+    blue: { label: "Blue", volts: 1.5, round: true, size: 4 },
+    green: { label: "Green", volts: 1.5, round: true, size: 2.5 },
+    purple: { label: "9V", volts: 9, round: false, size: 3.5 }
+  };
+  var fmtVolts = (v) => `${Math.round(v * 100) / 100}V`;
+  var digitsLabel = (d) => d.length === 1 ? `${d[0]}` : d.slice(0, -1).join(", ") + " and " + d[d.length - 1];
+  var ALIASES2 = {
+    "who's on first": "Who's On First",
+    "whos on first": "Who's On First",
+    "wof": "Who's On First",
+    "morse": "Morse Code",
+    "simon": "Simon Says",
+    "button": "The Button",
+    "wire sequence": "Wire Sequences",
+    "wire seq": "Wire Sequences",
+    "rubiks cube": "Rubik's Cube",
+    "cube": "Rubik's Cube",
+    "knob": "Knobs"
+  };
+  var NAMES = Object.keys(KNOWN_MODULE_NAMES);
+  var squash = (s) => String(s || "").toLowerCase().replace(/[’`]/g, "'").replace(/[^a-z' ]/g, " ").replace(/\s+/g, " ").trim();
+  function lev2(a, b) {
+    const m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const cur = [i];
+      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function matchModuleName(text) {
+    const t = squash(text);
+    if (!t) return { name: "", sure: false };
+    const cands = [...NAMES.map((n) => [squash(n), n]), ...Object.entries(ALIASES2)];
+    let best = null;
+    for (const [k, name] of cands) {
+      const kk = k.replace(/'/g, ""), tt = t.replace(/'/g, "");
+      const d = lev2(tt, kk) / Math.max(kk.length, tt.length);
+      if (!best || d < best.d) best = { d, name };
+    }
+    return best && best.d <= 0.45 ? { name: best.name, sure: best.d <= 0.25 } : { name: text.trim(), sure: false };
+  }
+  var NUM2 = "(\\d+(?:[.,]\\d+)?)";
+  var WORDS = [
+    "batteries",
+    "battery",
+    "biggest",
+    "largest",
+    "smallest",
+    "tallest",
+    "shortest",
+    "exactly",
+    "without",
+    "greater",
+    "minimum",
+    "maximum",
+    "higher",
+    "contains",
+    "fewer",
+    "total",
+    "under",
+    "below",
+    "above",
+    "round",
+    "least",
+    "lower",
+    "volts",
+    "less",
+    "more",
+    "most",
+    "over",
+    "than",
+    "only",
+    "none",
+    "with",
+    "volt",
+    "has",
+    "and",
+    "any",
+    "or",
+    "at",
+    "no"
+  ].sort((a, b) => b.length - a.length);
+  function splitWords(text) {
+    const s = String(text || "").toLowerCase().replace(/[’`]/g, "'").replace(/(\d)\s*,\s*(\d)/g, "$1.$2").replace(/\s+/g, "");
+    const out = [];
+    let i = 0;
+    while (i < s.length) {
+      const num2 = s.slice(i).match(/^\d+(?:\.\d+)?(?:volts?|v)?/);
+      if (num2) {
+        out.push(num2[0].replace(/volts?$/, "v"));
+        i += num2[0].length;
+        continue;
+      }
+      const w = WORDS.find((x) => s.startsWith(x, i));
+      if (w) {
+        out.push(w);
+        i += w.length;
+        continue;
+      }
+      if (out.length && out[out.length - 1].startsWith("~")) out[out.length - 1] += s[i];
+      else out.push("~" + s[i]);
+      i++;
+    }
+    return out.map((w) => w.startsWith("~") ? w.slice(1) : w).join(" ").replace(/\s*:\s*/g, " ").trim();
+  }
+  function parseCondition(text, icon = null) {
+    let t = splitWords(text);
+    t = t.replace(/\b[o]v\b/g, "0v").replace(/\bsv\b/g, "5v");
+    const op = /\b(under|below|less than|fewer than|lower than)\b/.test(t) ? "<" : /\b(over|above|more than|greater than|higher than)\b/.test(t) ? ">" : /\b(at least|or more|minimum)\b|\+/.test(t) ? ">=" : /\b(at most|or less|or fewer|maximum)\b/.test(t) ? "<=" : "=";
+    const round = /\bround\b/.test(t);
+    if (/\b(biggest|largest|tallest)\b/.test(t)) return { type: "biggest", color: icon, round };
+    if (/\b(smallest|shortest)\b/.test(t)) return { type: "smallest", color: icon, round };
+    const volts = t.match(new RegExp(NUM2 + "v\\b"));
+    if (volts) return { type: "volts", op, v: Number(volts[1]) };
+    const num2 = t.match(new RegExp("\\b" + NUM2 + "\\b"));
+    if (/^(no|without|none)\b/.test(t) && icon) return { type: "count", op: "=", n: 0, color: icon };
+    if (num2 && (/batter/.test(t) || icon)) return { type: "count", op, n: Number(num2[1]), color: /batter/.test(t) && !icon ? null : icon };
+    if (/^(has|with|contains|any)\b/.test(t) && icon) return { type: "count", op: ">=", n: 1, color: icon };
+    if (/^no\b/.test(t) && /batter/.test(t)) return { type: "count", op: "=", n: 0, color: null };
+    if (icon && /^[a-z0-9]{2,4}$/.test(t)) {
+      const near2 = [["has", ">=", 1], ["no", "=", 0]].filter(([w]) => lev2(t, w) <= 1 && t[0] === w[0]);
+      if (near2.length === 1) return { type: "count", op: near2[0][1], n: near2[0][2], color: icon };
+    }
+    return { type: "unknown" };
+  }
+  var oddVolts = (cond) => Boolean(cond && cond.type === "volts" && Math.abs(cond.v / 1.5 - Math.round(cond.v / 1.5)) > 1e-6);
+  var cmp = (a, op, b) => op === "<" ? a < b : op === ">" ? a > b : op === "<=" ? a <= b : op === ">=" ? a >= b : Math.abs(a - b) < 1e-9;
+  var opWord = { "<": "under", ">": "over", "<=": "at most", ">=": "at least", "=": "exactly" };
+  var kindLabel = (c) => c ? BATTERY_KINDS[c] ? BATTERY_KINDS[c].label : c : "?";
+  function describeCondition(c) {
+    if (!c || c.type === "unknown") return "not understood";
+    if (c.type === "volts") return `total ${opWord[c.op]} ${fmtVolts(c.v)}`;
+    if (c.type === "count") {
+      const what = c.color ? `${kindLabel(c.color)} batter${c.n === 1 ? "y" : "ies"}` : `batter${c.n === 1 ? "y" : "ies"}`;
+      if (c.op === ">=" && c.n === 1 && c.color) return `has a ${kindLabel(c.color)} battery`;
+      if (c.op === "=" && c.n === 0) return `no ${c.color ? kindLabel(c.color) + " " : ""}batteries`;
+      return `${opWord[c.op]} ${c.n} ${what}`;
+    }
+    return `${c.type} ${c.round ? "round " : ""}battery is ${kindLabel(c.color)}`;
+  }
+  function evalCondition(c, batteries) {
+    if (!c || c.type === "unknown") return null;
+    const list = batteries || [];
+    if (c.type === "volts") return cmp(list.reduce((a, b) => a + (Number(b.volts) || 0), 0), c.op, c.v);
+    if (c.type === "count") return cmp(c.color ? list.filter((b) => b.color === c.color).length : list.length, c.op, c.n);
+    if (!c.color) return null;
+    const pool2 = c.round ? list.filter((b) => b.round) : list;
+    if (!pool2.length) return false;
+    const measured = pool2.every((b) => b.size != null);
+    const size = (b) => measured ? b.size : (BATTERY_KINDS[b.color] || {}).size || 0;
+    const sizes = pool2.map(size);
+    const target = c.type === "biggest" ? Math.max(...sizes) : Math.min(...sizes);
+    const top = pool2.filter((b, i) => Math.abs(sizes[i] - target) <= Math.abs(target) * 0.04);
+    if (top.every((b) => b.color === c.color)) return true;
+    if (top.every((b) => b.color !== c.color)) return false;
+    return null;
+  }
+  var colName = (table, i) => table.modules[i] && table.modules[i].trim() || `Column ${i + 1}`;
+  function solveBatteries(table, batteries, overrides = {}) {
+    const rows = table && table.rows || [];
+    const n = table && table.modules.length || 0;
+    const info = rows.map((r, i) => {
+      const cond = r.cond || parseCondition(r.text, r.icon);
+      const auto = evalCondition(cond, batteries);
+      const truth = overrides[i] === true || overrides[i] === false ? overrides[i] : auto;
+      return { cond, auto, truth };
+    });
+    const mods = Array.from({ length: n }, (_, i) => ({ i, name: colName(table, i), digits: /* @__PURE__ */ new Set(), any: false, after: /* @__PURE__ */ new Set(), before: /* @__PURE__ */ new Set(), rows: [] }));
+    info.forEach((ri, r) => {
+      if (ri.truth !== true) return;
+      const cells = rows[r].cells || [];
+      const ends = {};
+      cells.forEach((c, j) => {
+        if (!c || j >= n) return;
+        mods[j].rows.push(r);
+        if (c.kind === "digit" && c.digit != null) mods[j].digits.add(Number(c.digit));
+        else if (c.kind === "any") mods[j].any = true;
+        else if (c.kind === "first" || c.kind === "then") {
+          const k = c.pair || "pair";
+          (ends[k] = ends[k] || { first: [], then: [] })[c.kind].push(j);
+        }
+      });
+      for (const { first, then } of Object.values(ends)) {
+        for (const a of first) for (const b of then) if (a !== b) {
+          mods[a].before.add(b);
+          mods[b].after.add(a);
+        }
+      }
+    });
+    const inOrder = mods.filter((m) => m.before.size || m.after.size);
+    const indeg = new Map(inOrder.map((m) => [m.i, m.after.size]));
+    const level = /* @__PURE__ */ new Map();
+    const queue = inOrder.filter((m) => !m.after.size).map((m) => m.i);
+    queue.forEach((i) => level.set(i, 0));
+    const done = [];
+    while (queue.length) {
+      const i = queue.shift();
+      done.push(i);
+      for (const j of mods[i].before) {
+        level.set(j, Math.max(level.get(j) || 0, level.get(i) + 1));
+        indeg.set(j, indeg.get(j) - 1);
+        if (indeg.get(j) === 0) queue.push(j);
+      }
+    }
+    const cycle = done.length < inOrder.length ? inOrder.filter((m) => !done.includes(m.i)).map((m) => m.name) : null;
+    const comp = /* @__PURE__ */ new Map();
+    let nc = 0;
+    for (const m of inOrder) {
+      if (comp.has(m.i)) continue;
+      const st = [m.i];
+      comp.set(m.i, nc);
+      while (st.length) {
+        const k = st.pop();
+        for (const j of [...mods[k].before, ...mods[k].after]) if (!comp.has(j)) {
+          comp.set(j, nc);
+          st.push(j);
+        }
+      }
+      nc++;
+    }
+    const chains = [];
+    for (let c = 0; c < nc; c++) {
+      const members = inOrder.filter((m) => comp.get(m.i) === c && level.has(m.i));
+      const lv = [];
+      for (const m of members) (lv[level.get(m.i)] = lv[level.get(m.i)] || []).push(m.name);
+      if (lv.length) chains.push(lv.filter(Boolean));
+    }
+    const timer = mods.filter((m) => m.digits.size).map((m) => ({ name: m.name, digits: [...m.digits].sort((a, b) => a - b) }));
+    const free = mods.filter((m) => !m.digits.size && !m.before.size && !m.after.size).map((m) => m.name);
+    const unknownRows = info.map((r, i) => r.truth === null ? i : -1).filter((i) => i >= 0);
+    const named = (name) => {
+      const t = timer.find((x) => x.name === name);
+      return t ? `${name} (${digitsLabel(t.digits)} on timer)` : name;
+    };
+    const parts = chains.map((lv) => lv.map((l) => l.map(named).join(" + ")).join(" \u2192 "));
+    const loose = timer.filter((t) => !inOrder.some((m) => m.name === t.name)).map((t) => named(t.name));
+    const copy = [...parts, ...loose, free.length ? `any time: ${free.join(", ")}` : ""].filter(Boolean).join(" \xB7 ");
+    return {
+      rows: info,
+      plan: mods.map((m) => ({ name: m.name, digits: [...m.digits].sort((a, b) => a - b), any: m.any, before: [...m.before].map((j) => mods[j].name), after: [...m.after].map((j) => mods[j].name), rows: m.rows })),
+      chains,
+      timer,
+      free,
+      cycle,
+      unknownRows,
+      copy: rows.length && batteries && batteries.length ? copy : "",
+      ready: Boolean(rows.length && batteries && batteries.length)
+    };
+  }
+  function parseCell(t) {
+    const s = String(t || "").trim().toLowerCase();
+    if (!s || s === "." || s === "-") return null;
+    if (s === "any") return { kind: "any", digit: null, pair: null };
+    if (/^\d$/.test(s)) return { kind: "digit", digit: Number(s), pair: null };
+    const m = s.match(/^(first|then):(\w+)$/);
+    return m ? { kind: m[1], digit: null, pair: m[2] } : null;
+  }
+  var cellKey = (c) => !c ? "" : c.kind === "any" ? "any" : c.kind === "digit" ? String(c.digit ?? "") : `${c.kind}:${c.pair || "blue"}`;
+  var SAMPLE_TABLE = {
+    modules: ["Who's On First", "Search", "Logic", "Chess", "Rubik's Cube", "Diagram", "Symbols"],
+    unsure: [],
+    rows: [
+      ["Under 9V total", null, "first:blue 4 first:orange then:blue 1 then:orange ."],
+      ["Biggest round:", "orange", "4 ANY ANY . . . ."],
+      ["Has", "yellow", ". 1 5 . 0 . ANY"],
+      ["Under 12V total", null, "then:orange 0 first:blue . first:orange 4 then:blue"],
+      ["Exactly 2 batteries", null, ". 2 . . ANY . ."],
+      ["Has", "blue", ". first:orange . . then:orange . 3"],
+      ["Biggest round:", "blue", ". then:orange . . . ANY first:orange"],
+      ["Biggest round:", "red", "0 then:orange then:blue first:blue . first:orange ."],
+      ["Under 4.5V total", null, "ANY . 2 . . . ."],
+      ["No", "blue", "5 . ANY . . ANY ."]
+    ].map(([text, icon, cells]) => ({ text, icon, cells: cells.split(" ").map(parseCell) }))
+  };
+  var SAMPLE_BATTERIES = [
+    { color: "orange", volts: 1.5, round: true, size: 16456 },
+    { color: "blue", volts: 1.5, round: true, size: 34584 },
+    { color: "purple", volts: 9, round: false, size: 26400 }
+  ];
+  var BOMB_START = 8 * 60;
+  var fmtClock = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+  var showsDigits = (sec, digits) => {
+    const face = `${Math.floor(sec / 60)}${String(sec % 60).padStart(2, "0")}`;
+    return digits.every((d) => face.includes(String(d)));
+  };
+  function timerWindows(digits, from = BOMB_START) {
+    const out = [];
+    let cur = null;
+    for (let s = from; s >= 0; s--) {
+      if (showsDigits(s, digits)) {
+        if (cur && cur.end === s + 1) {
+          cur.end = s;
+          cur.len++;
+        } else {
+          cur = { start: s, end: s, len: 1 };
+          out.push(cur);
+        }
+      }
+    }
+    return out;
+  }
+  function describeWindows(digits) {
+    if (digits.length === 1) {
+      const d = digits[0], parts = [];
+      if (d <= 7) parts.push(`${d}:59\u2192${d}:00 (a whole minute${d === 7 ? ", right after the start" : ""})`);
+      if (d === 8) parts.push("8:00 (only the first second)");
+      if (d <= 5) parts.push(`x:${d}9\u2192x:${d}0 every minute (10 s)`);
+      parts.push(`x:x${d} every 10 s (1 s \u2014 risky with lag)`);
+      return parts.join(" \xB7 ");
+    }
+    const ws = timerWindows(digits);
+    if (!ws.length) return "never on a timer counting down from 8:00 \u2014 check the table";
+    const long = ws.filter((w) => w.len >= 5).sort((a, b) => b.len - a.len).slice(0, 4).sort((a, b) => b.start - a.start);
+    const short = ws.filter((w) => w.len < 5);
+    const txt = long.map((w) => `${fmtClock(w.start)}\u2192${fmtClock(w.end)} (${w.len} s)`);
+    if (short.length) txt.push(`${short.length} short moment${short.length === 1 ? "" : "s"} like ${fmtClock(short[0].start)}${short[0].len > 1 ? `\u2192${fmtClock(short[0].end)}` : ""}`);
+    return txt.join(" \xB7 ");
+  }
+
+  // src/modules/batteries/batteriesVision.js
+  var batteriesVision_exports = {};
+  __export(batteriesVision_exports, {
+    DIGIT_TEMPLATES: () => DIGIT_TEMPLATES,
+    classifyPicture: () => classifyPicture,
+    hueName: () => hueName,
+    matchDigit: () => matchDigit,
+    readBatteryLayout: () => readBatteryLayout,
+    readTableLayout: () => readTableLayout
+  });
+  var lum2 = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  function hsv(r, g, b) {
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let h = 0;
+    if (d) {
+      if (mx === r) h = (g - b) / d % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    return { h, s: mx ? d / mx : 0, v: mx / 255 };
+  }
+  function hueName(r, g, b) {
+    const { h, s } = hsv(r, g, b);
+    if (s < 0.2) return "grey";
+    if (h < 15 || h >= 340) return "red";
+    if (h < 38) return "orange";
+    if (h < 70) return "yellow";
+    if (h < 170) return "green";
+    if (h < 250) return "blue";
+    return "purple";
+  }
+  function view(img) {
+    const { data, width: W2, height: H } = img;
+    const at2 = (x, y) => (y * W2 + x) * 4;
+    const L = new Float32Array(W2 * H);
+    for (let i = 0, p = 0; i < W2 * H; i++, p += 4) L[i] = lum2(data[p], data[p + 1], data[p + 2]);
+    return { data, W: W2, H, at: at2, L };
+  }
+  var isBrown = (r, g, b) => r - b > 12 && r >= 30 && r <= 95 && g >= b && g <= r;
+  function findHeader(v) {
+    const { data, W: W2, H, at: at2 } = v;
+    let y0 = -1, y1 = -1;
+    for (let y = 0; y < H; y++) {
+      let n = 0;
+      for (let x = 0; x < W2; x += 2) {
+        const p = at2(x, y);
+        if (isBrown(data[p], data[p + 1], data[p + 2])) n++;
+      }
+      if (n > W2 * 0.25) {
+        if (y0 < 0) y0 = y;
+        y1 = y;
+      } else if (y0 >= 0 && y - y1 > 2) break;
+    }
+    if (y0 < 0 || y1 - y0 < 12) return null;
+    const ym = y0 + y1 >> 1;
+    let x0 = -1, x1 = -1;
+    for (let x = 0; x < W2; x++) {
+      const p = at2(x, ym);
+      if (isBrown(data[p], data[p + 1], data[p + 2])) {
+        if (x0 < 0) x0 = x;
+        x1 = x;
+      }
+    }
+    return { y0, y1, x0, x1 };
+  }
+  function findLines(v, along, from, to, a0, a1) {
+    const { W: W2, L, data } = v;
+    const out = [];
+    for (let t = from + 3; t < to - 3; t++) {
+      let n = 0, tot = 0;
+      for (let s = a0; s < a1; s += 2) {
+        tot++;
+        const q = (along === "y" ? t * W2 + s : s * W2 + t) * 4;
+        if (Math.max(data[q], data[q + 1], data[q + 2]) - Math.min(data[q], data[q + 1], data[q + 2]) > 30) continue;
+        const c = along === "y" ? L[t * W2 + s] : L[s * W2 + t];
+        const m = along === "y" ? L[(t - 3) * W2 + s] : L[s * W2 + t - 3];
+        const p = along === "y" ? L[(t + 3) * W2 + s] : L[s * W2 + t + 3];
+        if (c > m + 1.2 && c > p + 1.2) n++;
+      }
+      if (tot && n / tot > 0.6) out.push(t);
+    }
+    const merged = [];
+    for (const t of out) {
+      const last = merged[merged.length - 1];
+      if (last && t - last.b <= 2) last.b = t;
+      else merged.push({ a: t, b: t });
+    }
+    return merged.map((m) => ({ a: m.a, b: m.b }));
+  }
+  function components3(mask, W2, H, minN = 1) {
+    const seen = new Uint8Array(W2 * H);
+    const out = [];
+    const stack = [];
+    for (let i = 0; i < W2 * H; i++) {
+      if (!mask[i] || seen[i]) continue;
+      let n = 0, x0 = W2, y0 = H, x1 = -1, y1 = -1;
+      stack.push(i);
+      seen[i] = 1;
+      while (stack.length) {
+        const j = stack.pop();
+        const x = j % W2, y = j / W2 | 0;
+        n++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W2 || yy >= H) continue;
+          const k = yy * W2 + xx;
+          if (mask[k] && !seen[k]) {
+            seen[k] = 1;
+            stack.push(k);
+          }
+        }
+      }
+      if (n >= minN) out.push({ n, x0, y0, x1, y1 });
+    }
+    return out;
+  }
+  var dist4 = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) + Math.abs(p[2] - q[2]);
+  function colourCounts(v, x0, y0, x1, y1) {
+    const { data, at: at2 } = v;
+    const m = /* @__PURE__ */ new Map();
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const p = at2(x, y);
+      const k = data[p] << 16 | data[p + 1] << 8 | data[p + 2];
+      m.set(k, (m.get(k) || 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ c: [k >> 16, k >> 8 & 255, k & 255], n }));
+  }
+  var GW2 = 8;
+  var GH2 = 12;
+  var DIGIT_TEMPLATES = {};
+  function glyphBits(mask, W2, box) {
+    const bw = box.x1 - box.x0 + 1, bh = box.y1 - box.y0 + 1;
+    let s = "";
+    for (let gy = 0; gy < GH2; gy++) for (let gx = 0; gx < GW2; gx++) {
+      const xa = box.x0 + Math.floor(gx * bw / GW2), xb = box.x0 + Math.max(Math.floor(gx * bw / GW2), Math.ceil((gx + 1) * bw / GW2) - 1);
+      const ya = box.y0 + Math.floor(gy * bh / GH2), yb = box.y0 + Math.max(Math.floor(gy * bh / GH2), Math.ceil((gy + 1) * bh / GH2) - 1);
+      let n = 0, t = 0;
+      for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+        t++;
+        if (mask[y * W2 + x]) n++;
+      }
+      s += n * 2 >= t ? "#" : ".";
+    }
+    return { bits: s, aspect: bw / bh };
+  }
+  function matchDigit(g) {
+    let best = null, second = -Infinity;
+    for (const [d, list] of Object.entries(DIGIT_TEMPLATES)) {
+      let ds = -Infinity;
+      for (const t of list) {
+        let same = 0;
+        for (let i = 0; i < t.bits.length; i++) if (t.bits[i] === g.bits[i]) same++;
+        ds = Math.max(ds, same / t.bits.length - Math.min(0.3, Math.abs(Math.log(t.aspect / g.aspect)) * 0.5));
+      }
+      if (!best || ds > best.score) {
+        if (best) second = best.score;
+        best = { d: Number(d), score: ds };
+      } else if (ds > second) second = ds;
+    }
+    if (best) best.margin = best.score - second;
+    return best;
+  }
+  function readBadge(v, x0, y0, x1, y1) {
+    const { W: W2, data, at: at2, L } = v;
+    const area = (x1 - x0 + 1) * (y1 - y0 + 1);
+    const cc = colourCounts(v, x0, y0, x1, y1);
+    if (!cc.length) return null;
+    const bg = cc[0].c;
+    const fill = cc.find((e) => e.n > area * 0.08 && dist4(e.c, bg) > 6);
+    if (!fill) return null;
+    let bx0 = x1, by0 = y1, bx1 = x0, by1 = y0;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const p = at2(x, y);
+      if (dist4([data[p], data[p + 1], data[p + 2]], fill.c) <= 6) {
+        if (x < bx0) bx0 = x;
+        if (x > bx1) bx1 = x;
+        if (y < by0) by0 = y;
+        if (y > by1) by1 = y;
+      }
+    }
+    if (bx1 - bx0 < 12 || by1 - by0 < 8) return null;
+    const fl = lum2(...fill.c);
+    let top = fl;
+    for (let y = by0; y <= by1; y++) for (let x = bx0; x <= bx1; x++) top = Math.max(top, L[y * W2 + x]);
+    if (top - fl < 40) return null;
+    const thr = (fl + top) / 2;
+    const w = bx1 - bx0 + 1, h = by1 - by0 + 1;
+    const mask = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (L[(by0 + y) * W2 + bx0 + x] > thr) mask[y * w + x] = 1;
+    const all = components3(mask, w, h, 2);
+    const inner = all.filter((c) => c.x0 > 0 && c.x1 < w - 1);
+    const comps = inner.length ? inner : all;
+    if (!comps.length) return null;
+    let tx0 = w, ty0 = h, tx1 = -1, ty1 = -1;
+    for (const c of comps) {
+      tx0 = Math.min(tx0, c.x0);
+      ty0 = Math.min(ty0, c.y0);
+      tx1 = Math.max(tx1, c.x1);
+      ty1 = Math.max(ty1, c.y1);
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x < tx0 || x > tx1 || y < ty0 || y > ty1) mask[y * w + x] = 0;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let y = ty0; y <= ty1; y++) for (let x = tx0; x <= tx1; x++) if (mask[y * w + x]) {
+      const p = at2(bx0 + x, by0 + y);
+      r += data[p];
+      g += data[p + 1];
+      b += data[p + 2];
+      n++;
+    }
+    if (n < 6) return null;
+    const text = [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
+    const box = { x0: bx0, y0: by0, x1: bx1, y1: by1 };
+    const tbox = { x0: bx0 + tx0, y0: by0 + ty0, x1: bx0 + tx1, y1: by0 + ty1 };
+    const textW = tx1 - tx0 + 1;
+    if (comps.length <= 2 && textW < w * 0.5) {
+      const glyph = glyphBits(mask, w, { x0: tx0, y0: ty0, x1: tx1, y1: ty1 });
+      const m = matchDigit(glyph);
+      const sure = m && (m.score > 0.86 || m.score > 0.8 && m.margin > 0.08);
+      return { kind: "digit", digit: sure ? m.d : null, score: m ? m.score : 0, glyph, box, tbox, text };
+    }
+    const th = ty1 - ty0 + 1;
+    let topInk = 0, botInk = 0;
+    for (let y = ty0; y <= ty1; y++) {
+      let ink = false;
+      for (let x = tx0; x <= Math.min(tx1, tx0 + 1); x++) if (mask[y * w + x]) ink = true;
+      if (!ink) continue;
+      if (y - ty0 < th / 2) topInk++;
+      else botInk++;
+    }
+    const half = th / 2;
+    const word = topInk > half * 0.6 && botInk > half * 0.6 ? "FIRST" : topInk > botInk ? "THEN" : "ANY";
+    if (word === "ANY") return { kind: "any", box, tbox, text };
+    return { kind: word === "FIRST" ? "first" : "then", pair: hueName(...text), box, tbox, text };
+  }
+  function readIcon(v, x0, y0, x1, y1) {
+    const { W: W2, data, at: at2 } = v;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1;
+    const mask = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const p = at2(x0 + x, y0 + y);
+      const { s, v: val } = hsv(data[p], data[p + 1], data[p + 2]);
+      if (s > 0.45 && val > 0.35) mask[y * w + x] = 1;
+    }
+    const comps = components3(mask, w, h, 6).sort((a, b2) => b2.n - a.n);
+    if (!comps.length) return null;
+    const c = comps[0];
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let y = c.y0; y <= c.y1; y++) for (let x = c.x0; x <= c.x1; x++) if (mask[y * w + x]) {
+      const p = at2(x0 + x, y0 + y);
+      r += data[p];
+      g += data[p + 1];
+      b += data[p + 2];
+      n++;
+    }
+    const rgb = [r / n, g / n, b / n].map(Math.round);
+    const bw = c.x1 - c.x0 + 1;
+    return {
+      color: hueName(...rgb),
+      rgb,
+      box: { x0: x0 + c.x0 - 2, y0: Math.max(y0, y0 + c.y0 - Math.round(bw * 0.8)), x1: x0 + c.x1 + 2, y1: Math.min(y1, y0 + c.y1 + Math.round(bw * 2.6)) }
+    };
+  }
+  function readTableLayout(img) {
+    const v = view(img);
+    const { W: W2, H } = v;
+    const hdr = findHeader(v);
+    if (!hdr || hdr.x1 - hdr.x0 < W2 * 0.5) return { ok: false, reason: "No table header (brown band) found." };
+    const bodyY0 = hdr.y1 + 1;
+    const hl = findLines(v, "y", bodyY0, H, hdr.x0 + 4, hdr.x1 - 4);
+    if (hl.length < 1) return { ok: false, reason: "No table rows found." };
+    const vl = findLines(v, "x", hdr.x0, Math.min(W2, hdr.x1 + 6), bodyY0 + 2, Math.min(H, hl[hl.length - 1].b + 20));
+    if (vl.length < 2) return { ok: false, reason: "No table columns found." };
+    const gaps = [];
+    for (let i = 1; i < hl.length; i++) gaps.push(hl[i].a - hl[i - 1].b - 1);
+    const rowH = gaps.length ? gaps.slice().sort((a, b) => a - b)[gaps.length >> 1] : hl[0].a - bodyY0;
+    const ys = [{ a: bodyY0, b: bodyY0 - 1 }, ...hl];
+    const rowsB = [];
+    for (let i = 0; i < ys.length; i++) {
+      const y0 = ys[i].b + 1;
+      const y1 = i + 1 < ys.length ? ys[i + 1].a - 1 : Math.min(H - 1, y0 + rowH - 1);
+      if (y1 - y0 >= rowH * 0.6) rowsB.push({ y0, y1 });
+    }
+    const xs = [{ a: hdr.x0, b: hdr.x0 - 1 }, ...vl];
+    const colsB = [];
+    for (let i = 0; i < xs.length; i++) {
+      const x0 = xs[i].b + 1;
+      const x1 = i + 1 < xs.length ? xs[i + 1].a - 1 : hdr.x1;
+      if (x1 - x0 >= 20) colsB.push({ x0, x1 });
+    }
+    if (colsB.length < 2) return { ok: false, reason: "No module columns found." };
+    const cond = colsB[0];
+    const columns = colsB.slice(1).map((c) => ({ ...c, header: { x0: c.x0, y0: hdr.y0, x1: c.x1, y1: hdr.y1 } }));
+    const rows = rowsB.map((r) => {
+      const icon = readIcon(v, cond.x0 + 2, r.y0 + 2, cond.x1 - 2, r.y1 - 2);
+      return {
+        ...r,
+        condBox: { x0: cond.x0, y0: r.y0, x1: cond.x1, y1: r.y1 },
+        icon,
+        cells: columns.map((c) => readBadge(v, c.x0 + 2, r.y0 + 2, c.x1 - 2, r.y1 - 2))
+      };
+    });
+    return { ok: true, header: hdr, condCol: cond, columns, rows };
+  }
+  function readBatteryLayout(img) {
+    const v = view(img);
+    const { W: W2, H, data, at: at2, L } = v;
+    const mask = new Uint8Array(W2 * H);
+    for (let i = 0, p = 0; i < W2 * H; i++, p += 4) {
+      const { s, v: val } = hsv(data[p], data[p + 1], data[p + 2]);
+      if (s > 0.4 && val > 0.3) mask[i] = 1;
+    }
+    const bands = components3(mask, W2, H, Math.max(40, W2 * H / 2500)).filter((c) => c.x1 - c.x0 >= 12 && c.y1 - c.y0 >= 8);
+    if (!bands.length) return { ok: false, reason: "No battery labels found." };
+    const cc = colourCounts(v, 0, 0, W2 - 1, H - 1);
+    const bg = cc[0].c;
+    const isBg = (x, y) => {
+      const p = at2(x, y);
+      return dist4([data[p], data[p + 1], data[p + 2]], bg) <= 12;
+    };
+    const rowHasInk = (y, xa, xb) => {
+      for (let x = xa; x <= xb; x++) if (!isBg(x, y)) return true;
+      return false;
+    };
+    const rowInk = (y, xa, xb) => {
+      let n = 0;
+      for (let x = xa; x <= xb; x++) if (!isBg(x, y)) n++;
+      return n;
+    };
+    const out = [];
+    for (const b of bands.sort((p, q) => p.x0 - q.x0)) {
+      let r = 0, g = 0, bl = 0, n = 0;
+      for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) if (mask[y * W2 + x]) {
+        const p = at2(x, y);
+        r += data[p];
+        g += data[p + 1];
+        bl += data[p + 2];
+        n++;
+      }
+      const rgb = [r / n, g / n, bl / n].map(Math.round);
+      const bw = b.x1 - b.x0 + 1;
+      const xa = Math.max(0, b.x0 - Math.round(bw * 0.15)), xb = Math.min(W2 - 1, b.x1 + Math.round(bw * 0.15));
+      let top = b.y0, bottom = b.y1;
+      while (top > 0 && rowHasInk(top - 1, xa, xb)) top--;
+      while (bottom < H - 1 && rowHasInk(bottom + 1, xa, xb)) bottom++;
+      let bodyTop = b.y0;
+      while (bodyTop > top && rowInk(bodyTop - 1, xa, xb) >= bw * 0.7) bodyTop--;
+      let terminals = 0;
+      if (bodyTop > top) {
+        const tw = xb - xa + 1, th = bodyTop - top;
+        const tm = new Uint8Array(tw * th);
+        for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (L[(top + y) * W2 + xa + x] > 130) tm[y * tw + x] = 1;
+        terminals = components3(tm, tw, th, 4).length;
+      }
+      out.push({
+        color: hueName(...rgb),
+        rgb,
+        round: terminals <= 1,
+        terminals,
+        x0: b.x0,
+        x1: b.x1,
+        y0: top,
+        y1: bottom,
+        size: bw * (bottom - top + 1),
+        label: { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }
+      });
+    }
+    return { ok: true, batteries: out };
+  }
+  function classifyPicture(img) {
+    const t = readTableLayout(img);
+    if (t.ok && t.rows.length >= 1 && t.columns.length >= 1) return { type: "table", layout: t };
+    const b = readBatteryLayout(img);
+    if (b.ok && b.batteries.length >= 1 && b.batteries.length <= 12) return { type: "batteries", layout: b };
+    return { type: null, reason: t.reason || b.reason };
+  }
+  var DIGIT_GLYPHS = {
+    0: [0.857, "..####../.######./###.####/###..###/###..###/###..###/###..###/###..###/###..###/###.####/.######./..####.."],
+    1: [0.467, "....####/..######/########/########/...#####/...#####/...#####/...#####/...#####/...#####/...#####/...#####"],
+    2: [0.786, ".#####../#######./###.####/###.####/##..####/##..####/..####../.####.../####..../########/########/########"],
+    3: [0.786, ".######./########/###..###/###..###/.#...###/...#####/...#####/##...###/###..###/########/########/.######."],
+    4: [0.929, "...###../...###../..####../..####../.#####../.#####../########/########/########/#######./....##../....##.."],
+    5: [0.857, ".#######/.######./.#####../.###..../.####.../######../.##.####/.#...###/##...###/###..###/########/.######."]
+  };
+  for (const [d, [aspect, rows]] of Object.entries(DIGIT_GLYPHS)) DIGIT_TEMPLATES[d] = [{ aspect, bits: rows.replace(/\//g, "") }];
+  var MORE_DIGIT_GLYPHS = [
+    [0, 0.8, "..####../.#####../###.###./###..###/###..###/###..###/###..###/###..###/###.####/#######./.#####../..####.."],
+    [3, 0.714, ".######./########/###.####/###.####/##..####/...#####/...#####/##...###/###..###/########/########/.######."],
+    [4, 0.857, "....###./...####./..#####./..#####./..#####./.##.###./########/########/########/.#######/....##../....##.."],
+    [5, 0.733, "..######/.######./.#####../.##...../######../#######./.#######/.....###/##...###/########/#######./.#####.."]
+  ];
+  for (const [d, aspect, rows] of MORE_DIGIT_GLYPHS) DIGIT_TEMPLATES[d].push({ aspect, bits: rows.replace(/\//g, "") });
+
+  // src/modules/batteries/batteriesOCR.js
+  var batteriesOCR_exports = {};
+  __export(batteriesOCR_exports, {
+    inkMask: () => inkMask,
+    pictureData: () => pictureData,
+    readBatteriesFile: () => readBatteriesFile,
+    readBatteriesPicture: () => readBatteriesPicture,
+    readTablePicture: () => readTablePicture,
+    squareFilter: () => squareFilter
+  });
+  var LETTERS3 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
+  function pictureData(img) {
+    const W2 = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+    const c = document.createElement("canvas");
+    c.width = W2;
+    c.height = H;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    return { canvas: c, data: ctx.getImageData(0, 0, W2, H) };
+  }
+  function squareFilter(v, w, h, r, pick = Math.max) {
+    const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = v[y * w + x];
+      for (let k = Math.max(0, x - r); k <= Math.min(w - 1, x + r); k++) m = pick(m, v[y * w + k]);
+      tmp[y * w + x] = m;
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = tmp[y * w + x];
+      for (let k = Math.max(0, y - r); k <= Math.min(h - 1, y + r); k++) m = pick(m, tmp[k * w + x]);
+      out[y * w + x] = m;
+    }
+    return out;
+  }
+  function inkMask(p, w, h, ink, { local = false, blankAt = () => false } = {}) {
+    const n = w * h, L = new Float32Array(n), cand = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const r = p[i * 4], g = p[i * 4 + 1], b = p[i * 4 + 2];
+      L[i] = lum3(r, g, b);
+      cand[i] = !blankAt(i % w, Math.floor(i / w)) && ink(r, g, b) ? 1 : 0;
+    }
+    if (!local) return cand;
+    const R = Math.max(2, Math.round(h / 15));
+    const textL = L.map((v, i) => cand[i] ? v : 0);
+    const hi = squareFilter(textL, w, h, R, Math.max), lo = squareFilter(L, w, h, R, Math.min);
+    const out = new Uint8Array(n);
+    for (let i = 0; i < n; i++) out[i] = cand[i] && L[i] >= (hi[i] + lo[i]) / 2 ? 1 : 0;
+    return out;
+  }
+  function inkCrop(src, box, ink, { scale = 3, blank = [], local = false } = {}) {
+    const w = box.x1 - box.x0 + 1, h = box.y1 - box.y0 + 1;
+    const sctx = src.canvas.getContext("2d", { willReadFrequently: true });
+    const d = sctx.getImageData(box.x0, box.y0, w, h);
+    const p = d.data;
+    const blankAt = (x, y) => blank.some((b) => b && box.x0 + x >= b.x0 && box.x0 + x <= b.x1 && box.y0 + y >= b.y0 && box.y0 + y <= b.y1);
+    const mask = inkMask(p, w, h, ink, { local, blankAt });
+    for (let i = 0; i < w * h; i++) {
+      const v = mask[i] ? 0 : 255;
+      p[i * 4] = p[i * 4 + 1] = p[i * 4 + 2] = v;
+      p[i * 4 + 3] = 255;
+    }
+    const small = document.createElement("canvas");
+    small.width = w;
+    small.height = h;
+    small.getContext("2d").putImageData(d, 0, 0);
+    const PAD = 16;
+    const out = document.createElement("canvas");
+    out.width = w * scale + PAD * 2;
+    out.height = h * scale + PAD * 2;
+    const octx = out.getContext("2d");
+    octx.fillStyle = "#fff";
+    octx.fillRect(0, 0, out.width, out.height);
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
+    octx.drawImage(small, PAD, PAD, w * scale, h * scale);
+    return out;
+  }
+  var lum3 = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  var sat = (r, g, b) => {
+    const mx = Math.max(r, g, b);
+    return mx ? (mx - Math.min(r, g, b)) / mx : 0;
+  };
+  async function ocr(canvas, params) {
+    const w = await ensureOCRWorker();
+    await w.setParameters({ user_defined_dpi: "300", ...params });
+    const { data } = await w.recognizeWithin(15e3, canvas);
+    return (data && data.text ? data.text : "").replace(/\s+/g, " ").trim();
+  }
+  async function readTablePicture(img, onStatus = () => {
+  }) {
+    const src = pictureData(img);
+    const layout = readTableLayout(src.data);
+    if (!layout.ok) return layout;
+    onStatus(`Table: ${layout.rows.length} rows \xD7 ${layout.columns.length} modules \u2014 reading the words\u2026`);
+    const headInk = (r, g, b) => lum3(r, g, b) > 95;
+    const condInk = (r, g, b) => lum3(r, g, b) > 92 && sat(r, g, b) < 0.35;
+    const heads = layout.columns.map((c) => ocr(inkCrop(src, c.header, headInk, { scale: 3 }), { tessedit_char_whitelist: LETTERS3, tessedit_pageseg_mode: "6" }).catch(() => ""));
+    const conds = layout.rows.map((r) => {
+      const blank = r.icon ? [{ ...r.icon.box, x0: r.icon.box.x0 - 3, x1: r.icon.box.x1 + 3 }] : [];
+      return ocr(inkCrop(src, r.condBox, condInk, { scale: 3, blank, local: true }), { tessedit_char_whitelist: LETTERS3 + "0123456789.:", tessedit_pageseg_mode: "7" }).catch(() => "");
+    });
+    const digitJobs = [];
+    layout.rows.forEach((r) => r.cells.forEach((c) => {
+      if (!c || c.kind !== "digit" || c.digit != null) return;
+      const box = { x0: c.tbox.x0 - 2, y0: c.tbox.y0 - 2, x1: c.tbox.x1 + 2, y1: c.tbox.y1 + 2 };
+      digitJobs.push(ocr(inkCrop(src, box, (rr, gg, bb) => lum3(rr, gg, bb) > 110, { scale: 5 }), { tessedit_char_whitelist: "0123456789", tessedit_pageseg_mode: "10" }).then((t) => {
+        const m = t.match(/\d/);
+        c.digit = m ? Number(m[0]) : null;
+        c.ocr = true;
+      }).catch(() => {
+      }));
+    }));
+    const [headTexts, condTexts] = await Promise.all([Promise.all(heads), Promise.all(conds), Promise.all(digitJobs)]);
+    const names = headTexts.map((t) => matchModuleName(t));
+    const table = {
+      modules: names.map((n) => n.name),
+      unsure: names.map((n, i) => n.sure ? -1 : i).filter((i) => i >= 0),
+      rows: layout.rows.map((r, i) => ({
+        text: condTexts[i],
+        icon: r.icon ? r.icon.color : null,
+        cells: r.cells.map((c) => c ? { kind: c.kind, digit: c.digit ?? null, pair: c.pair || null } : null)
+      }))
+    };
+    return { ok: true, table, layout };
+  }
+  async function readBatteriesPicture(img) {
+    const src = pictureData(img);
+    const layout = readBatteryLayout(src.data);
+    if (!layout.ok) return layout;
+    const white = (r, g, b) => lum3(r, g, b) > 190 && sat(r, g, b) < 0.25;
+    const batteries = await Promise.all(layout.batteries.map(async (b) => {
+      const def = b.round ? 1.5 : 9;
+      let volts = def, read = "";
+      try {
+        read = await ocr(inkCrop(src, b.label, white, { scale: 2 }), { tessedit_char_whitelist: "0123456789.V", tessedit_pageseg_mode: "7" });
+        const m = read.replace(/,/g, ".").match(/(\d+(?:\.\d+)?)/);
+        const v = m ? Number(m[1]) : NaN;
+        if (v > 0.5 && v <= 24) volts = v;
+        else if (m && /^\d\d$/.test(m[1]) && Number(m[1][0]) + Number(m[1][1]) / 10 <= 24) volts = Number(m[1][0]) + Number(m[1][1]) / 10;
+      } catch (e) {
+      }
+      const kind = BATTERY_KINDS[b.color];
+      return { color: b.color, volts, round: b.round, size: b.size, read, kindKnown: Boolean(kind) };
+    }));
+    return { ok: true, batteries, layout };
+  }
+  async function readBatteriesFile(img, onStatus) {
+    const src = pictureData(img);
+    const t = readTableLayout(src.data);
+    if (t.ok) {
+      const r = await readTablePicture(img, onStatus);
+      return r.ok ? { type: "table", ...r } : { type: null, reason: r.reason };
+    }
+    const b = await readBatteriesPicture(img);
+    return b.ok ? { type: "batteries", ...b } : { type: null, reason: "Not the Batteries table or a batteries picture." };
+  }
+
+  // src/modules/wireplace/wireplaceSolver.js
+  var wireplaceSolver_exports = {};
+  __export(wireplaceSolver_exports, {
+    CELLS: () => CELLS,
+    PICK_COLORS: () => PICK_COLORS,
+    SAMPLE_TABLE: () => SAMPLE_TABLE2,
+    SAMPLE_WIRES: () => SAMPLE_WIRES,
+    cap: () => cap,
+    solveWirePlacement: () => solveWirePlacement,
+    wireLabel: () => wireLabel
+  });
+  var CELLS = ["A1", "B1", "C1", "D1", "A2", "B2", "C2", "D2", "A3", "B3", "C3", "D3", "A4", "B4", "C4", "D4"];
+  var PICK_COLORS = ["black", "blue", "red", "white", "yellow", "green", "orange", "purple"];
+  var cap = (s) => s ? s[0].toUpperCase() + s.slice(1) : "";
+  var wireLabel = (w) => `${w.a}-${w.b} ${cap(w.color)}`;
+  function solveWirePlacement(table, wires) {
+    const out = { ready: false, reason: "", c3: null, column: -1, verdicts: [], cut: [], copy: "" };
+    if (!table) {
+      out.reason = "Paste this game's Wire Placement table.";
+      return out;
+    }
+    if (!wires || !wires.length) {
+      out.reason = "Paste the module picture (or add its wires).";
+      return out;
+    }
+    const c3 = wires.find((w) => w.a === "C3" || w.b === "C3");
+    if (!c3) {
+      out.reason = "No wire on C3 \u2014 check the board.";
+      return out;
+    }
+    out.c3 = c3;
+    const column = table.columns.indexOf(c3.color);
+    if (column < 0) {
+      out.reason = `The table has no ${cap(c3.color)} column \u2014 check the header colours.`;
+      return out;
+    }
+    out.column = column;
+    out.verdicts = wires.map((w) => {
+      const rows = [];
+      table.rows.forEach((row, r) => {
+        const code = row.cells[column];
+        if (row.color === w.color && code && (code === w.a || code === w.b)) rows.push(r);
+      });
+      return { wire: w, cut: rows.length > 0, rows };
+    });
+    out.cut = out.verdicts.filter((v) => v.cut).map((v) => v.wire);
+    out.copy = out.cut.length ? out.cut.map(wireLabel).join(", ") : "NONE";
+    out.ready = true;
+    return out;
+  }
+  var SAMPLE_TABLE2 = {
+    columns: ["black", "blue", "red", "white", "yellow"],
+    rows: [
+      ["blue", "B1 B2 D1 C4 B3"],
+      ["blue", "C1 B4 C2 A1 D3"],
+      ["white", "D2 A2 B1 A2 C2"],
+      ["black", "D4 A3 D2 B3 C4"],
+      ["red", "A2 C4 C3 A4 D4"],
+      ["black", "B2 A4 B4 D1 A2"],
+      ["yellow", "C3 A1 A3 D3 A1"],
+      ["blue", "C4 C1 B3 C1 C1"],
+      ["red", "A4 D1 D3 D2 D1"],
+      ["yellow", "A1 C2 A4 D4 B1"]
+    ].map(([color, cells]) => ({ color, cells: cells.split(" ") })),
+    unsure: []
+  };
+  var SAMPLE_WIRES = [
+    ["yellow", "A1", "A2"],
+    ["black", "B1", "B2"],
+    ["yellow", "C1", "D1"],
+    ["blue", "C2", "D2"],
+    ["white", "A3", "B3"],
+    ["blue", "C3", "D3"],
+    ["yellow", "A4", "B4"],
+    ["blue", "C4", "D4"]
+  ].map(([color, a, b]) => ({ color, a, b }));
+
+  // src/modules/wireplace/wireplaceVision.js
+  var wireplaceVision_exports = {};
+  __export(wireplaceVision_exports, {
+    GLYPHS: () => GLYPHS,
+    GLYPH_H: () => GLYPH_H2,
+    GLYPH_W: () => GLYPH_W2,
+    WIRE_COLORS: () => WIRE_COLORS,
+    buildGlyph: () => buildGlyph,
+    cellName: () => cellName,
+    classifyWirePicture: () => classifyWirePicture,
+    colorName: () => colorName,
+    encodeGlyph: () => encodeGlyph2,
+    readCellCode: () => readCellCode,
+    readWireBoard: () => readWireBoard,
+    readWireTable: () => readWireTable
+  });
+
+  // src/core/level/levelTitleRefs.js
+  var TITLE_REFS = [
+    { name: "Logic", aspect: 4.4, fp: "999900000000999900000005999999009999950009999995099900000059999999000009999999900999900099999995099900000099950999500099995999900099900599900995099900000999500299900599500009900099905999000095099900000999000099900999000000000099909990000000099900000999000099900999000000000099909990000000099900009999000099990999000999950099909990000000099900000999000099900799000599920099909990000000099900000999000099900599000099900099900999000000099900000999900599900599900099900099900999000009099900000099950999500099990099900099900599500599099999995029999995000007999999505999920259999952" },
+    { name: "Complex Wires", aspect: 11, fp: "000000000000000000000000000000000000000000000002079607905922929975902999672925955097979955995397597638763923927693900976293700927272929682953787652675392955927372900920097300957392929092900925950672092955927355900920079300659372929092900922920072092977927382900973058000659672929682951681920092095999927992900997029000399972929952992395920072092697927970900950059000397972929652900097920072092696927300900920069300295952929372900029650675392675927300900920077600092952929092900609672657672675927300920999075900090952929092995929289219932552926000997999533910080733938067995596" },
+    { name: "Chess", aspect: 4.25, fp: "000000000000000000000000000000000000005000000000000999999599995009990099999999000999995000999995059995599507995009990009995559909997997029979995099900059505995009990009990000059900099059950595999900009505995009990009990000059990005059950005999000000005997559990009995555005997500029999500999000000005999999990009999999000999995000999990999000000005995009990009990000000099999000099995999000000005995009990009990000000005999000005999099900009505995009990009990000059500099059000599099950059505995009990009999999959990999059950999005999995005950009970009999999505799995005999992" },
+    { name: "Diagram", aspect: 6.6, fp: "999995009990009600009999509999900005950099900099599999009950009600059999505999930005990099900099595099505950059900099959505950960009990059900599595029905950079900797005905950960009992059950599595009905950095950995000005955960059595059990999595009905950095950990000005999960059595059990999595009905950590950990059905999900055099059999999595009905950595790992029925957930097599059599959595059905950999990595009905955960099999559599559595099905950950695595009905950960590059559099559599999505950950395599009905950990590059559099559599997009975900097059999505920297770007957059059" },
+    { name: "Pressure", aspect: 6.75, fp: "000000000000000000000050000000000000000000000000999950599990599995069990099955990099599990099996299697097795099555297990797950960076099697069557099099095096099000590090950650960056099099069000099099095096099000590050990350960056099099069000099299097795099550099500799200960056099697069553099995099990099990069950099900960056099990069996099990095990099000039990059950960056099690069000099000095593099000002793002970960056099395069000099000095096099000530596900690990093099099069000095000095096099995590593990950599993099099069999092000092029599995079970599920079970097029779997" },
+    { name: "Memory", aspect: 6.4, fp: "999000995099999559950009900059990059999559950599599000995059999909990059900599995009999909950590599500995059500905990059900995599009905955950590599705995059500005995079902970059509905950990950599909995059500005995099905950059909909950599900599909995059999505999099905950009909999950599500595959995059999505599599905950009909999500099500595999595059500005579979905950029909929900099000590995595059500005559959905950059509909950099000590995595059500005509959900990059509905950099000590995595059999905509909900995599009905990099000570590295059999705507905900279992009700797097000" },
+    { name: "Wire Sequences", aspect: 9.4, fp: "000000000000000000200000000000000000000000000000772383959928992089299718925819599393581895997397575570907367501185572166572707270196355735721737375790907577300290272072092707270099357505720725287770909857750085076272092707285078657200762680097970909827750059376272092707285076957200762196097970907727300009572072092707270072957200720057075750907557300123572063292707270071956302720319063651907287992197579738760996299270653863797777052552925099992059079707920592299250350790797295000000000000000000000000930000000000000000000000000000000000000000000000380000000000000000000000" },
+    { name: "Password", aspect: 7.188, fp: "000000000000000300000000000000000000000000000000999950069000999306996995060695059950599960699990297795099005979529796595075390596992097792397695096096099509605659056095095390690096095095395099096096599509900359003095099690950096095095395059096296559702972029950077599650950079097792395059099993939900999306993069599950950059099960395059099990939900399603996069969950950059095960395059096002999930059600299059939920950097095590395079096003905969305653059039909900690096095095395399093003500969909659099039909900693993095095399996092006500762799307995009505900279970092059699992" },
+    { name: "Morse Code", aspect: 8.625, fp: "000000000000000000003000000000000000000000000000993069009960699600699099990006995039903999606999793079079595395922979077560029695296770976923956596099095066390953906066000066035390390950963900596099395069390953903066000096035690393950663900599399390039396950972067530093000660093950663953599999390039399600696069960093000660093950663996569969390039396900399066000093000660093950663900569959392059393920039366000075000670293950763900566939095066390953309366000066009390390953963900566939069093390993909369990039069093660999933999553639039972370595797069990027972069930999703999" },
+    { name: "Search", aspect: 5.062, fp: "000005000000000000000000000000000000000000000000059999059999995000995005999995000099999599950099597999009995555005995002997799005999599529950099995009009950000005999000995099509950059509950099995005009950000009999000995099559950009509950099099950009995550009299200997799259900000009975599059995009999990099099500999995059900000009999999009999009990000099099500995995059900000009950099000579909950000299999900995599059900000009950099950059909950000595009990995599509950009509950099995059909999995590005990995099509990059509950099079997009999995990002990990059920599995009700097" },
+    { name: "Maze", aspect: 3.867, fp: "999990000099995000059990000099999999995999999999099990000099995000099990000099999999900999999999099999000099995000099990000090000999900999950005099999500599995000599995000000009999000999900000099999900999995000990995000000099990000999950000099999900999995000950999000000099990000999999995099959990999995009950999000000999900000999999995099959999909995009975999500005999700000999920000099909999509995099999999900009999500000999900000099909999509995099900099990059999000000999900000099909999509995099000009990059999000090999999999099500999005995999000007990099999999990999999999" },
+    { name: "Piano", aspect: 4.4, fp: "999999950099999000099900099995009999900099999500999999990059990000599900009999000999000999999990099905999009990000599900005999900099009999009995099900999009990000799990005999920099029990000997099900999009990000990990005999990099059900000599099905999009990000900995005995999099059900000599099999990009990009900995005995999999059900000599099955520009990009955997005990599999059900000599099900000009990099999999005990059999059990000999099900000009990099500599905990059999009990000995099900000009990099000099905900009999000999009990097000000079995599000059905900000999000599999750" },
+    { name: "Circuit", aspect: 5.867, fp: "005999955999099999000059999559990599959959999999009999950995099999900599999559950099009959999999059909950995059559900999059509950095009905059905599000950995059509952990007509950095009900009900995000000995059559955950000009950095009900009900995000000995059999905950000009950095009900009900995000000995059999005950000009950095009900009900995000000995059579505950000009950095009900009900099000000995059559905950000009950095009900009900099000090995059559950990005509950095009900009900059505990995059509950995009505999995009900009900027999522997059007992279997002599970029970009700" },
+    { name: "Knobs", aspect: 4.562, fp: "000000000000000000000000000000000000000000000005999505999599990009999000999950009999995000599995099502970009999005970059957995005995799500997997059509950009999505950099500099505990099909990059059509900009999905950599000099505990099909995005059999000009929995950599000079905995799500799520059999900009909999950599000059905999999000599995059999900009900999950599000059905990599900009999059709950009900599950599000099705990009950002599059505990009900099950099500099505990009959900059059505999009900009950099905999005990099959995099059200599709500007950005999970005999999500599995" },
+    { name: "Symbols", aspect: 6.25, fp: "000000000000000000000000000000000000000000000003099995995099599500099059999000059950099500009996797990792075099900599009779700797795079500059797990590595093099900999009509905990099059500099009990050099590099950999009509905950059059500099503799500079950099972999009779705950059059500029950099950059900095995999009999509950059559500009996059990009900095999599009559905950059059500000999002995009900095599599009505955950059059500000279900595009900095599099009505955990099059500095009990995009900095099099009509950995596059500099559299970009500095097079009999700299992059999727996" },
+    { name: "Simon Says", aspect: 7.875, fp: "000300000000000000000000000000000000000000000000099909939950396009960596069600399600696990993996597925927950596297595099039200779600990970957796960635905990696393066099539000935600993693909036990305905990696693069099939000930303993696909506297205905993996690039095969000795003595399507950099905905999996690039093999000399306396099003993039935905699696690039090999000099606396059000996005935905699596692059090599000029907999059000077930635905659396393066090099000605909059359036039990935905659396096093090069000939906009356009566279727955509096059972070059000599556007355006995" },
+    { name: "Rubik's Cube", aspect: 9, fp: "000000000000000000000093003000000000000000000000999339639699933996939693996000399399369999906999777629309277770965929093977002969669036295935956663909309066390963936096609006903669036093663900663909309066390963963036903006600669036093633900677709309067750963992002960006600069036096923953699309309069960963993000996006600069036099933996669309309066690963996000399006600069036093963900666609309066292963957000069006600059036093663900666909309066093963939006309006900639036093663900663906999066390963909306939003933639996093663999632953995069972973507702796000699206972099933999" },
+    { name: "The Button", aspect: 9.2, fp: "999969605909996006996099069699995999906990096069999966605906996006999096039399995999909996099036539336605906603003939366036309635096339399069336009306605906600003909366036009300066066029269636009306905906600003939066036009300066096009369936009306999906993003996066036009300066093009366966009306999906993003999066036009300066093009363996009306705906600003929366036009300066095009363796009306605906600003906666036009300066066009363396009306605906600003906666036009300066066059063396009306605906996003909339996009300066039399063096009206505606996003999227992009200065007993062056" },
+    { name: "Wires", aspect: 4.533, fp: "999990059009999099990999999900099999999000999995099950059505995059990599999990059999999009999995009950059505990059950099005990059990005059959995009950099905990059950099002999059900000059920295005990099909990059950099909990059990000059999000005990999909900059950099999990059999995009999500005990999999900059950099999950059999995000999990002999955999900059950099509950059950000000059995000999950999900059950099005990059900000000000999000999900999000059950099005990059900000099000599000099900599000059950099000999059999999059950995000099500599000079995097000599979999999025999992" },
+    { name: "Switches", aspect: 6.75, fp: "000000000000000000000000000000000000000000000003099959960553990995999996059995995059059999509996797955960790950790769955799695295059009755939797990650960990950690009900990095095059009600069009990050960996950690009903990055095059009600069503799300775996900690009903950000097579009755229950099900595999900690009903950000099999009999509996059950599599900690009903950000095059009600000999002990299279700690009903950000095059009600000279900690099059500690009900990055095059009600065009990990099059500690009900995095095059009999969559299920065009500992009700279970070057009999727996" },
+    // from a 922×922 board screenshot (2026-11-22), same scale as the ones above
+    { name: "Laundry", aspect: 6.733, fp: "995000000950599905995990059969999500999955995099595000005950099500935995009539999900999990990056595000005950099500930999009539509950593990595093095000007990099500930999509539502990593595297292095000009690099500930999909539500990593995099950095000009395099500930959959539500990599990059950095000059395099500930955999539500990599950059900095000059697099500930952999539500990595970009900095000099999059500930950599539505990593990009900095000095099559500930950599539509990593995009900099000090059559999930950099539999950593595009900099999590029505999500920029539999700590299209500" },
+    { name: "Queens", aspect: 4.3, fp: "000000000000000000000000000000000000000000000005027999700599200992799999529999992999205992299995099207970099000590599002509950020099900590995575999000990099000590599000009900000099950590995005995000992099000590599555009995520097995590599720995000995099000590599555009995520095799990059992995000990099000590599000009900000095099990000999599002990099200770599000009900000095059990500099079759920029999920599999909999990090005990797597005999500005999500599999009999990090000990099990000059700000000000000000000000000000000000000000000002990000000000000000000000000000000000000000" },
+    // from a 924×924 board screenshot with MINES next to WIRES (2026-11-22) — without it MINES read as "Wires"
+    { name: "Mines", aspect: 4.313, fp: "000000000000000000000000000000000000000000000005999950000599000999995999000599959999999900999995059990000999000599902999920099009999555905995997009999000999000599900999990099009990000009950099009999009999000599900999990099009990000009990005009999209999000599900995999299009999555002999500009099599999000599900990099999009999999000999995009099999999000599900990099999009999000000059999009059999599000599900990029999009990000000005799009009999599000599900990009999009990000009900099009009990599000599900990000999009999999909990599009005990099000799950970000299009999999902599995" },
+    // approx: from the 440×440 module pictures (title scaled to the board size), not a board
+    // screenshot — they match a real board title less exactly (≈0.75 instead of ≈1.0). Replace each
+    // with a board crop when one turns up.
+    { name: "Hangman", aspect: 6.467, approx: true, fp: "950055005900595009900009000595000950009005950099990099005900599009900599990599005990059005990099990099009950099505500999990599005990099500995056990099009950099905505920290599507990099700999056990099059990099955509900000599509990599900999556999999055590090995509900000599909990555900909956999999055590090999509900000595959990555950909996990099097795090599509900792595995990977950902996990099099995090099509900590590990990999990900996990095590099090059505900590590990995900990900596990095550059090059505950590590990955500590900096520052520027070007500799970200220555200270700075" },
+    { name: "Astrology", aspect: 7.667, approx: true, fp: "006000065069995699000005000950000500000060399359009500999099999699950099930950006993000999399356009503999599999396950599960650009999009999359053059703907505900393790950570650077029239507229372056903930005900393993930090650096009539000009990093900990005900393993930090650093006569000005950093950599005900399953930090650093006569000005950296950069505900397923930090650095007569029300900599990009905900393953930590650096009539009300900550990509505900393990960560650059009039509300900950593969505900393990595960690009599039509300900700073595005700370295069720699703973007999300600" },
+    { name: "Pipes", aspect: 3.6, approx: true, fp: "099999000000999900999990000009999999900000099005999999999000999900999999990009999999990099999995099999999900099900999999999000999999990599999995099990059900099500099900999900990000000599000595099990059990099500099900999900990000000599990000099990059900099500099900999000999999900099999900099999999900099500099999999000999999000009999990099995555000099500099955550000995000000000559997099990000000099500099900000000990000000000000999099990000000099500099900000000990000000090000099099990000000099500099900000000999999990599900995099500000000999900099500000000999999990055999552" },
+    { name: "Limbo", aspect: 4.286, approx: true, fp: "999500000999909999000009990099999990000099999900099500000999900999900099990099999995000599999990099500000099000999900099990099950999000999009995099500000099000999900099990099950999000990000995099500000099000999950999990099950999009990000999099500000099000999970999990099979992009990000999099500000099000999999999990099999999009990000999099500000099000990999999990099950999009990000999099500000099000990999909990099950099909990000999099500000099000990999909990099950099900990000995099500000099000990099909990099950999000999009995099999990999900900099007990099999997000259999550" },
+    { name: "Balance", aspect: 5.8, approx: true, fp: "999900000590059500000055000990059900005500999995999990000995059500000099000995059900599990999995999999000995009500000099500599009900999990099999095099005997009500000599500599509507950075097000095599005599009500000999900599909509900000099000099990009099009500000955900555959509500000099990099990009099509500005955900555999509500000099995095299229599509500005957950550999509500000097000095059559999909500009999950550599509900000095000095099555009909500009900990550099505900005099000095599595005909900009000990550099505990095099999599955070000759999705000270520029500799970099995" },
+    { name: "Blackjack", aspect: 5.737, approx: true, fp: "999300960000090000090039039559000600000900593593799970760000595002999939539227000950059995293592590690560000596009605909565009005950395035093950590690560000797029300509570009005990392000095900599950560000909059300009960009009690390000099900597770560002909259300009990009009295690000099920590392560005999529300009577009059997390000095970590395560006506909300509569009055099395005093590597770595506005907755909229709092029279567093295599600599903000500699000005909050005309990050009000000000000000000000000000009000000000000000000000000000000000000000000000075000000000000000000" },
+    // from a full 36-module board screenshot (23 Nov): titles with no reference before, and board-made
+    // ones for the titles whose first reference came from a single-module picture
+    { name: "Breaker", aspect: 6.467, fp: "999990099999009999990009900995099959999909999900599999059999905999990059900595059009999955999990595099009509905990050059900595095009900550950990595099009507955950000079950095592009900000950793595099009959905990000095950099950009900000995990599995009999905999950090990099950009999900999990599999009999505999950590990099990009999900999950595079509759505970000595992099792009900000975950595059509509905950000999995095595009900000950990595059509509905950000950599095099009900000950990595099509505955999990900099095099509999950950593599997009202997999995900079092029929999920920297" },
+    { name: "Echo", aspect: 3.867, fp: "999999999500005999999009999000099900000999999000999999999500099999999905999000099900005999999990099950000500999900999905999000099900009999059995099950000009997000029905999000099900099900005997099950000009995000000005999900099900999900000999099999999009995000000005999999999900999000000999099999999009995000000005999999999900999000000999099950000009995000000005999500099900999500000999099950000009995000000005999000099900099900000999099950000009999000009905999000099900099900009995099999999500999900059905999000099900009999059995099999999500057999995005995000099500002999999550" },
+    { name: "Battleship", aspect: 8.533, fp: "999900093599993999969900599990599569009039969990599960096599996999996900099990999569039039539996590960096509903039006900096033969539039009509569590960599009900039003900093003925539039009509539590960569009900039003900096003990039039009509539599930939509900039003900099960993039999009509569599960939509900039003900099960599039999009509996590792969709900039003900095000069539039009509752590593999909900039003900093000009939039009509500590593906909900039003900093006506939039009509500590996506939900039003930099993939539039009509000599956202939500037003999599992799236027039707000" },
+    { name: "The Eye", aspect: 5.867, fp: "999999959950059509999990000999999599900995999999999999955950059509999990000999999099900950999999905990055950059505990050000595005059900950099005005990005950059505990000000595000009955900099000005990005950059505990000000595000005999500099000005990005999999505999950000599995005999000099995005990005999999505999950000599995000999000099995005990005950059505990000000595000000995000099000005990005950059505990000000595000000995000099000005990005950059505990000000595000000995000099000005990005950059005999990000599999000995000099999005950005920057005999990000599999000992000099999" },
+    { name: "Wire Placement", aspect: 12.8, fp: "975297979729970797290009005959977705559959077999755295759929970599590009209977995907559959255999555272725729220559290029229577255907527029555292557572725659000555590029356067205919527009752090277772727929200555590057555007205929527009952090279752729929950559290057555007975979529907972090279952729909950599290052755007975779529907792090196952726909100573090076755007205697527007692090095952725729000550090079955007205597527007292090092922725729000550090070957057205595527007292090072722725559970550090070929077995295529927092090071725823389970530099760627937985283529926062080" },
+    { name: "Bluescreen", aspect: 9.2, fp: "999609600993696999609960099939990399939999396099599936600690363999639960599909995099936999399066590936600690360950366960993909399093036603369336590933600690360950065263950539369093006600069536590933600690360950069306930009399093006600069936599903600690360999339606930009995099906999066966599933600690360999309936900009990099906999066996590763600690360950003965930009592093006600063796590663600390360950000693930009395093006600063396590663600390360950090393960339369093006600063396590963900399960999666660990939369099936999360096599923999369720999639950279609229699936999260066" },
+    { name: "Who's On First", aspect: 10.75, fp: "000000000000000900200000000000000000000000030000970567760902950709900079059269039979679902995999672735662908692758900587729536029557567835895696373735562929076765500652929735009007356567262090373965562927056565200952959935009007356567530090286962576927056039200920956865009527357853820090096992599957059009700920956795009957359902990090099792562927056007900920956595009007356900792090087691562927056001830931956295009007356730292090076590562929076060730652926095009007356767062090076590562909393065730375626065009007356567592090053290531706980029800289325055006008753393971080" },
+    { name: "Astrology", aspect: 7.938, fp: "000000000300000000000000000000000000000000000000009600699399999699900099603950003990003999099069039602979367967396970795970950029777007979557055039905905305900393690950690650099039539506539063069905900305900393693950693650096009539006509590062920972005900396973900393650096009569000007960090930699005900399903900393650396009969039906930090930399305900396903900393650096009569039903930299960039605900393953920593650096009539009503930560695309605900393690950690650099039539509503930530395909605900393690690950690059569009909503930930290799205700392296399720699907995005999203900" },
+    { name: "Blackjack", aspect: 6, fp: "999950990000095000999659569659500950009996595696295790790000297005969609539229502990059696095392095392590000799009700709572009505992097007095720095690590000969359500009590009509693595000095900099970590002959359200009990009509395592000099900095593590003959629500009995009539596295000099950095393590006999609500009569009539999095000095690095393590006507907922709559309565059079227095593099972599979000922799309207709572007527993092077000000000000000000000000000009500000000000000000000000000000000000000000000029200000000000000000000000000000000000000000000096000000000000000000" },
+    { name: "Hangman", aspect: 7.2, fp: "995059505950599309960099990699005990099009960599595059505990099605930599990399005990099305990096595059505990099605900996990399505990099300995056595059509993099925907970095399709990599600997056599059509593095995909950000399939990559600999556599999539096095695909900000399939990955900969956599999539096095699909900995395969990955900969996597059559597095299909920797395995992977920937996595059569999095099905950595390990993999950930996595059565059095059905950595390990993900950930996595059590059595009905990595390990996500990900596592059070007592007900599990370560796200590900096" },
+    { name: "Limbo", aspect: 4.667, fp: "999900000999959999000009990099999950000009999000099900000999900999900099990059999999000599999900099900000099900999900099990059900999000999059990099900000099900999920599990059900999009992005995099900000099900999950599990059900999009990000995099900000099900999990999990059999990009990000995099900000099900995990999990059999999059990000999099900000099900992999909990059900599909990000995099900000099900990999909990059900099909990000995099900000099900990999509990059900099909995009995099900000099900990099509990059900999900999059990099999992999920990099207990059999995000299999700" },
+    { name: "Pipes", aspect: 3.688, fp: "000000000000000000000000000000000000000000000005999999995000999995999999995009999999999009999995059995599950099990599955999500999955559099979997009990009990099990099900099900999000000599900099009990009990099990099900099900999000000599950005009990059990099990099900599900999955550059995500009999999900099990099999999000999999990009999995009999999000099990099999995000999900000000099999009990000000099990099900000000999000000000025999009990000000099990099900000000999000000599000099009950000000099990099900000000999999999599950999009920000000599992099200000000999999999055999995" },
+    { name: "Balance", aspect: 6.4, fp: "999990000990059900000099005995059950099995999999599995000995059900000099500999009900999995599999595599005995009900000599500999009505995595599005595099005997009900000599700999709507950075595000595599009599009900000959900959959509900000599000599995009599009900000959900955959509900000599995599995009059509900000905950955999509900000599995595279259579509900005957950950799509900000597000595059559999909900005999990950599509900000595000595059595009909900009500990950099505950055595000595099595009909900009500990950059505990095599999599997292002959999959200295920029500599970599999" }
+  ];
+
+  // src/core/level/levelVision.js
+  var FP_W = 48;
+  var FP_H = 12;
+  function isTitleInk(r, g, b) {
+    return r > 190 && g > 140 && g < 225 && b > 80 && b < 170 && r - b > 70 && r - g > 25;
+  }
+  function letterBoxes(mask, W2, H) {
+    const seen = new Uint8Array(W2 * H), stack = new Int32Array(W2 * H), boxes = [];
+    for (let p0 = 0; p0 < W2 * H; p0++) {
+      if (!mask[p0] || seen[p0]) continue;
+      let sp = 0, n = 0;
+      stack[sp++] = p0;
+      seen[p0] = 1;
+      let x0 = W2, x1 = -1, y0 = H, y1 = -1;
+      while (sp) {
+        const p = stack[--sp], x = p % W2, y = (p - x) / W2;
+        n++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W2 || ny >= H) continue;
+          const q = ny * W2 + nx;
+          if (mask[q] && !seen[q]) {
+            seen[q] = 1;
+            stack[sp++] = q;
+          }
+        }
+      }
+      if (n >= 6) boxes.push({ x0, x1, y0, y1, n });
+    }
+    return boxes;
+  }
+  function mergeLines(boxes) {
+    const items = boxes.map((b) => ({ ...b }));
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const a = items[i], b = items[j];
+          const h = Math.max(a.y1 - a.y0, b.y1 - b.y0) + 1;
+          const vOverlap = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+          const gap = Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1);
+          if (vOverlap > h * 0.35 && gap < h * 0.9) {
+            a.x0 = Math.min(a.x0, b.x0);
+            a.x1 = Math.max(a.x1, b.x1);
+            a.y0 = Math.min(a.y0, b.y0);
+            a.y1 = Math.max(a.y1, b.y1);
+            a.n += b.n;
+            items.splice(j, 1);
+            changed = true;
+            j--;
+          }
+        }
+      }
+    }
+    return items;
+  }
+  var decodeFp = (s) => Float32Array.from(s, (d) => Number(d) / 9);
+  function soften(v) {
+    const o = new Float32Array(v.length);
+    for (let y = 0; y < FP_H; y++) for (let x = 0; x < FP_W; x++) {
+      let s = 0, n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const yy = y + dy, xx = x + dx;
+        if (yy < 0 || xx < 0 || yy >= FP_H || xx >= FP_W) continue;
+        const w = dx === 0 && dy === 0 ? 4 : 1;
+        s += v[yy * FP_W + xx] * w;
+        n += w;
+      }
+      o[y * FP_W + x] = s / n;
+    }
+    return o;
+  }
+  var prepareRefs = (list) => list.map((r) => ({ name: r.name, aspect: r.aspect, v: soften(decodeFp(r.fp)) }));
+  var REFS = prepareRefs(TITLE_REFS);
+
+  // src/utils/moduleCard.js
+  function findModuleTitle(img) {
+    const { data, width: W2, height: H } = img;
+    const mask = new Uint8Array(W2 * H);
+    for (let i = 0, p = 0; p < W2 * H; p++, i += 4) if (isTitleInk(data[i], data[i + 1], data[i + 2])) mask[p] = 1;
+    const lines = mergeLines(letterBoxes(mask, W2, H)).filter((l) => l.x1 - l.x0 > (l.y1 - l.y0) * 2.2 && l.y1 - l.y0 >= 6);
+    if (!lines.length) return null;
+    return lines.sort((a, b) => b.y1 - b.y0 - (a.y1 - a.y0) || b.x1 - b.x0 - (a.x1 - a.x0))[0];
+  }
+  function cropImage(img, x0, y0, x1, y1) {
+    const { data, width: W2, height: H } = img;
+    x0 = Math.max(0, Math.round(x0));
+    y0 = Math.max(0, Math.round(y0));
+    x1 = Math.min(W2, Math.round(x1));
+    y1 = Math.min(H, Math.round(y1));
+    const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
+    const out = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++) out.set(data.subarray(((y0 + y) * W2 + x0) * 4, ((y0 + y) * W2 + x0 + w) * 4), y * w * 4);
+    return { data: out, width: w, height: h, offset: { x: x0, y: y0 } };
+  }
+  function cropAroundTitle(img, title, { widthPerTitle, heightPerWidth = 1, topPerTitle = 1.4, margin = 0.03 }) {
+    const tw = title.x1 - title.x0 + 1, th = title.y1 - title.y0 + 1;
+    const cw = tw * widthPerTitle, cx = (title.x0 + title.x1) / 2;
+    const top = title.y0 - th * topPerTitle;
+    return cropImage(img, cx - cw / 2 - cw * margin, top - cw * margin, cx + cw / 2 + cw * margin, top + cw * heightPerWidth + cw * margin);
+  }
+
+  // src/modules/wireplace/wireplaceVision.js
+  var lum4 = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  function hsv2(r, g, b) {
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let h = 0;
+    if (d) {
+      if (mx === r) h = (g - b) / d % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    return { h, s: mx ? d / mx : 0, v: mx };
+  }
+  var WIRE_COLORS = ["black", "blue", "red", "white", "yellow", "green", "orange", "purple"];
+  function colorName(r, g, b, darkMax = 40) {
+    const { h, s, v } = hsv2(r, g, b);
+    if (v < 120 && s < 0.35) return v <= darkMax - 8 ? "black" : null;
+    if (s < 0.18) return Math.min(r, g, b) > 200 ? "white" : null;
+    if (s < 0.35 || v < 90) return null;
+    if (h < 15 || h >= 340) return "red";
+    if (h < 38) return "orange";
+    if (h < 70) return "yellow";
+    if (h < 170) return "green";
+    if (h < 260) return "blue";
+    return "purple";
+  }
+  var COLS2 = "ABCD";
+  var cellName = (c, r) => `${COLS2[c]}${r + 1}`;
+  function px(img, x, y) {
+    const p = (y * img.width + x) * 4;
+    return [img.data[p], img.data[p + 1], img.data[p + 2]];
+  }
+  function runs3(n, f, gap = 0) {
+    const out = [];
+    let s = -1, last = -1;
+    for (let i = 0; i < n; i++) {
+      if (f(i)) {
+        if (s < 0) s = i;
+        else if (i - last - 1 > gap) {
+          out.push([s, last]);
+          s = i;
+        }
+        last = i;
+      }
+    }
+    if (s >= 0) out.push([s, last]);
+    return out;
+  }
+  function topColors(img, x0, y0, x1, y1, step = 1, k = 3) {
+    const counts = /* @__PURE__ */ new Map();
+    for (let y = y0; y <= y1; y += step) for (let x = x0; x <= x1; x += step) {
+      const [r, g, b] = px(img, x, y);
+      const key = r >> 2 << 16 | g >> 2 << 8 | b >> 2;
+      const e = counts.get(key);
+      if (e) e[3]++;
+      else counts.set(key, [r, g, b, 1]);
+    }
+    return Array.from(counts.values()).sort((a, b) => b[3] - a[3]).slice(0, k);
+  }
+  var modeColor = (img, x0, y0, x1, y1, step = 1) => {
+    const t = topColors(img, x0, y0, x1, y1, step, 1)[0];
+    return t ? t.slice(0, 3) : null;
+  };
+  var near = (a, b, tol) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) <= tol;
+  function readWireBoard(img) {
+    const direct = readBoardIn(img);
+    if (direct.ok) return direct;
+    const title = findModuleTitle(img);
+    if (!title) return direct;
+    const card = cropAroundTitle(img, title, { widthPerTitle: 1.45, heightPerWidth: 1.01, topPerTitle: 1.35 });
+    if (card.width >= img.width * 0.9 && card.height >= img.height * 0.9) return direct;
+    const inCard = readBoardIn(card);
+    return inCard.ok ? { ...inCard, card: { x: card.offset.x, y: card.offset.y, w: card.width, h: card.height } } : direct;
+  }
+  function readBoardIn(img) {
+    const { width: W2, height: H } = img;
+    const greys = topColors(img, Math.floor(W2 * 0.2), Math.floor(H * 0.3), Math.floor(W2 * 0.8), Math.floor(H * 0.9), 2, 6).filter(([r, g, b]) => Math.max(r, g, b) - Math.min(r, g, b) < 25 && Math.max(r, g, b) < 110).slice(0, 2);
+    if (greys.length < 2) return { ok: false, reason: "No dark panel with tiles." };
+    const panel = Math.max(...greys[0].slice(0, 3)) < Math.max(...greys[1].slice(0, 3)) ? greys[0].slice(0, 3) : greys[1].slice(0, 3);
+    const pMax = Math.max(...panel);
+    const isTile2 = (x, y) => {
+      const [r, g, b] = px(img, x, y);
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      return mx - mn < 25 && mx >= pMax + 10 && mx <= pMax + 70;
+    };
+    const panelRows = runs3(H, (y) => {
+      let n = 0;
+      for (let x = 0; x < W2; x += 2) if (near(px(img, x, y), panel, 12)) n++;
+      return n > W2 * 0.25;
+    }, 3);
+    const panelCols = runs3(W2, (x) => {
+      let n = 0;
+      for (let y = 0; y < H; y += 2) if (near(px(img, x, y), panel, 12)) n++;
+      return n > H * 0.25;
+    }, 3);
+    if (!panelRows.length || !panelCols.length) return { ok: false, reason: "No dark panel." };
+    const py0 = panelRows[0][0], py1 = panelRows[panelRows.length - 1][1];
+    const px0 = panelCols[0][0], px1 = panelCols[panelCols.length - 1][1];
+    const pw = px1 - px0 + 1, ph = py1 - py0 + 1;
+    const rowP = new Float64Array(ph), colP = new Float64Array(pw);
+    for (let y = py0; y <= py1; y++) for (let x = px0; x <= px1; x++) if (isTile2(x, y)) {
+      rowP[y - py0]++;
+      colP[x - px0]++;
+    }
+    const fitFour = (prof) => {
+      const n = prof.length;
+      const sum = new Float64Array(n + 1);
+      for (let i = 0; i < n; i++) sum[i + 1] = sum[i] + prof[i];
+      const band = (a, b) => b <= a ? 0 : (sum[Math.min(n, b)] - sum[Math.max(0, a)]) / (Math.min(n, b) - Math.max(0, a));
+      let best = null;
+      for (let s = Math.max(8, Math.floor(n * 0.08)); s <= Math.floor(n * 0.24); s++) {
+        for (let g = Math.max(2, Math.floor(s * 0.08)); g <= Math.ceil(s * 0.5); g++) {
+          const span = 4 * s + 3 * g;
+          for (let o = g; o + span + g <= n; o++) {
+            let tile = 0, gap = 0;
+            for (let k = 0; k < 4; k++) tile += band(o + k * (s + g), o + k * (s + g) + s);
+            for (let k = 0; k <= 4; k++) gap += band(o + k * (s + g) - g, o + k * (s + g));
+            const score = tile / 4 - gap / 5;
+            if (!best || score > best.score) best = { score, s, g, o, tile: tile / 4, gap: gap / 5 };
+          }
+        }
+      }
+      return best;
+    };
+    const fr = fitFour(rowP), fc = fitFour(colP);
+    if (!fr || !fc || fr.tile < fr.gap * 3 + 4 || fc.tile < fc.gap * 3 + 4 || Math.abs(fr.s - fc.s) > Math.max(fr.s, fc.s) * 0.25) {
+      return { ok: false, reason: "No 4\xD74 tile grid." };
+    }
+    const xs = [0, 1, 2, 3].map((k) => px0 + fc.o + k * (fc.s + fc.g) + (fc.s - 1) / 2);
+    const ys = [0, 1, 2, 3].map((k) => py0 + fr.o + k * (fr.s + fr.g) + (fr.s - 1) / 2);
+    const size = (fc.s + fc.g + (fr.s + fr.g)) / 2;
+    const darkMax = pMax;
+    const probe = (c0, r0, c1, r1) => {
+      const x0 = xs[c0], y0 = ys[r0], x1 = xs[c1], y1 = ys[r1];
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      const nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+      const reach = Math.round(size * 0.22);
+      const votes = {};
+      const STEPS = 15;
+      for (let s = 0; s < STEPS; s++) {
+        const t = 0.25 + 0.5 * s / (STEPS - 1);
+        const cx = x0 + (x1 - x0) * t, cy = y0 + (y1 - y0) * t;
+        const here = {};
+        for (let k = -reach; k <= reach; k++) {
+          const x = Math.round(cx + nx * k), y = Math.round(cy + ny * k);
+          if (x < 0 || y < 0 || x >= W2 || y >= H) continue;
+          const name = colorName(...px(img, x, y), darkMax);
+          if (name) here[name] = (here[name] || 0) + 1;
+        }
+        const top = Object.entries(here).sort((a, b) => b[1] - a[1])[0];
+        if (top && top[1] >= 2) votes[top[0]] = (votes[top[0]] || 0) + 1;
+      }
+      const best = Object.entries(votes).sort((a, b) => b[1] - a[1])[0];
+      return best ? { color: best[0], score: best[1] / STEPS } : null;
+    };
+    const found = [];
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      for (const [dc, dr, diag] of [[1, 0, false], [0, 1, false], [1, 1, true], [-1, 1, true]]) {
+        const c1 = c + dc, r1 = r + dr;
+        if (c1 < 0 || c1 > 3 || r1 > 3) continue;
+        const hit = probe(c, r, c1, r1);
+        if (hit && hit.score >= 0.8) found.push({ color: hit.color, a: cellName(c, r), b: cellName(c1, r1), score: hit.score, diag });
+      }
+    }
+    found.sort((p, q) => p.diag - q.diag || q.score - p.score);
+    const used = /* @__PURE__ */ new Set(), wires = [];
+    for (const w of found) {
+      if (used.has(w.a) || used.has(w.b)) continue;
+      used.add(w.a);
+      used.add(w.b);
+      wires.push({ color: w.color, a: w.a, b: w.b, score: w.score });
+    }
+    const order = (n) => (Number(n[1]) - 1) * 4 + COLS2.indexOf(n[0]);
+    wires.sort((p, q) => order(p.a) - order(q.a));
+    if (!wires.length) return { ok: false, reason: "No wires found on the board." };
+    return { ok: true, wires, tiles: { xs, ys, size } };
+  }
+  var GLYPH_W2 = 8;
+  var GLYPH_H2 = 12;
+  var GLYPHS = {
+    "1": { aspect: 0.318, g: "0147adc979ceffeeffffffff68dfffff06dfffff06dfffff06dfffff06dfffff06dfffff06dfffec06dffea604ad8730" },
+    "2": { aspect: 0.671, g: "04cfe9306dffffa2cfe9cfe7ffa16ffcee608ffb6613efe7018efe5019efa5107efc1013fffffffdfffffffbfffffff9" },
+    "3": { aspect: 0.685, g: "16dffb307effffb3dfd8dff9ef706ef956aacfd503dfffb20168cffb9a506efdff905dfedffcfff98dffffa325cfc820" },
+    "4": { aspect: 0.743, g: "0006fd20002cff30007fff3002efff3017edff304dc8ff30bfcbffa6effffffeffffffff777afe850007fc100007d600" },
+    A: { aspect: 0.771, g: "003ef500007ff91100bffb2201dfff3004edef6108f8cf910cf9efe42efffff66ffffffcbf501cfdee3008fefa1002ae" },
+    B: { aspect: 0.765, g: "fffffc50afffffd58ffaaffd8ff66ffa8ffccfd58fffffc38ffa9efd8ff61cfe8ff60bff8ffa9efd8fffffd74dfffc50" },
+    C: { aspect: 0.815, g: "006cfca918effffb4fff9effcff500afdfd10035ff900000ff900000dfd10000aff300383efc8afe07ffffe8018cfc70" },
+    D: { aspect: 0.85, g: "effffa40bfffffc38fe9bff98fd31afe8fd306ff8fd305ff8fd306ff8fd308ff8fd32cfe8ffffff88fffffb26fffe920" }
+  };
+  function buildGlyph(mask, w, box) {
+    const out = new Float32Array(GLYPH_W2 * GLYPH_H2);
+    const bw = box.x1 - box.x0 + 1, bh = box.y1 - box.y0 + 1;
+    for (let gy = 0; gy < GLYPH_H2; gy++) for (let gx = 0; gx < GLYPH_W2; gx++) {
+      const sx0 = box.x0 + gx * bw / GLYPH_W2, sx1 = box.x0 + (gx + 1) * bw / GLYPH_W2;
+      const sy0 = box.y0 + gy * bh / GLYPH_H2, sy1 = box.y0 + (gy + 1) * bh / GLYPH_H2;
+      let ink = 0, n = 0;
+      for (let y = Math.floor(sy0); y < Math.ceil(sy1); y++) for (let x = Math.floor(sx0); x < Math.ceil(sx1); x++) {
+        n++;
+        if (mask[y * w + x]) ink++;
+      }
+      out[gy * GLYPH_W2 + gx] = n ? ink / n : 0;
+    }
+    return out;
+  }
+  var decodeGlyph2 = (s) => Float32Array.from(s, (ch) => parseInt(ch, 16) / 15);
+  var encodeGlyph2 = (g) => Array.from(g, (v) => Math.round(v * 15).toString(16)).join("");
+  function matchGlyph2(g, aspect, chars) {
+    const all = [];
+    for (const ch of chars) {
+      const t = GLYPHS[ch];
+      if (!t) continue;
+      const tg = decodeGlyph2(t.g);
+      let d = 0;
+      for (let i = 0; i < tg.length; i++) d += (tg[i] - g[i]) ** 2;
+      all.push({ ch, score: 1 - Math.sqrt(d / tg.length) - Math.abs(Math.log(aspect / t.aspect)) * 0.3 });
+    }
+    all.sort((a, b) => b.score - a.score);
+    return all.length ? { ...all[0], margin: all.length > 1 ? all[0].score - all[1].score : 1 } : null;
+  }
+  function blobs2(mask, w, h) {
+    const seen = new Uint8Array(w * h), out = [];
+    for (let i = 0; i < w * h; i++) {
+      if (!mask[i] || seen[i]) continue;
+      const st = [i];
+      seen[i] = 1;
+      const b = { x0: w, y0: h, x1: -1, y1: -1, n: 0 };
+      while (st.length) {
+        const j = st.pop(), x = j % w, y = (j - x) / w;
+        b.n++;
+        if (x < b.x0) b.x0 = x;
+        if (x > b.x1) b.x1 = x;
+        if (y < b.y0) b.y0 = y;
+        if (y > b.y1) b.y1 = y;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          const k = yy * w + xx;
+          if (mask[k] && !seen[k]) {
+            seen[k] = 1;
+            st.push(k);
+          }
+        }
+      }
+      out.push(b);
+    }
+    return out;
+  }
+  function readCellCode(img, box) {
+    const w = box.x1 - box.x0 + 1, h = box.y1 - box.y0 + 1;
+    const fill = modeColor(img, box.x0, box.y0, box.x1, box.y1);
+    const fl = lum4(...fill);
+    const mask = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const c = px(img, box.x0 + x, box.y0 + y);
+      if (!near(c, fill, 90)) mask[y * w + x] = lum4(...c) > fl + 50 ? 1 : 0;
+    }
+    let bs = blobs2(mask, w, h);
+    if (!bs.length) return { code: null, empty: true };
+    const big = Math.max(...bs.map((b) => b.n));
+    bs = bs.filter((b) => b.n >= big * 0.12 && b.x0 > 0 && b.x1 < w - 1 && b.y0 > 0 && b.y1 < h - 1);
+    if (!bs.length) return { code: null, empty: true };
+    const keep = new Uint8Array(w * h);
+    bs.forEach((b) => {
+      for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) if (mask[y * w + x]) keep[y * w + x] = 1;
+    });
+    const X0 = Math.min(...bs.map((b) => b.x0)), X1 = Math.max(...bs.map((b) => b.x1));
+    const colInk = (x) => {
+      let n = 0;
+      for (let y = 0; y < h; y++) n += keep[y * w + x];
+      return n;
+    };
+    let split = -1, least = Infinity;
+    for (let x = Math.round(X0 + (X1 - X0) * 0.35); x <= Math.round(X0 + (X1 - X0) * 0.75); x++) {
+      const n = colInk(x);
+      if (n < least) {
+        least = n;
+        split = x;
+      }
+    }
+    const part = (xa, xb) => {
+      const b = { x0: w, y0: h, x1: -1, y1: -1 };
+      for (let y = 0; y < h; y++) for (let x = xa; x <= xb; x++) if (keep[y * w + x]) {
+        if (x < b.x0) b.x0 = x;
+        if (x > b.x1) b.x1 = x;
+        if (y < b.y0) b.y0 = y;
+        if (y > b.y1) b.y1 = y;
+      }
+      return b.x1 < 0 ? null : b;
+    };
+    const letter = part(X0, split - 1), digit = part(split + 1, X1);
+    if (!letter || !digit) return { code: null, empty: false };
+    const only = (b) => {
+      const m = new Uint8Array(w * h);
+      for (let y = b.y0; y <= b.y1; y++) for (let x = b.x0; x <= b.x1; x++) m[y * w + x] = keep[y * w + x];
+      return m;
+    };
+    const glyphs = [letter, digit].map((b) => ({ g: buildGlyph(only(b), w, b), aspect: (b.x1 - b.x0 + 1) / (b.y1 - b.y0 + 1) }));
+    const L = matchGlyph2(glyphs[0].g, glyphs[0].aspect, "ABCD");
+    const D = matchGlyph2(glyphs[1].g, glyphs[1].aspect, "1234");
+    if (!L || !D) return { code: null, empty: false, glyphs };
+    return { code: L.ch + D.ch, sure: Math.min(L.margin, D.margin) > 0.1 && Math.min(L.score, D.score) > 0.55, score: Math.min(L.score, D.score), margin: Math.min(L.margin, D.margin), glyphs };
+  }
+  function readWireTable(img) {
+    const { width: W2, height: H } = img;
+    const edge = /* @__PURE__ */ new Map();
+    let bg = null, bgN = 0;
+    const add2 = (x, y) => {
+      const c = px(img, x, y);
+      const k = c.join(",");
+      const n = (edge.get(k) || 0) + 1;
+      edge.set(k, n);
+      if (n > bgN) {
+        bgN = n;
+        bg = c;
+      }
+    };
+    for (let x = 0; x < W2; x += 2) {
+      add2(x, 0);
+      add2(x, H - 1);
+    }
+    for (let y = 0; y < H; y += 2) {
+      add2(0, y);
+      add2(W2 - 1, y);
+    }
+    if (!bg || lum4(...bg) > 90) return { ok: false, reason: "No dark background." };
+    const notBg = (x, y) => !near(px(img, x, y), bg, 18);
+    const rowRuns = runs3(H, (y) => {
+      let n = 0;
+      for (let x = 0; x < W2; x += 2) if (notBg(x, y)) n++;
+      return n > W2 * 0.5 * 0.3;
+    }).filter(([a, b]) => b - a >= 8);
+    const colRuns = runs3(W2, (x) => {
+      let n = 0;
+      for (let y = 0; y < H; y += 2) if (notBg(x, y)) n++;
+      return n > H * 0.5 * 0.3;
+    }).filter(([a, b]) => b - a >= 8);
+    if (rowRuns.length < 3 || colRuns.length < 3) return { ok: false, reason: "Not a table." };
+    const darkMax = Math.max(...bg);
+    const badge = (x0, y0, x1, y1) => {
+      const n = {};
+      for (let y = y0; y <= y1; y += 2) for (let x = x0; x <= x1; x += 2) {
+        const name = colorName(...px(img, x, y), darkMax);
+        if (name) n[name] = (n[name] || 0) + 1;
+      }
+      const best = Object.entries(n).sort((a, b) => b[1] - a[1])[0];
+      const area = ((y1 - y0) / 2 + 1) * ((x1 - x0) / 2 + 1);
+      return best && best[1] > area * 0.3 ? best[0] : null;
+    };
+    const head = rowRuns[0];
+    const columns = colRuns.slice(1).map(([x0, x1]) => badge(x0, head[0], x1, head[1]));
+    if (columns.filter(Boolean).length < 2) return { ok: false, reason: "No colour badges across the top." };
+    const left = colRuns[0];
+    const rows = [], unsure = [];
+    rowRuns.slice(1).forEach(([y0, y1], r) => {
+      const color = badge(left[0], y0, left[1], y1);
+      const cells = colRuns.slice(1).map(([x0, x1], c) => {
+        const got = readCellCode(img, { x0, y0, x1, y1 });
+        if (!got.code || !got.sure) unsure.push([r, c]);
+        return got.code;
+      });
+      rows.push({ color, cells });
+    });
+    if (rows.filter((r) => r.color).length < 2) return { ok: false, reason: "No colour badges down the left." };
+    return { ok: true, columns, rows, unsure };
+  }
+  function classifyWirePicture(img) {
+    const t = readWireTable(img);
+    if (t.ok && t.rows.length >= 3 && t.rows.some((r) => r.cells.some(Boolean))) return { type: "table", table: t };
+    const b = readWireBoard(img);
+    if (b.ok) return { type: "board", board: b };
+    return { type: null, reason: t.reason || b.reason };
+  }
+
+  // src/modules/laundry/laundrySolver.js
+  var laundrySolver_exports = {};
+  __export(laundrySolver_exports, {
+    CARE: () => CARE,
+    CONTROLS: () => CONTROLS,
+    DRY: () => DRY,
+    IRON: () => IRON,
+    SAMPLE_MANUAL_TEXT: () => SAMPLE_MANUAL_TEXT,
+    TABLES: () => TABLES,
+    WASH: () => WASH,
+    describeFormula: () => describeFormula,
+    isLoadMessage: () => isLoadMessage,
+    lastSerialDigit: () => lastSerialDigit,
+    manualHasAny: () => manualHasAny,
+    parseLaundryManual: () => parseLaundryManual,
+    parseLaundryText: () => parseLaundryText,
+    pickSymbol: () => pickSymbol,
+    pressesFor: () => pressesFor,
+    sharedLetters: () => sharedLetters,
+    solveLaundry: () => solveLaundry
+  });
+  var WASH = ["30\xB0C", "40\xB0C", "50\xB0C", "95\xB0C", "Hand wash", "Do not wash"];
+  var DRY = ["High heat", "Dry flat", "Tumble dry", "No tumble dry", "Low heat", "Medium heat"];
+  var IRON = ["150\xB0C", "No steam", "Iron", "200\xB0C", "110\xB0C"];
+  var CARE = [
+    "Bleach",
+    "No tetra solvent",
+    "Reduced moisture",
+    "Short cycle",
+    "Do not bleach",
+    "No dry cleaning",
+    "Petroleum only",
+    "Low heat",
+    "Wet cleaning",
+    "Any solvent",
+    "No steam finish",
+    "Non-chlorine bleach"
+  ];
+  var CONTROLS = [["wash", "Wash", WASH], ["dry", "Dry", DRY], ["iron", "Iron", IRON], ["care", "Special care", CARE]];
+  var LISTS = { wash: WASH, dry: DRY, iron: IRON, care: CARE };
+  var TABLES = ["item", "material", "color"];
+  var TABLE_LABEL = { item: "Item", material: "Material", color: "Color" };
+  var cleanSerial = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  var num = (v) => v === "" || v == null || !Number.isFinite(Number(v)) ? null : Number(v);
+  var norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  function lastSerialDigit(serial) {
+    const d = cleanSerial(serial).match(/\d/g);
+    return d ? Number(d[d.length - 1]) : 0;
+  }
+  function firstSerialDigit(serial) {
+    const d = cleanSerial(serial).match(/\d/);
+    return d ? Number(d[0]) : 0;
+  }
+  function sharedLetters(name, serial) {
+    const s = new Set(cleanSerial(serial).replace(/\d/g, ""));
+    return Array.from(new Set(String(name).toUpperCase().replace(/[^A-Z]/g, ""))).filter((ch) => s.has(ch));
+  }
+  function lev3(a, b) {
+    const m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const cur = [i];
+      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function closestD(raw, options) {
+    const r = norm(raw);
+    if (!r) return null;
+    let best = null, bestD = Infinity;
+    for (const o of options) {
+      const d = lev3(r, norm(o));
+      if (d < bestD) {
+        bestD = d;
+        best = o;
+      }
+    }
+    return best && bestD <= Math.max(1, Math.floor(norm(best).length * 0.3)) ? { value: best, d: bestD } : null;
+  }
+  var closest = (raw, options) => {
+    const c = closestD(raw, options);
+    return c ? c.value : null;
+  };
+  var USUAL_NAMES = [
+    "Corset",
+    "Shirt",
+    "Skirt",
+    "Skort",
+    "Shorts",
+    "Scarf",
+    "Polyester",
+    "Cotton",
+    "Wool",
+    "Nylon",
+    "Corduroy",
+    "Leather",
+    "Ruby Fountain",
+    "Star Lemon Quartz",
+    "Sapphire Springs",
+    "Jade Cluster",
+    "Clouded Pearl",
+    "Malinite"
+  ];
+  function pickSymbol(control, raw) {
+    const list = LISTS[control];
+    const s = String(raw || "").trim().replace(/\.$/, "");
+    const temps = list.filter((x) => /^\d+°C$/.test(x));
+    const digits = s.replace(/\D/g, "");
+    if (digits.length >= 2 && /^[\d\s°º*o0]+c?$/i.test(s.replace(/\s/g, ""))) {
+      const hit = temps.map((t) => t.replace(/\D/g, "")).filter((t) => digits.startsWith(t)).sort((a, b) => b.length - a.length)[0];
+      if (hit) return `${hit}\xB0C`;
+    }
+    return closest(s, list.filter((x) => !temps.includes(x)));
+  }
+  var ARROW = /\s*(?:→|->|=>|—>|–>|⇒|➔|►)\s*|\s+(?:—|–|-|>|\+|=)\s+/;
+  var TW = "(?:[il1|]{1,2}tem|material|colou?r)";
+  var tableKey = (w) => /^colou?r$/i.test(w) ? "color" : /^[il1|]{1,2}tem$/i.test(w) ? "item" : /^material$/i.test(w) ? "material" : null;
+  var controlKey = (w) => /^wash$/i.test(w) ? "wash" : /^dry$/i.test(w) ? "dry" : /^iron$/i.test(w) ? "iron" : /^special\s*care$/i.test(w) ? "care" : null;
+  function parseFormula(rhs) {
+    const text = rhs.replace(/\(.*?\)/g, "").trim();
+    const terms = [];
+    for (const part of text.split(/(?=[+-])/)) {
+      const sign = part.trim().startsWith("-") ? -1 : 1;
+      const t = part.replace(/^[\s+-]+/, "").trim().toLowerCase();
+      if (!t) continue;
+      if (/^\d+$/.test(t)) terms.push({ sign, kind: "num", n: Number(t) });
+      else if (/remaining/.test(t)) terms.push({ sign, kind: "count", key: "remaining" });
+      else if (/solved/.test(t)) terms.push({ sign, kind: "count", key: "solved" });
+      else if (/needy/.test(t)) terms.push({ sign, kind: "count", key: "needy" });
+      else if (/total/.test(t)) terms.push({ sign, kind: "count", key: "total" });
+      else if (/first.*digit/.test(t)) terms.push({ sign, kind: "digit", which: "first" });
+      else if (/digit/.test(t)) terms.push({ sign, kind: "digit", which: "last" });
+      else return { text: rhs.trim(), terms, unknown: t };
+    }
+    return { text: text.replace(/\s+/g, " "), terms };
+  }
+  function parseLaundryManual(text) {
+    const out = { load: null, modulus: null, formulas: {}, tables: {}, columns: {}, controlFrom: {}, overrides: [], care: [], unread: [] };
+    const lines = String(text || "").replace(/\r/g, "").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+    let table = null, inCare = false;
+    const names = () => TABLES.flatMap((k) => (out.tables[k] || []).map((r) => r.name));
+    const pendingRules = [];
+    for (const raw of lines) {
+      const l = raw.replace(/^[•·*e+»]\s+/, "").replace(/^[-–]\s+/, "");
+      let m;
+      if (m = l.match(/^load\s*#?\s*(\d+)/i)) {
+        out.load = Number(m[1]);
+        continue;
+      }
+      if (m = l.match(/subtract\s+(\d+)/i)) {
+        out.modulus = Number(m[1]);
+        continue;
+      }
+      if ((m = l.match(new RegExp(`^(${TW})\\s*(?:=|:|\u2014|\u2013|-)\\s*(.+)$`, "i"))) && !/\//.test(m[2]) && /\d|remaining|solved|needy|total|digit/i.test(m[2])) {
+        out.formulas[tableKey(m[1])] = parseFormula(m[2]);
+        table = null;
+        continue;
+      }
+      if (m = l.match(new RegExp(`^(${TW})\\b\\W*\\s*(wash|dry|iron)\\s*[/|l1I]\\s*special\\s*care\\.?$`, "i"))) {
+        table = tableKey(m[1]);
+        out.tables[table] = [];
+        out.columns[table] = [controlKey(m[2]), "care"];
+        inCare = false;
+        continue;
+      }
+      if (/first\s+match/i.test(l)) {
+        inCare = true;
+        table = null;
+        continue;
+      }
+      const looksOverride = /^.+?:\s*(?:wash|dry|iron|special care)\s+\S/i.test(l) && !/[/|]/.test(l);
+      if (table && !looksOverride && (m = l.match(/^([A-Za-z][A-Za-z' ]*?)\s*[:;]\s*(.+?)\.?$/))) {
+        const [c1, c2] = out.columns[table];
+        const name = m[1].trim(), rest = m[2];
+        let pair = null;
+        const slash = rest.match(/^(.+?)\s*[/|]\s*(.+)$/);
+        if (slash) pair = [pickSymbol(c1, slash[1]), pickSymbol(c2, slash[2])];
+        if (!pair || !pair[0] || !pair[1]) {
+          const words = rest.split(" ");
+          for (let i = 1; i < words.length && (!pair || !pair[0] || !pair[1]); i++) {
+            const a = pickSymbol(c1, words.slice(0, i).join(" ").replace(/\s*[/|l1I]$/, "")), b = pickSymbol(c2, words.slice(i).join(" ").replace(/^[/|l1I]\s*/, ""));
+            if (a && b) pair = [a, b];
+          }
+        }
+        out.tables[table].push({ name, values: { [c1]: pair ? pair[0] : null, [c2]: pair ? pair[1] : null }, text: raw });
+        continue;
+      }
+      const maps = Array.from(l.matchAll(new RegExp(`\\b(wash|dry|iron)\\b\\W{0,4}\\s*(${TW})\\b`, "gi")));
+      if (maps.length && !/\//.test(l)) {
+        maps.forEach((x) => {
+          out.controlFrom[controlKey(x[1])] = tableKey(x[2]);
+        });
+        table = null;
+        continue;
+      }
+      if (m = l.match(/^(.+?)\s*:\s*(wash|dry|iron|special care)\s+(.+?)\.?$/i)) {
+        const control = controlKey(m[2]);
+        const value = pickSymbol(control, m[3]);
+        const who = m[1].split(/\s+or\s+|\s*,\s*/i).map((s) => s.trim()).filter(Boolean);
+        if (value && who.length) {
+          out.overrides.push({ who, control, value, text: raw });
+          table = null;
+          continue;
+        }
+      }
+      if (inCare) {
+        pendingRules.push(raw);
+        continue;
+      }
+      if (table) continue;
+      if (!/subject of|^top\b|find the load|use the module|set the controls|check every/i.test(l)) out.unread.push(raw);
+    }
+    const known = Array.from(/* @__PURE__ */ new Set([...names(), ...USUAL_NAMES]));
+    for (const raw of pendingRules) out.care.push(parseCareRule(raw, known));
+    return out;
+  }
+  function parseCareThen(s) {
+    const t = s.trim().replace(/\.$/, "");
+    const m = t.match(new RegExp(`^(${TW})\\s+care$`, "i"));
+    if (m) return { kind: "care", table: tableKey(m[1]), d: 0 };
+    const v = closestD(t, CARE);
+    return v ? { kind: "value", value: v.value, d: v.d } : null;
+  }
+  function parseCareWhen(s, known) {
+    const t = s.trim();
+    if (/^otherwise$/i.test(t)) return { kind: "always", d: 0 };
+    const m = t.match(new RegExp(`^(${TW})\\s+shares\\s+(?:a\\s+)?letter\\s+with\\s+(?:the\\s+)?serial`, "i"));
+    if (m) return { kind: "shares", table: tableKey(m[1]), d: 0 };
+    const parts = t.split(/\s+or\s+|\s*,\s*/i).map((x) => x.trim()).filter(Boolean);
+    const hits = parts.map((p) => closestD(p, known));
+    if (parts.length && hits.every(Boolean)) return { kind: "names", who: hits.map((h) => h.value), d: hits.reduce((a, h) => a + h.d, 0) };
+    return null;
+  }
+  var strip = ({ d, ...rest }) => rest;
+  function parseCareRule(raw, known) {
+    const l = raw.replace(/^[•·*e+»]\s+/, "");
+    const parts = l.split(ARROW);
+    if (parts.length >= 2) {
+      const when = parseCareWhen(parts[0], known), then = parseCareThen(parts.slice(1).join(" "));
+      if (when && then) return { when: strip(when), then: strip(then), text: raw };
+    }
+    const words = l.split(" ");
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const when = parseCareWhen(words.slice(0, i).join(" "), known), then = parseCareThen(words.slice(i).join(" "));
+      if (when && then && (!best || when.d + then.d < best.d)) best = { when: strip(when), then: strip(then), d: when.d + then.d };
+    }
+    if (best) return { when: best.when, then: best.then, text: raw };
+    return { when: { kind: "unknown" }, then: null, text: raw };
+  }
+  var manualHasAny = (m) => Boolean(m && (Object.keys(m.formulas).length || Object.keys(m.tables).length || m.overrides.length || m.care.length));
+  var SAMPLE_MANUAL_TEXT = `On the subject of Laundry
+Load 1 \u2022 Check every 60s. Wrong settings explode. Reopen for each new load.
+Top: Wash | Dry. Bottom: Iron | Special care.
+
+Find the load
+
+Use the module's captured counts. Subtract 6 until each result is 0 to 5.
+Item = remaining + 5
+Material = solved + needy + 2
+Color = last serial digit + total + 1 (no digit: use 0)
+
+Item \u2192 Iron / Special care
+Corset: 150\xB0C / Bleach
+Shirt: No steam / No tetra solvent
+Skirt: Iron / Reduced moisture
+Skort: 200\xB0C / Short cycle
+Shorts: 150\xB0C / Do not bleach
+Scarf: 110\xB0C / No dry cleaning
+
+Material \u2192 Wash / Special care
+Polyester: 50\xB0C / Petroleum only
+Cotton: 95\xB0C / No dry cleaning
+Wool: Hand wash / Reduced moisture
+Nylon: 30\xB0C / Low heat
+Corduroy: 40\xB0C / Wet cleaning
+Leather: Do not wash / No tetra solvent
+
+Color \u2192 Dry / Special care
+Ruby Fountain: High heat / Any solvent
+Star Lemon Quartz: Dry flat / Low heat
+Sapphire Springs: Tumble dry / Short cycle
+Jade Cluster: No tumble dry / No steam finish
+Clouded Pearl: Low heat / Low heat
+Malinite: Medium heat / Non-chlorine bleach
+
+Set the controls
+
+Wash \u2192 material. Dry \u2192 color. Iron \u2192 item.
+\u2022 Leather or Jade Cluster: Wash 30\xB0C.
+\u2022 Wool or Star Lemon Quartz: Dry High heat.
+
+Special care: first match wins
+Clouded Pearl \u2192 Non-chlorine bleach
+Corset or Corduroy \u2192 material care
+Material shares a letter with serial \u2192 color care
+Otherwise \u2192 item care`;
+  var USUAL = parseLaundryManual(SAMPLE_MANUAL_TEXT);
+  var fmtFormula = (f) => f.terms.map((t, i) => `${i ? t.sign < 0 ? " \u2212 " : " + " : t.sign < 0 ? "\u2212" : ""}${t.kind === "num" ? t.n : t.kind === "count" ? t.key : `${t.which} serial digit`}`).join("");
+  var describeFormula = (key, f) => f ? `${TABLE_LABEL[key]} = ${f.unknown ? f.text : fmtFormula(f)}` : `${TABLE_LABEL[key]} = ?`;
+  function solveLaundry(manual, counts, serial) {
+    if (!manual || !Object.keys(manual.formulas).length) return { ready: false, missing: ["manual"], reason: "Paste this game's Laundry manual (its formulas change every game)." };
+    const c = {
+      remaining: num(counts && counts.remaining),
+      solved: num(counts && counts.solved),
+      needy: num(counts && counts.needy),
+      total: num(counts && counts.total)
+    };
+    const ser = cleanSerial(serial);
+    const missingF = TABLES.filter((k) => !manual.formulas[k]);
+    if (missingF.length) return { ready: false, missing: missingF.map((k) => `${k} formula`), reason: `The manual's ${missingF.join(" / ")} formula wasn't read \u2014 fix it in the manual text.` };
+    const odd = TABLES.find((k) => manual.formulas[k].unknown);
+    if (odd) return { ready: false, missing: [], reason: `Not understood in the ${odd} formula: "${manual.formulas[odd].unknown}" \u2014 fix it in the manual text.` };
+    const used = new Set(TABLES.flatMap((k) => manual.formulas[k].terms.map((t) => t.kind === "count" ? t.key : t.kind === "digit" ? "serial" : null)).filter(Boolean));
+    const missing = ["remaining", "solved", "needy", "total"].filter((k) => used.has(k) && c[k] === null);
+    const careNeedsSerial = (manual.care.length ? manual.care : USUAL.care).some((r) => r.when.kind === "shares");
+    if (!ser && (used.has("serial") || careNeedsSerial)) missing.push("serial");
+    if (missing.length) return { ready: false, missing };
+    const modulus = manual.modulus || 6;
+    const borrowed = [];
+    const tables = {}, columns = {};
+    for (const k of TABLES) {
+      const t = manual.tables[k];
+      if (!t || !t.length) {
+        tables[k] = USUAL.tables[k];
+        columns[k] = USUAL.columns[k];
+        borrowed.push(`${k} table`);
+        continue;
+      }
+      if (t.length !== modulus) return { ready: false, missing: [], reason: `The manual's ${k} table has ${t.length} rows, not ${modulus} \u2014 fix it in the manual text.` };
+      const bad = t.find((r) => Object.values(r.values).some((v) => !v));
+      if (bad) return { ready: false, missing: [], reason: `Manual row not understood: "${bad.text}" \u2014 fix it in the manual text.` };
+      tables[k] = t;
+      columns[k] = manual.columns[k];
+    }
+    const controlFrom = { ...USUAL.controlFrom };
+    if (Object.keys(manual.controlFrom).length) Object.assign(controlFrom, manual.controlFrom);
+    else {
+      let fromHeads = 0;
+      for (const k of TABLES) if (manual.columns[k]) {
+        controlFrom[manual.columns[k][0]] = k;
+        fromHeads++;
+      }
+      if (!fromHeads) borrowed.push("which table sets wash / dry / iron");
+    }
+    const overrides = manual.overrides.length || manual.care.length ? manual.overrides : (borrowed.push("the wash / dry exceptions"), USUAL.overrides);
+    const care = manual.care.length ? manual.care : (borrowed.push("the special-care rules"), USUAL.care);
+    const value = (t) => t.kind === "num" ? t.n : t.kind === "count" ? c[t.key] : t.which === "first" ? firstSerialDigit(ser) : lastSerialDigit(ser);
+    const pick = {}, why = {};
+    for (const k of TABLES) {
+      const f = manual.formulas[k];
+      const sum = f.terms.reduce((a, t) => a + t.sign * value(t), 0);
+      const idx = (sum % modulus + modulus) % modulus;
+      pick[k] = tables[k][idx];
+      const parts = f.terms.map((t, i) => `${i ? t.sign < 0 ? " \u2212 " : " + " : t.sign < 0 ? "\u2212" : ""}${t.kind === "num" ? t.n : t.kind === "count" ? `${c[t.key]} ${t.key}` : `${t.which} digit ${value(t)}`}`);
+      const noDigit = f.terms.some((t) => t.kind === "digit") && !/\d/.test(ser) ? " (no serial digit: 0)" : "";
+      why[k] = `${parts.join("")}${noDigit} = ${sum} \u2192 ${idx}`;
+    }
+    const isPicked = (name) => TABLES.some((k) => norm(pick[k].name) === norm(name));
+    const set = {};
+    for (const control of ["wash", "dry", "iron"]) {
+      const from = controlFrom[control];
+      set[control] = pick[from].values[control] || null;
+      why[control] = pick[from].name;
+    }
+    for (const o of overrides) {
+      if (o.control === "care") continue;
+      const hit = o.who.find(isPicked);
+      if (hit) {
+        set[o.control] = o.value;
+        why[o.control] = `${hit} \u2192 ${o.value}`;
+      }
+    }
+    set.care = null;
+    for (const r of care) {
+      const w = r.when;
+      if (w.kind === "unknown") {
+        return { ready: false, missing: [], reason: `Special-care rule not understood: "${r.text}" \u2014 fix it in the manual text.`, item: pick.item, material: pick.material, color: pick.color, why };
+      }
+      let hit = false, label2 = "";
+      if (w.kind === "always") {
+        hit = true;
+        label2 = "no rule above";
+      } else if (w.kind === "names") {
+        const h = w.who.find(isPicked);
+        if (h) {
+          hit = true;
+          label2 = h;
+        }
+      } else if (w.kind === "shares") {
+        const shared = sharedLetters(pick[w.table].name, ser);
+        if (shared.length) {
+          hit = true;
+          label2 = `${pick[w.table].name} shares ${shared.join(", ")} with the serial`;
+        }
+      }
+      if (!hit) continue;
+      if (r.then.kind === "value") {
+        set.care = r.then.value;
+        why.care = `${label2} \u2192 ${r.then.value}`;
+      } else {
+        set.care = pick[r.then.table].values.care || null;
+        why.care = `${label2} \u2192 ${r.then.table} care (${pick[r.then.table].name})`;
+      }
+      break;
+    }
+    const unset = CONTROLS.filter(([k]) => !set[k]).map(([, label2]) => label2);
+    if (unset.length) return { ready: false, missing: [], reason: `No ${unset.join(" / ")} setting came out of the manual \u2014 check its text.`, item: pick.item, material: pick.material, color: pick.color, why };
+    return {
+      ready: true,
+      missing: [],
+      item: pick.item,
+      material: pick.material,
+      color: pick.color,
+      set,
+      why,
+      borrowed,
+      modulus,
+      copy: `Wash ${set.wash} \xB7 Dry ${set.dry} \xB7 Iron ${set.iron} \xB7 Care ${set.care}`
+    };
+  }
+  function pressesFor(set, current2) {
+    const out = {};
+    for (const [key, , list] of CONTROLS) {
+      const to = list.indexOf(set[key]);
+      const from = current2 && current2[key] != null ? list.indexOf(current2[key]) : -1;
+      out[key] = to < 0 || from < 0 ? null : (to - from + list.length) % list.length;
+    }
+    return out;
+  }
+  function parseLaundryText(text) {
+    const t = String(text || "").replace(/[*_`]/g, "").replace(/\s+/g, " ");
+    const grab = (re) => {
+      const m = t.match(re);
+      return m ? Number(m[1]) : null;
+    };
+    const serialM = t.match(/serial\s*(?:number)?\s*[:：]?\s*([A-Z0-9]{4,12})\b/i);
+    return {
+      load: grab(/\bload\s*#?\s*(\d+)/i),
+      remaining: grab(/(\d+)\s*remaining/i),
+      solved: grab(/(\d+)\s*solved/i),
+      needy: grab(/(\d+)\s*needy/i),
+      total: grab(/(\d+)\s*total/i),
+      serial: serialM ? serialM[1].toUpperCase() : null,
+      checkIn: grab(/check\s+in\s+(\d+)\s*s/i)
+    };
+  }
+  var isLoadMessage = (t) => /captured\s+counts\s*:\s*\**\s*\d|\d+\**\s*remaining/i.test(String(t || ""));
+
+  // src/modules/laundry/laundryVision.js
+  var laundryVision_exports = {};
+  __export(laundryVision_exports, {
+    ICON: () => ICON,
+    MARK_H: () => MARK_H,
+    MARK_W: () => MARK_W,
+    buildIconTemplates: () => buildIconTemplates,
+    encodeIcon: () => encodeIcon,
+    iconGlyph: () => iconGlyph,
+    matchIcon: () => matchIcon,
+    readLaundryModule: () => readLaundryModule,
+    readSymbol: () => readSymbol
+  });
+
+  // src/modules/laundry/laundryIcons.js
+  var ICON_TEMPLATES = {
+    wash: {
+      "30\xB0C": { c: 3, f: "f5000000000000000000003bf5000004885000000038888ff500038bffc8400005afffcffa888afb88afb8888cc888cfbfffffa40038fffffc50008f8c888830000088888500008b8a00000000000000000000a88a00000000000000000000a84a40000000000000000004c80a80003884008840485008c40a80008bab34bab38a8008a00a8000545f5883b5855008a00a8000005f588088855008a008b30004ab38808a485008a005f50004ab38808a05303b8005f500003b58808a00005f5005f500543b8883b500005f5003b800abaf54baf500005f50008a00588830888300008b30008a0000000000000000a800008a0000000000000000a800008a0000000000000000a800004a4000000000000004c800000ab88888888888888bc400", m: "08ffff00008ffff80008ffff8bb8bf8404bf88bb4008b8bf88408ff808ff004b8008808f00008ff808ff0008b808808f0048bf8408ff0008ff048888008fff0008ff0008ff008f8000008ff808ff0008ff000000000048f808ff0008ff000000000000fb48ff0008b8000000884048fb48ff004b80000000ffb8bff804bf88bf80000000fffffff8008fffff80000000" },
+      "40\xB0C": { c: 3, f: "f5000000000000000000003bf5000004885000000038888ff500038bffc8400005afffcffa888afb88afb8888cc888cfbfffffa40038fffffc50008f8c888830000088888500008b8a00000000000000000000a88a00000000000000000000a84a40000000000000000004c80a80000058308840485008c40a800000af54bab38a8008a00a800004cf5885f5855008a00a80003bcf5883b8855008a008b3005b8f58808a485008a005f500885f58808a05303b8005f503a45f58808a00005f5005f50388af8883b500005f5003b800005f54baf500008f50008a0000383088830000ab30008a0000000000000000a800008a0000000000000000a800008a0000000000000000a800004a4000000000000004c800000ab88888888888888bc400", m: "00008fff0008ffff0008ffff00008fff004bb8bf8408b8bf0004bfff008f808ff808808f004bbbff008f8048fb48808f008b48ff008f8000ff848888008808ff008f8000ff808f8008f808ff008f8000ff8000008bb408ff008f8000ff800000ffb88bff848f8000fb40000088888bff848f8048f8000000000008ff004bb8bff8000000000008ff0008fffff8000000" },
+      "50\xB0C": { c: 3, f: "f5000000000000000000003bf5000004885000000038888ff500038bffc8400005afffcffa888afb88afb8888cc888cfbfffffa40038fffffc50008b8c88883000008888850000888a00000000000000000000a88a00000000000000000000a84a40000000000000000004c80a80003888308840485008c40a80005fff54bab38a8008a00a80005b883885f5855008a00a80008b840883b8855008a008b300affb38808a485008a005f500588b88808a05303b8005f5000008a8808a00005f5005f500543b8883b500005f5003b8008baf54baf500008f50008a0038883088830000ab30008a0000000000000000a800008a0000000000000000a800008a0000000000000000a800004a4000000000000004c800000ab88888888888888bc400", m: "08fffff8008ffff80008ffff08fffff804bf88bb4008b8bf08b8888408ff008f8008808f8bb8880008ff004bb808808fffffff8408ff0008ff048888fffffff808ff0008ff008f80000000ff88ff0008ff000000000000ff88ff0008ff000000000000ff88ff0008b8000000884048fb48ff004b800000008bb8bff804bf88bf8000000008fffff8008fffff80000000" },
+      "95\xB0C": { c: 3, f: "f5000000000000000000003bf5000004885000000038888ff500005bffc8400005afffcffa8348cb88afb8438cc888cfbffabfa40038ffbafc50008f8c8a8830000088ba8500008b8a00000000000000000000a88c40000000000000000000a84c80000000000000000000a80a80003884008885485004a40a80008bab30fff88a8008a00a8000a85f50b883858408a008b300845f84ffb3488008a005f500abafa4b8b805503b8005f5008fcb80408a00005f5005f500388b50008a00005f5005f800545f54408a00005f5003ba00abab34b8b800005f50008a0004500045000000a800008a0000000000000000a800008a0000000000000000a800004a4000000000000004c800000ab88888888888888bc4000008ffffffffffffffffa000", m: "08fff800008ffffff88fff808bb8bb40008fffff848b8b80ff808f80008b8888008808b8fb408f80008b8840008808b8fb408fb804bfffb800488b80ffb8bfff04bb88bf840488408bffbbb80044008ff800000004888b800000008ff800000088408f800484008ff8000000ffb8bb4004bb88bf8400000088bfb400004bfb8800000000008f80000008f80000000000" },
+      "Hand wash": { c: 0, f: "0000000000000005b8000000000000000000004cfc5000000000000003558acfffd82000000005888bffffffffffa40083000affffffffffffffc404f500037aaadffffffffc755cf500005884affffffff88fcffa8888cb84affffffff858cf8c88883000afffffffa0008b8a00000004cfffffff8000a88c3000005cfffffffd3000a84c800004cffffffffa0000a80a80003bfbaffffff80004a40a80007fa5accfcdf50008a00a8003cb38f88c48f50008a008b303a43bc4ba05f50008a005f500008b30f50a80005f5005f50004c804b30a80005f5003c800058308500330005f50008a00000004000000008b30008a0000000000000000a800008a0000000000000000a800004a4000000000000004c800000ab88888888888888bc400", m: "" },
+      "Do not wash": { c: 0, f: "f5008c300000000000ab303bf5004c548850000003a8888ff5000888ffc840000888ffcfccaaa8ca757acaa78c3355af8c88858f80008888f800008b8a00003ba0000008b30000a88c300003a820028a300000a84c8000008f8008f8000000a80a8000003bc40ab3000004a40a80000004c84a40000008a00a800000007cc800000008a008b30000003bf500000008a005f50000003bf80000003b8005f5000003aa8a3000005f5005f500003bc40ab300005f5003b800008f8008f800008f50008a0000ab3003ba0000ab30008a0028a30000388200a800008a008f80000005f800a800004a40ab30000003bc34c80000078785555555555a88830000004c500000000003a4000000008c300000000000ab30000000880000000000008b3000", m: "" }
+    },
+    dry: {
+      "High heat": { c: 3, f: "fffffffffffffffffffffffffb88888bfffffffb888888bff800005bfffffffb8300008ff80258ca8555558acc83008ff805fb50000000004afb308ff808b4000000000003bf508ff85c500000000000003a808ffbb80000000000000004a48ffff50000000000000000abbffff50000000000000000afffffc305a8305aa338a7007fffff8008ff80aff58ffc405fffff8008ff80aff58ffc405fffffc30388305a8238a5007ffffff50000000000000000abbffff80000000000000000a88ffbba0000000000000004a48ff85c830000000000028c808ff808fb300000000008fb308ff803bf80000000004cb4008ff80038aa8555558aa830008ff8000038bfffffb84000008ffb888888bfffffb8888888bffffffffffffffffffffffffb", m: "ffff800008ffff80008fff80ffff800008ffff80008fff80ffffb4004bffff8048bfff80fffff8008fffff808fffff80fffff8008fffff808fffffb8fffff8008fffff808ffffffffffff8008fffff808ffffffffffff8008fffff808fffffb8fffff8008fffff808fffff808bffb4004bffb84048bffb4008ff800008ff8000008ff80008ff800008ff8000008ff800" },
+      "Dry flat": { c: 0, f: "fb8888888888888888888bfff800000000000000000004bff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8025555555555555553008ff805fffffffffffffff8008ff8038888888888888884008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ff800000000000000000004bffb8888888888888888888bfffffffffffffffffffffffffb", m: "" },
+      "Tumble dry": { c: 0, f: "fffffffffffffffffffffffffb88888bfffffffb888888bff800005bfffffffb8300008ff80038ca8555558acc83008ff803bf80000000004afb308ff808b8300000000003bf508ff85c500000000000003a808ffbb80000000000000004a48ffff50000000000000000abbffff50000000000000000afffffc300000000000000007fffff8000000000000000005fffff8000000000000000005fffffc300000000000000007ffffff50000000000000000abbffff80000000000000000a88ffbba0000000000000004a48ff85c830000000000028c808ff808fb300000000008fb308ff803bf80000000004cb4008ff80038aa8555558aca30008ff8000038bfffffb88300008ffb888888bfffffb8888888bffffffffffffffffffffffffb", m: "" },
+      "No tumble dry": { c: 0, f: "0008b8888affffc8888bf500830880004affffc40004f538fa388000bfc88cfb0000f8af8cca505aa730037aa500acc803af85cb00000000bc58fa300038fa840000000048afb3000005aa850000000058a8c3000008b8cf83000004fc84f5000008fa5bf800005bb5abf5000008fa04bc5005cb40aff5000008f80037c88c83007ff5000008f50000affa00005ff5000008f50003cfbc30005ff5000008f8038a8538a8308ff5000008fa3bf800005bb5abf5000008b8af83000004fc84f50000088ac8000000008ca4f5000028cc830000000038cca30003af83ab00000000bc58fa3008fb408f83000038f800bfa4aa788025cc7557cc8200cacc830880004affffa40004f5380008b8888affffa8888bf5000008ffffffffffffffffb300", m: "" },
+      "Low heat": { c: 1, f: "fffffffffffffffffffffffffb88888bfffffffb888888bff800005bfffffffb8300008ff80258ca8555558acc83008ff805fb50000000004afb308ff808b4000000000003bf508ff85c500000000000003a808ffbb80000000000000004a48ffff50000000000000000abbffff50000000000000000afffffc30000005a820000007fffff80000000aff50000005fffff80000000aff50000005fffffc30000005a820000007ffffff50000000000000000abbffff80000000000000000a88ffbba0000000000000004a48ff85c830000000000028c808ff808fb300000000008fb308ff803bf80000000004cb4008ff80038aa8555558aa830008ff8000038bfffffb84000008ffb888888bfffffb8888888bffffffffffffffffffffffffb", m: "000000ffffffffffff000000000000ffffffffffff000000888888ffffffffffff888888ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff888888ffffffffffff888888000000ffffffffffff000000000000ffffffffffff000000" },
+      "Medium heat": { c: 2, f: "fffffffffffffffffffffffffb88888bfffffffb888888bff800005bfffffffb8300008ff80258ca8555558acc83008ff805fb50000000004afb308ff808b4000000000003bf508ff85c500000000000003a808ffbb80000000000000004a48ffff50000000000000000abbffff50000000000000000afffffc300038a5038a500007fffff800008ffa08ff800005fffff800008ffa08ff800005fffffc300038a50388300007ffffff50000000000000000abbffff80000000000000000a88ffbba0000000000000004a48ff85c830000000000028c808ff808fb300000000008fb308ff803bf80000000004cb4008ff80038aa8555558aa830008ff8000038bfffffb84000008ffb888888bfffffb8888888bffffffffffffffffffffffffb", m: "008ffff8000000008fffffff008ffff8000000008fffffff88bffffb84000048bffffffffffffffff800008ffffffffffffffffff800008ffffffffffffffffff800008ffffffffffffffffff800008ffffffffffffffffff800008ffffffffffffffffff800008fffffffff88bffffb84000048bffffb88008ffff8000000008ffff800008ffff8000000008ffff800" }
+    },
+    iron: {
+      "150\xB0C": { c: 2, f: "0000bfffffffffffffffffff0000488888888888888888bf00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000004888bfffffffb88bf0000048bffff888888bfffff00008bff88880000004888bf0004ff88000000000000008f004bb800000000000000008f00bf4000000000000000008f04fb0000048404840000008f4bb4000008fb08fb0000008f8f0000004bff08ff0000008fbb00000004b804fb0000008ff8000000004000840000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ffb88888888888888888888bfbffffffffffffffffffffffb", m: "008fffff80000008fffff800008fffff80000008fffff800008fffffb8400008fffffb88008fffffff800008ffffffff88bfffffff800008ffffffffffffffffff800008ffffffffffffffffff800008ffffffff88bfffffff800008ffffffff008fffffff800008ffffffff0048bfb8884000048bfffb8800008f800000000008fff80000008f800000000008fff800" },
+      "No steam": { c: 0, f: "0000488888888888888888ff0000000000000000000000af00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000008888888888848f0000038aaaaaaaaaaaaaaacf00008bfb88000000000004bf004bb400000000000000008f03a83000000000000000008f4b800000000000000000008f8f300000000000000000008faa000000000000000000008ff8000000000000000000008fca000000000000000000008f8f88888888888888888888bf48888bb888888888bf88888400aa5883000000008f558a000088fffb88000088bfff88000000888affaaaaffc85500000055aca8aaa858aaaaaa550000ffb88400000000488bff000055c5000000000000a855000000f8000000000000b80000", m: "" },
+      "Iron": { c: 0, f: "0000488888888888888888bf00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f000000488bfffffffffffbbf000004bfff88888888888bff00008bfb88000000000004bf0004fb84000000000000008f004bb400000000000000008f00bb4000000000000000008f04b40000000000000000008f4b800000000000000000008f8f000000000000000000008fbf000000000000000000008ffb000000000000000000008ff8000000000000000000008ff8000000000000000000008ffb000000000000000000008fbf88888888888888888888bf4bfffffffffffffffffffffb", m: "" },
+      "200\xB0C": { c: 3, f: "0000afffffffffffffffffff0000588888888888888888bf00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f0000000488affffffffa88bf0000048bfffb888888bfffff00005bfb88840000004888bf0004cfa4000000000000008f005bc830000000000000008f04cb5000000000000000008f08c40004840485038840008f4b80003bfb38fc45ff80008fbb30003bff58ff85ff80008ff8000004a834bc43bc40008ff8000000300045004500008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008ffb88888888888888888888bfffffffffffffffffffffffff", m: "08fff80008ffff80008fffff08fff80008ffff80008fffff8bfffb8408ffffb4008ffffffffffff808fffff8008ffffffffffff808fffff8008ffffffffffff808fffff8008ffffffffffff808fffff8008fffff8bfffff808fffff8008fffff08fffff808fffff8008fffff04bfb884048bffb4004bffb8008f80000008ff800008ff80008f80000008ff800008ff80" },
+      "110\xB0C": { c: 1, f: "00008fffffffffffffffffff0000488888888888888888bf00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000000000000000008f00000000888bfffffffb88bf00000088ffff888888bfffff000048ff88880000004888bf0004bf88000000000000008f004bb800000000000000008f00bf4000000000000000008f04fb0000000088000000008f08b400000004ff400000008f8f0000000008ff400000008f8f0000000004bb000000008fbb000000000044000000008ff8000000000000000000008ff8000000000000000000008ff8000000000000000000008fbb88888888888888888888bf8fffffffffffffffffffffff", m: "00008ffffffffffffff8000000008ffffffffffffff800008888bffffffffffffffb8888fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb8888fffffffffffffffffff80000888888888bffffb8888400000000000008ffff80000000000000000008ffff8000000000" }
+    },
+    care: {
+      "Bleach": { c: 0, f: "000000000008b4000000000000000000004bf8000000000000000000008ffb40000000000000000004bbbf8000000000000000000cc55cc000000000000000004f8004b400000000000000008b40008b4000000000000004b800004f8000000000000008f400000fb40000000000008ca0000008ca000000000000fb400000008f000000000004f8000000004b400000000008b40000000008b4000000004b400000000004f800000003ac000000000000cc5000000bf80000000000004bb000000fb400000000000008f000004f8000000000000004b400008b40000000000000008b4038c300000000000000003fa38fb000000000000000000bf8bf80000000000000000008fbffb888888888888888888bffbfffffffffffffffffffffff", m: "" },
+      "No tetra solvent": { c: 1, f: "0000008bffffffffb8000000000048fb88888888bf8400000004bfb40000000048fb4000004bfb400000000000bfb40004bfb40000000000004bfb4008fb4000000000000004bf808fb400008fffffb8400008f88f8000008fb8bfff800008fbbb4000008f8048bfb40004bff80000008f80008ff800008ff80000008f80008ff800008ff80000008f8048bfb400008ff80000008ffffb840000008ff80000008fb884000000008ffb4000008f8000000000008fbf8000008f800000000004bf8f8000008f800000000008fb4bb400008f80000000004bf804bfb400000000000004bb40004bfb0000000000008bb4000004bf400000000004ff800000004bb8840000048bb84000000004bffb88888bff40000000000048bffffffb88000000", m: "ffffffffffffffffb8888400ffffb8888888fffffffff800ffff800000008888bffffb88ffff8000000000008fffffffffff8000000000008fffffffffff800000008888bffffb88ffffffffffffffb888840000ffffb8888888884000000000ffff80000000000000000000ffff80000000000000000000ffff80000000000000000000ffff80000000000000000000" },
+      "Reduced moisture": { c: 0, f: "00000000bf5000000000000000000004fb300000000000000000028c8300000000000000000008fb003888884000000000004cb404afffffb83000000028ca33aaa85555aaa83000008fb34bb4000000008fb50004cb43bf400000000038ba00bf800ab40000000000000ab4fb304a4000000000000008f85303a80000000000000003ca0008f500000000000000008f0008f500000000000000008f0008f500000000000000008f0008f500000000000000008f0008f500000000000000008f0004b800000000000000008f00008a0000000000000003bb00005c5000000000000007c5000008b40000000000004c80000005fb000000000004bc400000028c85300000037cc50000000004bfc888888bc840000000000048cffffffb500000", m: "" },
+      "Short cycle": { c: 0, f: "0000000004afffffb8300000000000008bfb8888ffa4000000000038c853000055ac8300000003bf400000000038ba00000008c80000000000003a8300004a4000000000000008f800008a0000000000000005f80005c70000000000000002ac0008f500000000000000008f0008f500000000000000008f0008f500000000000000008f0008f500000000000000008f0004b800000000000000008f84008a0000000000000003bbcc505c5000000000000007c54bc408b40000000000004c8003ac85cc300000000028ca30003bf84bb850000004afb3000004bc44bfc888888bc8400000003ac8358aaaaaa8300000000003bf400000000000000000000038c82000000000000000000000bf50000000000000000000004b50000000000000", m: "" },
+      "Do not bleach": { c: 0, f: "000000000008b4000000000000000000004bf800000000000000000003accc5000000000000000000bf88fb000000000000000000fb44bf000000000000a83005c5003a830038000000bf804b800004f804bb0000004bb08f400000fb4bb4000000004b8400000048b400000000000bb40000004bb00000000000588a300003a8883000000004b404b4004b404f8000000008f000bb44bb000fb40000008ca00038acc50008ca000000fb400004bf8000008f000004f800004bfbb400004b40004b400004fb404b400004f804bf00004bb40008b40000fb4afa0008cc300003ac8000afaffb844fb88888888bf448bfffffb8bb8bffffffb8bb8bfff5555ac335555555533cca555000bb40000000000004bf000000b4000000000000004b000", m: "" },
+      "No dry cleaning": { c: 0, f: "fb0000048bffffb8000000bfbf84004bfb8888ff840004ff4bfb04bf8400008bfb004bb804ff44b800000004bf44bf40008bb44000000000488bb8000004fb400000000000bf4000000888fb00000000bfb84000004b40bf84000004fb488000008f004bfb00008bb4088000008f0004bf4004ff4008b400008f00004bb84bb80004f800008b000004ffbf400000f80000b8000000bffb400000f800008b000048fbbfb40000f800008f0000bfb448fb0004f800008f0004fb4000bf8408b400008f408bb400004bfb088000004b44ff40000004bf4440000004bf400000000004ff4000004bfb4000000000488bb40000bf88b400000000bf04fb4048fb04fb40000048fb00bfb4bfb4008bb88888bfb40048fbff400004fffffffb400000bf", m: "" },
+      "Petroleum only": { c: 1, f: "0000008bffffffffb8000000000048fb88888888bf8400000004bfb40000000048fb4000004bfb400000000000bfb40004bfb40000000000004bfb4008fb4000000000000004bf808fb400008fffffff800008f8bf8000008ffb8888400008fbfb4000008ff80000000004bff80000008ff800000000008ff80000008ff800000000008ff80000008ffb88840000008ff80000008ffb88840000008ff80000008ff800000000008ff80000008ff800000000008fbb4000008ff80000000004bf8f8000008ff80000000008fb4bb400008ff8000000004bf804bfb400000000000004bb40004bfb0000000000008bb4000004bf400000000004ff800000004bb8840000048bb84000000004bffb88888bff40000000000048bffffffb88000000", m: "ffffffffffffffffffffffffffffffff8888888888888888ffffffff0000000000000000ffffffff0000000000000000ffffffff0000000000000000ffffffff8888888888888400ffffffff8888888888888400ffffffff0000000000000000ffffffff0000000000000000ffffffff0000000000000000ffffffff0000000000000000ffffffff0000000000000000" },
+      "Low heat": { c: 0, f: "0000038bfffffa400000000000004aff8888bfb8000000000028ca550000358c85200000008fb30000000004bf50000005c83000000000003aa300004b8000000000000004c800008f5000000000000000a80000ca20000000000000007c5000f800000000000000005f8000f800000000000000005f8000f800000000000000005f8000f800000000000000005f8000bb30000000000000005f80008f50000000000000008b40045c8000000000000003a5028a04a40000000000004ba008b4008c820000000003cc538830003bfa840000038bb43bf50000048cfb88888afb408b83000000038aaaaaa85338a500000000000000000000bf50000000000000000000388520000000000000000003bb0000000000000000000005b400000000", m: "" },
+      "Wet cleaning": { c: 0, f: "0000008bffffffffb8000000000048fb88888888bf8400000004bfb40000000048fb4000004bfb400000000000bfb40004bfb40000000000004bfb4008fb4000000000000004bf808fb44b80004bf80008f808f8bf800880008ff80008b408fbfb4008b4008ff800088004bff80008f804bffb404b80008ff80004f808fbbf808f80008ff80000f808f88f808f40008ff80000fb8bf88fb48f00008ff80000bfffb44bfbbf00008ff800008fff8008fffb00008fbb40008fff8008fff80004bf8f80008fff8004bff80008fb4bb4008ffb40008ff8004bf804bfb400000000000008fb40004bfb0000000000008bb4000004bf400000000004fb400000004bb8400000048bb40000000004bfb888888bff40000000000048bffffffb88000000", m: "" },
+      "Any solvent": { c: 0, f: "0000008bffffffffb8000000000004fb88888888bf84000000048bb40000000048fb4000004bfb400000000000bfb400008fb40000000000004bfb4004bb4000000000000004bf808fb40000004bf800000008f8bf800000008ff800000008fbfb40000004bffb40000004bff800000008ffbf800000008ff800000008fb8fb40000008ff80000004bf88ff80000008ff80000008f8008fb4000008ff8000004bfb88bff8000008ffb400008ffffffffb400008fbf80004bfb8888bff80004bf8f80008ff800004bf80008fb4bb4008fb4000008fb004bf804bfb400000000000004bb40004bfb0000000000008bb4000004bf400000000004ff800000004bb8840000048bb84000000004bffb88888bff40000000000048bffffffb88000000", m: "" },
+      "No steam finish": { c: 0, f: "00000000000005fb0000000000000000000003bf400000000000000000000038c82000000000000488888300bf8000000000038bfffffa404bc4000000038aaa55558aaa33ac8200003bf8000000004bb85bf800008fb30000000004bf54bc4008c400000000000008c408fb4b8000000000000004c803bfac30000000000000008a3035f800000000000000005f8000f800000000000000005f8000f800000000000000005f8000f800000000000000005f8000f800000000000000005f8000bb30000000000000005f80008f50000000000000008b40005c8000000000000003a5000004a40000000000004ba0000000ab400000000000bf800000005cc75300000258c820000000048cfb88888afb40000000000005bffffffc8400000000", m: "" },
+      "Non-chlorine bleach": { c: 0, f: "000000000008b4000000000000000000004bf8000000000000000000008ffb40000000000000000004bbbf8000000000000000000cc55cc000000000000000004f8004b400000000000000008b40008b4000000000000004b40004bf8000000000000008f00008ffb40000000000008ca0005ccafa000000000000fb4000bb44bf000000000004f80000f8004b400000000008b40004b40008b4000000004b40004b800008f800000003ac0003af30003acc5000000bf80008fb0004bf4bb000000fb4000bb40008fb08f000004f80004f80000bf804b400008b40008b40000fb4008b4038c30005c500005a30003fa38fb0004bb00004b400000bf8bf8000bfb0004bf0000008fbffb888fff888bff888888bffffffffffffffffffffffffff", m: "" }
+    }
+  };
+
+  // src/modules/laundry/laundryVision.js
+  var ICON = 24;
+  var MARK_W = 24;
+  var MARK_H = 12;
+  var lum5 = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  function boxOf(mask, w, h, keep = null, labels = null) {
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!mask[i] || keep && !keep.has(labels[i])) continue;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+    return x1 < 0 ? null : { x0, y0, x1, y1 };
+  }
+  function sample(mask, w, box, gw, gh, keep = null, labels = null) {
+    const bw = box.x1 - box.x0 + 1, bh = box.y1 - box.y0 + 1;
+    const g = new Float32Array(gw * gh);
+    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+      const sx0 = box.x0 + gx * bw / gw, sx1 = box.x0 + (gx + 1) * bw / gw;
+      const sy0 = box.y0 + gy * bh / gh, sy1 = box.y0 + (gy + 1) * bh / gh;
+      let ink = 0, n = 0;
+      for (let y = Math.floor(sy0); y < Math.ceil(sy1); y++) for (let x = Math.floor(sx0); x < Math.ceil(sx1); x++) {
+        n++;
+        const i = y * w + x;
+        if (mask[i] && (!keep || keep.has(labels[i]))) ink++;
+      }
+      g[gy * gw + gx] = n ? ink / n : 0;
+    }
+    return g;
+  }
+  function iconGlyph(img, box, level = 0.25) {
+    const { data, width: W2 } = img;
+    const w = box.x1 - box.x0 + 1, h = box.y1 - box.y0 + 1;
+    const L = new Float32Array(w * h);
+    let lo = 255, hi = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const p = ((box.y0 + y) * W2 + box.x0 + x) * 4;
+      const v = lum5(data[p], data[p + 1], data[p + 2]);
+      L[y * w + x] = v;
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    }
+    if (hi - lo < 60) return null;
+    const cut = lo + (hi - lo) * level;
+    const mask = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) mask[i] = L[i] < cut ? 1 : 0;
+    const all = boxOf(mask, w, h);
+    if (!all) return null;
+    const labels = new Int32Array(w * h).fill(-1);
+    const blobs3 = [];
+    for (let i = 0; i < w * h; i++) {
+      if (!mask[i] || labels[i] >= 0) continue;
+      const id = blobs3.length, st = [i];
+      labels[i] = id;
+      const b = { id, n: 0, x0: w, y0: h, x1: -1, y1: -1 };
+      while (st.length) {
+        const j = st.pop(), x = j % w, y = (j - x) / w;
+        b.n++;
+        if (x < b.x0) b.x0 = x;
+        if (x > b.x1) b.x1 = x;
+        if (y < b.y0) b.y0 = y;
+        if (y > b.y1) b.y1 = y;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          const k = yy * w + xx;
+          if (mask[k] && labels[k] < 0) {
+            labels[k] = id;
+            st.push(k);
+          }
+        }
+      }
+      blobs3.push(b);
+    }
+    const outline = blobs3.reduce((a, b) => b.n > a.n ? b : a);
+    const ow = outline.x1 - outline.x0 + 1, oh = outline.y1 - outline.y0 + 1;
+    const marks = blobs3.filter((b) => b !== outline && b.n >= Math.max(3, outline.n * 4e-3) && b.x1 - b.x0 + 1 < ow * 0.45 && b.y1 - b.y0 + 1 < oh * 0.6 && b.x0 >= outline.x0 && b.x1 <= outline.x1 && b.y0 >= outline.y0 && b.y1 <= outline.y1);
+    const keep = new Set(marks.map((b) => b.id));
+    const mbox = marks.length ? boxOf(mask, w, h, keep, labels) : null;
+    return {
+      full: sample(mask, w, all, ICON, ICON),
+      marks: mbox ? sample(mask, w, mbox, MARK_W, MARK_H, keep, labels) : null,
+      count: marks.length
+    };
+  }
+  function soften2(g, gw, gh) {
+    const out = new Float32Array(g.length);
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      let s = 0, n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
+        s += g[yy * gw + xx];
+        n++;
+      }
+      out[y * gw + x] = s / n;
+    }
+    return out;
+  }
+  function correlate(a, b, w) {
+    let sw = 0, ma = 0, mb = 0;
+    for (let i = 0; i < a.length; i++) {
+      sw += w[i];
+      ma += w[i] * a[i];
+      mb += w[i] * b[i];
+    }
+    ma /= sw;
+    mb /= sw;
+    let num2 = 0, da = 0, db = 0;
+    for (let i = 0; i < a.length; i++) {
+      const x = a[i] - ma, y = b[i] - mb;
+      num2 += w[i] * x * y;
+      da += w[i] * x * x;
+      db += w[i] * y * y;
+    }
+    return da && db ? num2 / Math.sqrt(da * db) : 0;
+  }
+  var encodeIcon = (g) => g ? Array.from(g, (v) => Math.round(v * 15).toString(16)).join("") : "";
+  var decodeIcon = (s) => s ? Float32Array.from(s, (ch) => parseInt(ch, 16) / 15) : null;
+  function spread(list, n) {
+    const w = new Float32Array(n);
+    if (!list.length) return w.fill(1);
+    for (let i = 0; i < n; i++) {
+      let m = 0;
+      list.forEach((t) => {
+        m += t[i];
+      });
+      m /= list.length;
+      let v = 0;
+      list.forEach((t) => {
+        v += (t[i] - m) ** 2;
+      });
+      w[i] = Math.sqrt(v / list.length) + 0.03;
+    }
+    return w;
+  }
+  var groups = {};
+  function groupOf(name) {
+    if (groups[name]) return groups[name];
+    const names = Object.keys(ICON_TEMPLATES[name]);
+    const temps = names.map((n) => {
+      const t = ICON_TEMPLATES[name][n];
+      const m = decodeIcon(t.m);
+      return { full: soften2(decodeIcon(t.f), ICON, ICON), marks: m ? soften2(m, MARK_W, MARK_H) : null, count: t.c };
+    });
+    const wFull = spread(temps.map((t) => t.full), ICON * ICON);
+    const wMarks = spread(temps.filter((t) => t.marks).map((t) => t.marks), MARK_W * MARK_H);
+    return groups[name] = { names, temps, wFull, wMarks };
+  }
+  function matchIcon(group, glyph) {
+    const { names, temps, wFull, wMarks } = groupOf(group);
+    const full = soften2(glyph.full, ICON, ICON);
+    const marks = glyph.marks ? soften2(glyph.marks, MARK_W, MARK_H) : null;
+    const all = names.map((name, i) => {
+      const t = temps[i];
+      const a = correlate(full, t.full, wFull);
+      const b = marks && t.marks ? correlate(marks, t.marks, wMarks) : !marks && !t.marks ? a : 0;
+      const c = glyph.count === t.count ? 0 : -0.15;
+      return { name, score: (a + b) / 2 + c };
+    });
+    all.sort((a, b) => b.score - a.score);
+    return { ...all[0], margin: all.length > 1 ? all[0].score - all[1].score : 1 };
+  }
+  function whiteTiles(img) {
+    const { data, width: W2, height: H } = img;
+    const white = new Uint8Array(W2 * H);
+    for (let i = 0, p = 0; i < W2 * H; i++, p += 4) white[i] = Math.min(data[p], data[p + 1], data[p + 2]) > 225 ? 1 : 0;
+    const seen = new Uint8Array(W2 * H), out = [];
+    const minSide = Math.max(12, Math.min(W2, H) * 0.05);
+    for (let i = 0; i < W2 * H; i++) {
+      if (!white[i] || seen[i]) continue;
+      const st = [i];
+      seen[i] = 1;
+      let x0 = W2, y0 = H, x1 = -1, y1 = -1, n = 0;
+      while (st.length) {
+        const j = st.pop(), x = j % W2, y = (j - x) / W2;
+        n++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+        if (x > 0 && white[j - 1] && !seen[j - 1]) {
+          seen[j - 1] = 1;
+          st.push(j - 1);
+        }
+        if (x < W2 - 1 && white[j + 1] && !seen[j + 1]) {
+          seen[j + 1] = 1;
+          st.push(j + 1);
+        }
+        if (y > 0 && white[j - W2] && !seen[j - W2]) {
+          seen[j - W2] = 1;
+          st.push(j - W2);
+        }
+        if (y < H - 1 && white[j + W2] && !seen[j + W2]) {
+          seen[j + W2] = 1;
+          st.push(j + W2);
+        }
+      }
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+      if (bw >= minSide && bh >= minSide && bw / bh > 0.8 && bw / bh < 1.25 && n > bw * bh * 0.6) out.push({ x0, y0, x1, y1, n });
+    }
+    return out;
+  }
+  function twoByTwo(tiles) {
+    for (let i = 0; i < tiles.length; i++) {
+      const a = tiles[i], s = a.x1 - a.x0 + 1;
+      const same = (t) => Math.abs(t.x1 - t.x0 + 1 - s) <= s * 0.12 && Math.abs(t.y1 - t.y0 + 1 - s) <= s * 0.15;
+      const right = tiles.find((t) => t !== a && same(t) && Math.abs(t.y0 - a.y0) <= s * 0.1 && t.x0 > a.x1 && t.x0 - a.x1 < s * 0.5);
+      const below = tiles.find((t) => t !== a && same(t) && Math.abs(t.x0 - a.x0) <= s * 0.1 && t.y0 > a.y1 && t.y0 - a.y1 < s * 0.5);
+      if (!right || !below) continue;
+      const diag = tiles.find((t) => t !== a && same(t) && Math.abs(t.x0 - right.x0) <= s * 0.1 && Math.abs(t.y0 - below.y0) <= s * 0.1);
+      if (diag) return [a, right, below, diag];
+    }
+    return null;
+  }
+  var GROUPS = [["wash", WASH], ["dry", DRY], ["iron", IRON], ["care", CARE]];
+  function readSymbol(img, box, group) {
+    let best = null;
+    for (const level of [0.25, 0.15, 0.4]) {
+      const g = iconGlyph(img, box, level);
+      if (!g) continue;
+      const hit = matchIcon(group, g);
+      if (!best || hit.score > best.score) best = hit;
+    }
+    return best;
+  }
+  function readLaundryModule(img) {
+    const quad = twoByTwo(whiteTiles(img));
+    if (!quad) return { ok: false, reason: "No 2\xD72 block of white symbol tiles." };
+    const current2 = {}, scores = {};
+    let sure = true;
+    quad.forEach((t, i) => {
+      const s = t.x1 - t.x0 + 1, m = Math.round(s * 0.1);
+      const box = { x0: t.x0 + m, y0: t.y0 + m, x1: t.x1 - m, y1: t.y1 - m };
+      const [group] = GROUPS[i];
+      const best = readSymbol(img, box, group);
+      if (!best) {
+        current2[group] = null;
+        sure = false;
+        return;
+      }
+      current2[group] = best.name;
+      scores[group] = best;
+      if (best.score < 0.6 || best.margin < 0.04) sure = false;
+    });
+    return { ok: true, current: current2, sure, scores, tiles: quad };
+  }
+  function buildIconTemplates(img) {
+    const at2 = (row, col) => {
+      const ys = [38, 176, 314, 452, 562];
+      const x0 = 42 + col * 140, y0 = ys[row];
+      return { x0: x0 + 3, y0: y0 + 3, x1: x0 + 52, y1: y0 + 52 };
+    };
+    const enc = (box) => {
+      const g = iconGlyph(img, box);
+      return { f: encodeIcon(g.full), m: encodeIcon(g.marks), c: g.count };
+    };
+    const out = { wash: {}, dry: {}, iron: {}, care: {} };
+    WASH.forEach((n, i) => {
+      out.wash[n] = enc(at2(0, i));
+    });
+    DRY.forEach((n, i) => {
+      out.dry[n] = enc(at2(1, i));
+    });
+    IRON.forEach((n, i) => {
+      out.iron[n] = enc(at2(2, i));
+    });
+    CARE.forEach((n, i) => {
+      out.care[n] = enc(at2(i < 6 ? 3 : 4, i % 6));
+    });
+    return out;
+  }
+
+  // src/modules/laundry/laundryOCR.js
+  var laundryOCR_exports = {};
+  __export(laundryOCR_exports, {
+    pictureData: () => pictureData2,
+    readLaundryPicture: () => readLaundryPicture
+  });
+  var TEXT_CHARS = "";
+  function pictureData2(img) {
+    const W2 = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+    const c = document.createElement("canvas");
+    c.width = W2;
+    c.height = H;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    return { canvas: c, data: ctx.getImageData(0, 0, W2, H) };
+  }
+  function textBand(src, y0, y1) {
+    const W2 = src.data.width, h = y1 - y0;
+    const scale = Math.min(3, Math.max(1, 1600 / W2));
+    const d = src.canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, y0, W2, h);
+    const p = d.data;
+    let sum = 0;
+    for (let i = 0; i < p.length; i += 16) sum += 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+    const dark = sum / (p.length / 16) < 128;
+    for (let i = 0; i < p.length; i += 4) {
+      let v = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+      if (dark) v = 255 - v;
+      v = Math.max(0, Math.min(255, (v - 40) * 1.4));
+      p[i] = p[i + 1] = p[i + 2] = v;
+      p[i + 3] = 255;
+    }
+    const small = document.createElement("canvas");
+    small.width = W2;
+    small.height = h;
+    small.getContext("2d").putImageData(d, 0, 0);
+    const out = document.createElement("canvas");
+    out.width = Math.round(W2 * scale);
+    out.height = Math.round(h * scale);
+    const ctx = out.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(small, 0, 0, out.width, out.height);
+    return out;
+  }
+  async function readText(canvas, psm) {
+    const w = await ensureOCRWorker();
+    await w.setParameters({ tessedit_pageseg_mode: psm, user_defined_dpi: "300", tessedit_char_whitelist: TEXT_CHARS });
+    const { data } = await w.recognizeWithin(25e3, canvas);
+    return data && data.text || "";
+  }
+  async function readLaundryPicture(img, onStatus = () => {
+  }) {
+    const src = pictureData2(img);
+    const symbols = readLaundryModule(src.data);
+    if (symbols.ok) {
+      const top = Math.min(...symbols.tiles.map((t) => t.y0));
+      const tile = symbols.tiles[0].x1 - symbols.tiles[0].x0 + 1;
+      let facts = null, text2 = "";
+      if (top > tile * 2.5) {
+        onStatus("Reading the bot message text\u2026");
+        try {
+          text2 = await readText(textBand(src, 0, Math.max(1, Math.round(top - tile * 0.6))), "6");
+          const f = parseLaundryText(text2);
+          if (["remaining", "solved", "needy", "total", "serial"].some((k) => f[k] != null)) facts = f;
+        } catch (e) {
+        }
+      }
+      return { ok: true, type: "module", symbols, facts, text: text2 };
+    }
+    onStatus("Reading the text in the picture\u2026");
+    let text = "";
+    try {
+      text = await readText(textBand(src, 0, src.data.height), "4");
+    } catch (e) {
+      return { ok: false, reason: "Could not read the text in that picture." };
+    }
+    if (isLoadMessage(text)) return { ok: true, type: "message", facts: parseLaundryText(text), text };
+    const manual = parseLaundryManual(text);
+    if (manualHasAny(manual)) return { ok: true, type: "manual", text: text.replace(/\n{3,}/g, "\n\n").trim(), manual };
+    return { ok: false, reason: "Not a Laundry module picture, message or manual.", text };
+  }
+
+  // src/modules/laundry/laundrySprite.js
+  var laundrySprite_exports = {};
+  __export(laundrySprite_exports, {
+    SPRITE: () => SPRITE,
+    SPRITE_CELL: () => SPRITE_CELL
+  });
+  var SPRITE_CELL = 48;
+  var SPRITE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAADABAMAAAAem8H0AAAAGFBMVEX////+/v77+/vX19d8fHw2NjYLCwsAAAAehC3CAAAdoUlEQVR42u193XMb15Xn715QY9kW0LcblDyJxUZ3g5KyY5vEB2XXTDmJRSBxtuZh1rFSedyaj9r3qZrs/hf7B+zD7NNu1dbEM5OtrdpyTFKynE2tVgQIwt44sonuBqAkdix03wblWE6EvvuAj76ND4ryxh7QwakSRf7ww7mnz/069/S93cBCFrKQhSxkIX0h5sIHR4pB2MIJRwhN5OgJM3npC+1f4dlvcrgnykGJL8o56uNP/LFz+OdPnL4pTp6D2P34xQz//n3i9+9/0i0XviLUjz94KH+uppXPUbXUVFgWqkpUBqCz5cY+4RPkuRuDNGNPgBoQDgCNgfT6wwTNPSpeBYg5woPkiM+Wc8MS01aix/kATz/3pgXhACpdc8kAn695BSDdTRVUt23HBDTPtpcLBAAIfRhuDHEMcA0kE+HZEa4Sb3Tp4c5yIRjirNjXT1gxZQ/w+WtBArDCdhlezYK9wcRSVI/HxPsdRICxsL3BvJoFL2uKJQxxkFuC0TwAoFEa6hGAaGdX4dUsBLpTWuLz2cUIiOclNgsIU9exmjXAbyq8Pyw8Gg7YSGwW4KWuY+llQzRvD3DieQkGDwDADzdGfOJ56eeWEaau46zIsgE+dw4ShHzP18wGT19eDjS9Qgr9kVOQ7lQcoLP4V7lqNXj28hLSeoXmbw/woM/vD8p+dcQPvsehVZC+vOwvcx7pn7tAsWkBu42mxbIIt6sJEwM7g6m4IDP5WeCg2vQ3igi3vYQ6LCSwgINquwQAvbt7sv5e68yPLJa19de8Q3NeZ7Eer8CrEqUBU3h7FMOGHvIKvCrYON6bjTO/wlHhlujsUfLd21zmX+6POy0S09P+t2oDJvVsSpQ5nMSwBAgDd2sgpq02GqBmk4mmAoxwxsg0nCqYwt8CsRw2wiHpyWicAcRhJK6nu9ZsuFcrrDvUM3fTPABLZYZtcoOaoSsCkGFNaioTwuEGtSbwlO9P8i1VVe2Mb1mW3hQcQYQz9U6OARAdJcZnqf100yys7HNZz7w5yFc5d4qO0l5zVtdFNBT4JuekWxTtNXt1XYnjXcvq82Vc5b5XaMK27TtrcZyHJXAAouXHcdqwMsTaNZgyn6miJQD8FINxNs/2XlXohTM1zR98xk8xgC3nBvglGWdnc6L6beWwOI5fyLHrryJMJGsXZZzcyx0sMUC4qbh+36zn//ur/8fnTPXnMkMDoOsAsOz8od6iZ9o5+IOhoOsAEJaamIIzjbGE3lIncMstEEsjyXaO+GKEi0wp3Gcc8BVAwgHh2VbRbnJgxJ/DMYgI3rkGctc3egTwhmMlI4IcrvdxSDiIAKtukbs8jjNC2qkdYvZu/XOPAF5mhIOy99Op2t1aR4nhAujah9/s6ICEz6GDGN8qOAZE5tTKfpQU5QRq1hYMInNKl3AQgJWL4GEc50QBEDBaWj+1Esi41tLrRoN1AHAZZ0C44oY33Bg+dw4SASOWCXDAcaSssQiMlOmC93FFxuFXLAYIGRciUDLdK4yE9YzruEzGRZVmbCMAENPPAEIZWTdi+Lw5SCgBFLuhMRXY2sYoXhNK0D3UQXJ93JBw8MZWS6ggMh9KgNApNMOtbfONbRItrJRA9La1sJ3ymcsjXCgBANLS6yYByBwuxIYOSoEdlve6EMS3zL7Z6OOZQC0lhCCOZUJIOOuqBkcfZ10Jb1a2U6CAZUIZhkEiBaZZZrUrauA8jjPoBc/WXAYoXT6vXYyAZdJ53U+rjudSNPloqFFEdafH06rvuUTGWSabXhvibnRhLPPdmtLK5+HIfMAInZRd8IwOJ3E9oO18xabrjMT0zNsYxI3QL3v2vXWfgUaTreDGytaemIIz4Zf8Pq5JkzM30P07x1+6sq3EkrmcMbHVDKt8N5bkFdxgSiFZX2mWmpjT+0FLABA4Xw22w7vJSmpfUCk7HDhf5Wq31pvE/yziBzF+sN07OFNR9gWlcT1wcIsIYBxnVlVp3VkzmnOale476OOvq8qWpt2tmsCSnxo29eDjr2tQdqyD7gSuKlua1se9CXwXFnDPU3xJjzYqMY63vve+qqKVIZKeuXOQUFQb8DzABp4PWTTNMBuAPY4jxhcSX8IvhiNHCKHaoxKfl3CF2S97VQCJv7gu6583B8En5RGSDiI7fToVFzG+lMWR8YSUgRcx/ZD1G40yAByWlgM+t10MghYj6KZ0YZ8LziVcTaYNAOJN3bg5v2OQEBUJimbbR8erUjjM3WPoSdTQAYCkUZnLWf73IdK8zR6RT5Z+kBuEG99/aY6neUCVIDkt84g4f0Q+S3v1/keKvUIEFjLemBI5Y9CCErmFO6YIG8XPjCy8Ma0JGaM1D1t4YyELWchCFrKQhSxkIQtZyEIWspDjLaf7P+WltODRp7FdX9Fu+Vl8asi4g4fxZ+FzJ/J1HecW5yw+e0T+o5b7L9WCCM1JUK8W2bwp13BjeINnJj9xRW5w1WESdRZ/pp45kiUAyFyINfV6OLqArPSB6A3vO8zimxfy/a5CGIBOLRx4aBZ/Fj53DgK1AF9F/4dspmJP7QLUJFP4ln3R4wA1IGwARmjZR/Jn43PnILy3b2+UADQqWvcvpY/D1yKzX5bw9/e91XE+vbqLj27w4qYIWGqbtP82fTl0R/zp+mfhc+cgEa6WPD9QN3DtWGOlCJeLE/xmYZ+mrE3b52qh+E+Ws6HfjPirxWn6Z+Fz5yC0r/Zu1ZAoFTp3jvW99tXk1hg/9dqr67uHLzR2XQD5tbfN/K3miH9YnuAfic+bg0gh8+O6hXBbzb5zrMlvCp8bDWM5u7LVtYAdWjxV2L0+2nZIrOn6Z+Hz18W0Rl23QXX7JeNYXWwav+WSTVTrKRswtq8UGg3DOZL/Gcr94mXQ8xNGI+MCYavaZcf52lR+aLI9CyEDiGtYSbSco/mfodx/uS6WrKcAQOjusWqSJPtBS2jE+DS5v8FrLMgkiqm9PPMexp+Jz18LcqAxyyImsY9laGLYOAKZL5B40CytdTPtVf1aHnyMb1ljfCDhgFgGtVhgG3Pdgtht3SYczKbyJksAsIa/2DLKbuv9ECc4jPGND197dQP18vpurRSO8YkNxsf47Lbu2oANekjFXDuI3Cl3Esr18oN3glSMYE/9WrTVgMX59HyjtHoqv3vd5KkxfmZZuTbOZ4TQzfDGSwddOlbuvM1iolC8+ZTeLD54K3ZhEN8aDJ7hP8anseH/fowvPLpLNtMHDcOJ4wKk+4Ju+4E/jtPig4+L4V4cn79AkT/F06zLxPguJqENxoZebHtKlLtJjgcAbG+T3W4aY5MSBwmUQBHj7YQLJgg4m9OzPpGDmJd7f0nnxB/bpkPfYMNFQWz2GW3ZPYzPbipPvOo1n+/WVDbGF0qgt0J043wW+MEDwd4j3fl2ECHVTHX57kH1I9WIr6o974hMJEDijoBol/U33lZL4Tss7lEIUfnIF3SMT9CzP3pbd9i87g9aGrb0lR+ygwPyBqXHyjrwUU+MDx2cltZ363oF5aVwnM/5wSRfCPIGET8EpfM5BA3jID/bsqCZwsrkjzXb+tnWoGvG+b1EvrKjNx80EtEyY8hXNRNQ4nw/2xKWQqxxfO4cFKrwuOfAFpp7nK+F6iD/nJL5RDS1g4bpiu7ujiXkcTdUofqeAyhx/aEK1ebCHsfnzkGCrqkAoLWNYxk6lU98T1tptBzAM6u1rOcZMp9N0z8LnzsH9faLjsmI5hWTteN8rbdfmuRnEtnUjQ3dMjXLKa7UrELraP4R+Nw5CI3lTYcaXjbvHO97jaVNhxpeWua3N/T3q+ms7Xj2xpXGTmtzbYI/oX8WPnfT/INakWx7G+nkzfh0O2MJOY2vXl63tfN7ReIFarFzw/JQDhwcrX9muXO31ODbrKAGWubWfmLWUuyCPHYEA/5uxA/yB/ced9ukaMPqbYXuv7luiCjynq5/Zrnz5iCaFQ1kEVZa8QetSee8wD6UeqY14DcjvtjqXFoqo+daCGtLZUIq0cw9S/8sfO4ctLoMqADNZuNPVpTPeUFykMSPWkNFQxYQBKBZBoRqZRo/pn8WPm8O8nj/B2GxPQf9G4BRdxiuv7jMx4hv+o1ROOwBITeHH83SPwufc2FYyNiiU5N9IlVl7AgO80c5jll8YnAprI4Ohs3iz8IXspCFLGQhC1nIQhaykIUsZCELWchCPrM8LI8XO4/jL/w1IWzRgo7+mOSlvwZvfviDkoe8X4yt5iSn9Fz+B+sg+RlasbN/RJVaW/SkQ4lPQj5jzJL0zNR/QrpYfOdd9Fesiy1/GD3Y7njKxZemBWXO5aQKvjXqSkKRHvAnnYdSYyftdkaOoPSvJOXvXR/5uWxEcPj34cnrYnJda1JXCszhr9ITyUFoVrrg3rXpLYVowyYklBM7Mw4c5Lq3RhD9njxcONFQI6HJRif6S2p8YfifpBb35OhX/uMITvztiRyk1ZkzvzalxpvSYBR7wN+MN83Kez3JSRyD4PtR99mIXZrhDPe5Sts7hDbjgqWb1YYMR5tl6cl0kDRFx3YsM+5sDGo/ttCILpjQI5cnkvQbKQlOqIM0xem7IC1fK0+XRr2Df4h4Z/IBqBi7YGLa/mToA6KGfZiaJ9NBlu1pJgD4cqyTSWxk/F3uAypRrdjIlLIH7Sq+80kLbWoyAH441lORZQCE555IB2l2VlULAIQt+YG2r+qV7SlxELTQLQIq/LExiIaHxX6QZMtb9EnGKRLLBBDuLZ9EB1FvI2vA44CWBW4PP01d1Cs7JhccIEyN+6GcHozC8h4iot/ZLEDYALEsvB8NP61ylvX1F9E7gQ7Sl4tKBb7gqq1itGuMJPL29cEuKMHlaFBfej4f9oNs1ZIuWLnzqtHgPnzCPGkwI365EFYEFwFzmBw3nRgH3XkhuT1cVNDowrqp1zNTd+20r2Z2eccFQCznpcgRh1czu53aRKCoXCgcONVpcdMJcRB7YWWnqvo0xU0ijSmZS53W9GVTSd9ucGIB8BqJyEHKBWN3G1R3VV+OGMlh4aDiWrCpQthJDBTJvdzNquUWO4lsRQoUCWXVqe+6oNncboWa3AagatLYpBUOtkmh0y42isKJ1l/KxeTrTdNGscN97yQGiuxC74bKs+Xbn6x1pEmYNMv7U99bqVudayTs9z1fCvxIK3XTTJTff+qbYiP5H6OvauZBU3FIonywc+LSHRQAFHNX91Ma0owyOQomytTUFj00GplpC3hWCOt+2jeNgCpEj/hd5UcKB6gwgxPnoCUAtP3tfwgBAQGAyz1AyInDqEUEyRtThybFbOjcUx9wJiCkk3k8xQT6O6hPZsKMpHQXzXauemqlFv9YXn95F4d+WBVT5zYCtFxy6NxtPdfZf9IdNaHUBQEOIHQ/yjgn0kEQLiCSlX3yu/j7deSTCNFZBIXOSL22XqhC9CoNuu22V6IjlkxzOADR222wk9mCBs9XqFiibmjSNCy6xRh5GGEzx4w3nOFvwgLQsMS+FXY1icL7/IYF7YTmg+zhTxsYTfMi1QDSPQ4AiSQHRmcRQnl5IS9W7UiNJ+WPBgvb/seJE+igeFcaNaBgq9gjH9UA4NJX2izK36eLU1uQEtczmuj8lRjOT56DEtO7ErJlj4eAZUM5e84cZSr4enqqQ1OI67nVd1FwNh3jn7jFqgi34uBwDBZOJWsZmudsmMQUu8OzGt2leBsYzUzBwQGmeIJXx4KCk3S77OgRk3UtI20ITlhYdUbP/CMkF/eQPUv54Blm7ER1qmlxEAMA1R/exhplNjjcnGcQMDhk5B8IpTpDm9Z/nR/rDzOje9KByfv4wF/OSXPQ4OCSP3GrWDOXs7CFo7EsjL3ROi2Ip5uj9YjX/12MjcPC532cT0SfJ7uLEfp3ocPv1oDEFWKx1x/x1vyXQo4MSgh57MN7O7828dXwZ+nf/OqTD+7/4TnoYWHty79zPQ6o6oVPr+MPUY4Oa4ml3f3kAwD3lcRT98l9LGR8nh/dYl68IG0hC1nIQhaykIUsZCELWcgXssz9Mqw9ondNfw7LtC9FNT/0dSef9SYVob/N3z/5q/v0xdP8/9ODM0To5fwjO3Xu/KMul1qP0MTII+xgpnfWG8ocdfjPJryR+MakUeTRdnITFVDZxLW+/Ddk+khN2PFHcHXwDwwAiQ9rU8s9Qv9M/lF68PJfHz/RRU+9wqZWO2ETBmlL/+ElWAVriqVsBj5FPwWDCi1rGTBAYE42tylqZujvA5P8o/QULSz9+5fUI+2Uzmro57I/mqxjpVXUFKcT76okdbl34/ImsNsY3zOmBtPxKfqNiw+uU7+4aqBTrcFolbZ4NGJmBuWO33ScpT8zzc4j8KGe/eKNI+2MZjGiPaPemxjTf8s3Sl/RrNO/iRmqffTKreVN71f8mdNVI/YV8snGAGdjc9yEfoLzuY8fW37xKcd/2vj4iea3jHejeVH7YFDumEWz9NOgOMVOgE61X9LzP19cit/FI9oz7OOo1MhBtPudlvDHHZRZLTWcX33wzOmbMvrU5VNv/3njnZ2fn37msVq84Z4f4j+P4/dp9zv1x3x5h9/j959hN8rnqv/j56ef/OOd4p81/vcnUQmjcsUU/bfH9bOnstP5mYfpSdw13ox9RLvfaYV8ioOMrP7m+ptj91Zp98XeOz+1m6f/5N7jPIqBDl/52WrvJ++Zqf0n8r+EVJXkiRd779QncTx+38jq7116U7DTI/hT73d/cvprt65ZqSp59v5q778o96eUG2tC5IkXez95z0yO6//tDH6kJ95OyJNDPYX/Wrp3WlZlZPX6pcgPIwcRceHjDwq/GQv+MhfWflI31dT+k1+7HvlO+fq5//av33ov49BztWdC+XaimrjyVj3j0HO1p/9Iwgl9inxy4c4HhV+S7lORoZrz9Neq1y07sP7v409e+skTv5pWbqzO1MSVqeXO4kd4vJ2o2p++9Z7u0HO1Z568+6+uyVUsLtz5oBB5fxQHkUPDsVtjDYi0zWo9tO3WSiW9PgoY6L3cbqlTTznwmit7eblmlOIQd2RcaKXg0OB2S1GKhaiTeSsVyoQH4RhNs1r3Jsp1k3K5A/26A68VL5e087t1xbaDle0Yn7TNal237ebKuJ5sp55y4TVX9orb6XVp1iKHhm+3lMlAUajJfd0vxqNdYeq2USwW9dbdfXP0wsJMqfOWUdE5ANGtJjKyQUzCpWOwIr3W19+2fKkSuupedrMLZNqbPV/a1C9M3dazxWJRu7uvurJ+o6K7AMJ4ucJMHa4jW0R7fV9txu3X3WxBidk/0DO083ytJE2JipmsGzzyw8hBatZngaPGd16wtNdqbpTLGxnTG0UpJBAHairoX45/vinvPSe6hEeeEMnr2b5+c+WaRPesXrOwZtBWKVW7EsTLxWq5XNYNL09i8cXUclnaW15nq5uBtunnx+x3zdXNbijZDwAx+7cDqc5I2mfNnMonHBRmGqnAPiyMRVONDODzrBHs0WGzE2HnTTVs9lUIwk25xmRc8kSraimNVGCjWFWlrkEzndcS2ZZezFf341FfQwd830crKheAMkM/YQ2REAxGIKqx8/2soRMwkmPNuJ6Y/efl7U5hppGywsP8uIPIvUyLhytcj4WcQYYAaFRclSvRSwh5JRO9JsR3FKkmNZdFuFzs+Xqq5YbJ2ooj1xYR9fPV7DfaVm8nI18AzxAAYaXCocRefiiV68f5rtoGSeV8ccjiekiL0RQ7Sg+VHETuZVqBZrsjPwwdxAqey9F1srEzz0RpukBnl5siyaMmrXF4Q/O6bkIOaoWIcKnTo9sxUwYJEnvN2GwrWHenebmkb5mOfAH9csNKpZaSywUQDssNarQp8x1CWKCq4YrMJ0rTBUm5IOGYHi8T6fGlPsAKnuvnOv7ID3TU6Do64Fdjp1kIgQuAWozHchWe/LAJxmQHeRIufyVl1rMtlljTjHgChPsrFWo26r7CJ8olxaLBx3Iko3ZDmEpkPgNSrmCx138RAhdKPnSzzfFcy6giCVMDR+58ncxSqlWlYy2Itg2XAyLZWmMTecPshtEQYmyt/Wg5H9rWOpaulBpUH0svCOq4isfG30/HACyVNxkTx8spMQ+5kGvgYlyPoglfZTie/bRtuKIQume6a0bMQcxK7nMAwk23Jgy1TI8zEl+xRHbwmE0zcGYld+uFO2vVuH4BRt2S3txIGe3J/eWh7UxcyaxymSAquAZ3/MpJF80U0Y3j2c+s5D41K6k0hnYOHJRS+1t5iWdKL98TAi6ASuXW/njNaMMBQBi9Ua+yYriQqiyl2aSSLdnNmH6AQLfy9muJYlNVYuVyAL1/+GHtiHJFdJBfwEVg+qGqxPZgCwFOiEFNipl6FMn+vp1NpdltKUM76SB8NPsvu+J2N/aORrJuAHe36gqhsRrwRw9DMdRgeGXMDmQ8VOTwlLNUfc02YvqFANrFXuX8XvYbPHb4k6wZALEsRiikHEisXG94AgRCkPWUq7oOVYI4n6xlAsWyYI3hYqSHmQGLhdGGlXL0zc7QzkELCgbTr8g0LbmRNhUA1NI5aSmSh4JwFM0IY5gBIPxb6zIuz1eB7ogQ2Pdj+okI1kqZrVZ3u7lhCmmsF00GAI7NSSsjq5H1B+2rkp2Mc08IEcT4Yp8JK9zaqpmkJc8CgRfpYXIGI1hphqatdlljaCcdTG7+4HJCz5T4ipsOgDB0oZhJ6QKIQweDGG2z0eOqGC3KuMPlybNJ76zVvxHE9AultpRv7Kf8lUpivcbGy2UAFFN+PWesXL9oSHwOBgRCxPgKTwcqKhWfKGZyup47zJXt9N226qpdfX9oZ99BvmkPzge29hLyYs8zOfMAEMWSHR2u7Fv9QUy3ku6oP9rp56bgff2ZVMmzN9S4flTTnQrjomlfszqxaMEMELoAUSxnVrlv520S8bthgycdNxPjwzODlG1ZdnOm/aZspzDtDFnxw0IYDO1MAADJ/um7n6qqqqoqS55Z4vejfOKzZ+7/rw84tF9v7sqZEJXmfqFywGpufDxKO3zqP200c7/Q/DG8r7/9yk8/OXMGqTOjzAyhn5QvvVN/7D6o/jjN/yJK+n3Knz3TrbwLaL++8s6Mcg+Tl7aHSYlP+bNnfvlTfr9xuxvjf8qfPbPzru//5meHx7Af5Mkr7366mnLJ07/A0A/9nHQrjKLtc89Fg0fI3I3rlg/Vfj4ZSwI3W/niaxZgX157I3pHllJ9pXc4iff1v9yoIvEX13HuudFElFnON5bXWhbC9rerRvGfRktlkXQ3rluCq/a3U+PlZrf7+v+xbHd5xF+9bvlQvedj/L4eH2p4NjlLz5acXQiruNywE6Vb9tAPSwCQucijE29UzhfQRq60DfireTs2i4XG3jdL28BGwa5HZ52Cw2ZuhO9HBWcu8jJf2ysD7RKJ9NP2C729q+A2EmXlQW1tLfAnyjUny0Vffzr1esp7GH+EF2bqqUl2XuJlZDplwpbLQz8sASBdVT7xJtaiMxk+rxVVO1CzydfjcVyrrRY1X9WSN3VXqrDqK736AM+4UaymptW6nzYg9vJv50b6M2czP27sbJJVohq7dcI2fjjqZA8vd3fDlh6bMYvvY4RjXE9h0k6WTgNZBhQBiHXfHRyoU+SVMUQgzzNbLKtBDd9oxiOt0DhgFhBu1+XDct1uc/1HE7hQfMXP7OV9QDnseRjoJ/7FRt2qkCsAdncYq7wSDUIzyxV6v9w3/ij1ulw1M/gifAT7h34YtOP+68IGk70UPJCUK2eWRKJgwmvsjd+foqFmMdFw47hx6pUfd7UJnGbOPvefmQDD8jf/fqSfZTvER9c04VVVn4ZF25fW4UeW6zT/5qN/DmN5h+l8VRxuHt9+muGE+YPnRsX88NAdB2zqbeMJnNDv//U0PPHvcv07n4nvb8aVD+6ITnzlIeVe/kHuePxHs39Slh5GENAYJu+XAT5UYBwXiv1SLuATuNrrN2WxYq9IT4oVgOCEwRcAeCzfe3S53UKjHk7a2X/l3bHw6fbH1un889gvQej3X53cHEESuWH24PfyeCX17A/yxpRLmrlD4phqwaJGpzJ8LsIufHeaRfToi3hkB32X4oQKocYUH0Rbg6jx+3AQNYyT6qD4exE/J1FBTqx/vpjdr1+KLbYLWchCFvJQ+X9vs9YizYnW1QAAAABJRU5ErkJggg==";
+
+  // src/modules/battleship/battleshipSolver.js
+  var battleshipSolver_exports = {};
+  __export(battleshipSolver_exports, {
+    SAMPLE_MANUAL: () => SAMPLE_MANUAL,
+    analyzeBattleship: () => analyzeBattleship,
+    cellName: () => cellName2,
+    colLetter: () => colLetter,
+    parseBattleshipText: () => parseBattleshipText,
+    parseCell: () => parseCell2,
+    playGame: () => playGame
+  });
+  var colLetter = (c) => String.fromCharCode(65 + c);
+  var cellName2 = (i, cols) => `${colLetter(i % cols)}${Math.floor(i / cols) + 1}`;
+  function parseCell2(s, cols, rows) {
+    const m = String(s || "").trim().match(/^([A-Za-z])\s*(\d{1,2})$/);
+    if (!m) return -1;
+    const c = m[1].toUpperCase().charCodeAt(0) - 65, r = Number(m[2]) - 1;
+    return c >= 0 && c < cols && r >= 0 && r < rows ? r * cols + c : -1;
+  }
+  function parseBattleshipText(text) {
+    const t = discordPlain(String(text || ""));
+    const ships = [];
+    for (const raw of t.split(/\n|;|(?<=afloat|sunk|sank)\s*,/i)) {
+      const line = raw.trim();
+      const m = line.match(/(\d{1,2})\s*[-‑–]?\s*(?:cells?|squares?|long)\b/i) || line.match(/\bship\b[^0-9\n]{0,12}\(?\s*(\d{1,2})\s*\)?/i);
+      if (!m || !/ship|cell|boat|carrier|destroyer|cruiser|submarine|battleship/i.test(line)) continue;
+      if (/ships?\s+lie|never\s+overlap|wait\s+\d+\s*s/i.test(line)) continue;
+      const len = Number(m[1]);
+      if (len < 1 || len > 10) continue;
+      const status = /\b(sunk|sank|destroyed|down)\b/i.test(line) ? "sunk" : /\b(afloat|alive|intact|floating|damaged|hit)\b/i.test(line) ? "afloat" : null;
+      ships.push({ len, status });
+    }
+    let size = null;
+    const sm = t.match(/(\d{1,2})\s*[x×]\s*(\d{1,2})/);
+    if (sm && Number(sm[1]) >= 3 && Number(sm[1]) <= 10 && Number(sm[2]) >= 3 && Number(sm[2]) <= 10) size = { cols: Number(sm[1]), rows: Number(sm[2]) };
+    const shots = [];
+    for (const m of t.matchAll(/\b([A-J])\s?(10|[1-9])\b[^A-Za-z0-9\n]{0,4}\s*(hit|miss(?:ed)?|splash|sunk|sank)\b/gi)) shots.push({ cell: `${m[1].toUpperCase()}${m[2]}`, result: /miss|splash/i.test(m[3]) ? "miss" : "hit" });
+    for (const m of t.matchAll(/\b(hit|miss(?:ed)?)\s+(?:at|on)\s+([A-J])\s?(10|[1-9])\b/gi)) shots.push({ cell: `${m[2].toUpperCase()}${m[3]}`, result: /miss/i.test(m[1]) ? "miss" : "hit" });
+    return { ships, size, shots };
+  }
+  function placementsOf(len, cols, rows) {
+    const out = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c + len <= cols; c++) out.push(Array.from({ length: len }, (_, k) => r * cols + c + k));
+    if (len > 1) for (let c = 0; c < cols; c++) for (let r = 0; r + len <= rows; r++) out.push(Array.from({ length: len }, (_, k) => (r + k) * cols + c));
+    return out;
+  }
+  var popcount = (x) => {
+    x -= x >>> 1 & 1431655765;
+    x = (x & 858993459) + (x >>> 2 & 858993459);
+    return (x + (x >>> 4) & 252645135) * 16843009 >>> 24;
+  };
+  function analyzeBattleship({ cols = 6, rows = 6, ships = [], shots = {}, trustAfloat = false, budget = 4e6 }) {
+    const N2 = cols * rows;
+    const hitSet = /* @__PURE__ */ new Set(), missSet = /* @__PURE__ */ new Set();
+    for (const [k, v] of Object.entries(shots)) {
+      const i = Number(k);
+      if (i >= 0 && i < N2) (v === "hit" ? hitSet : v === "miss" ? missSet : null)?.add(i);
+    }
+    const base = { cols, rows, hits: hitSet.size, misses: missSet.size, prob: Array(N2).fill(0), best: [], ties: [], certain: [], bestP: 0, total: 0, exact: true, done: false };
+    if (!ships.length) return { ...base, ok: false, reason: 'No fleet yet \u2014 paste the manual text (the "Enemy fleet" list).' };
+    const cells = ships.reduce((a, s) => a + s.len, 0);
+    if (cells > N2) return { ...base, ok: false, reason: `The fleet (${cells} cells) does not fit a ${cols}\xD7${rows} board.` };
+    if (ships.every((s) => s.status === "sunk")) return { ...base, ok: true, done: true, mode: "done" };
+    if (hitSet.size >= cells) return { ...base, ok: true, done: true, mode: "done" };
+    const WN = Math.ceil(N2 / 32);
+    const maskOf = (cs) => {
+      const m = new Uint32Array(WN);
+      for (const i of cs) m[i >> 5] |= 1 << (i & 31);
+      return m;
+    };
+    const hitMask = maskOf(hitSet);
+    const order = ships.map((s, i) => ({ ...s, i })).sort((a, b) => (b.status === "sunk") - (a.status === "sunk") || b.len - a.len);
+    const cand = order.map((s) => placementsOf(s.len, cols, rows).filter((p) => {
+      if (p.some((i) => missSet.has(i))) return false;
+      const allHit = p.every((i) => hitSet.has(i));
+      if (s.status === "sunk") return allHit;
+      if (s.status === "afloat" && trustAfloat && allHit) return false;
+      return true;
+    }).map((p) => ({ cells: p, mask: maskOf(p) })));
+    if (cand.some((c) => !c.length)) return { ...base, ok: false, reason: "No way to fit the fleet around these shots \u2014 check the marks and the fleet list." };
+    const sameAsPrev = order.map((s, k) => k > 0 && order[k - 1].len === s.len && order[k - 1].status === s.status);
+    const restLen = order.map((_, k) => order.slice(k).reduce((a, s) => a + s.len, 0));
+    const counts = cand.map((c) => new Float64Array(c.length));
+    const pick = new Int32Array(order.length);
+    const occ = Array.from({ length: order.length + 1 }, () => new Uint32Array(WN));
+    let total = 0, nodes = 0, aborted = false;
+    const dfs = (k) => {
+      if (aborted) return;
+      if (++nodes > budget) {
+        aborted = true;
+        return;
+      }
+      const o = occ[k];
+      let open2 = 0;
+      for (let w = 0; w < WN; w++) open2 += popcount(hitMask[w] & ~o[w]);
+      if (open2 > (k < order.length ? restLen[k] : 0)) return;
+      if (k === order.length) {
+        total++;
+        for (let j = 0; j < order.length; j++) counts[j][pick[j]]++;
+        return;
+      }
+      const start = sameAsPrev[k] ? pick[k - 1] + 1 : 0;
+      const list = cand[k], next = occ[k + 1];
+      for (let p = start; p < list.length; p++) {
+        const m = list[p].mask;
+        let clash = false;
+        for (let w = 0; w < WN; w++) if (o[w] & m[w]) {
+          clash = true;
+          break;
+        }
+        if (clash) continue;
+        for (let w = 0; w < WN; w++) next[w] = o[w] | m[w];
+        pick[k] = p;
+        dfs(k + 1);
+      }
+    };
+    dfs(0);
+    let cellCount = new Float64Array(N2);
+    let exact = true;
+    if (aborted) {
+      exact = false;
+      total = 1;
+      cellCount = new Float64Array(N2);
+      order.forEach((s, k) => {
+        const ok = cand[k];
+        for (const p of ok) for (const i of p.cells) cellCount[i] += 1 / ok.length;
+      });
+    } else {
+      if (!total) return { ...base, ok: false, reason: "No way to fit the fleet around these shots \u2014 check the marks and the fleet list." };
+      counts.forEach((cs, k) => cs.forEach((n, p) => {
+        if (n) for (const i of cand[k][p].cells) cellCount[i] += n;
+      }));
+    }
+    const prob = Array.from(cellCount, (n) => Math.min(1, n / total));
+    const open = [];
+    for (let i = 0; i < N2; i++) if (!hitSet.has(i) && !missSet.has(i)) open.push(i);
+    if (exact && open.every((i) => prob[i] === 0)) return { ...base, ok: true, done: true, mode: "done", total, prob };
+    open.sort((a, b) => prob[b] - prob[a] || a - b);
+    const bestP = prob[open[0]];
+    const ties = open.filter((i) => prob[i] >= bestP - 1e-9);
+    const certain = exact ? open.filter((i) => prob[i] >= 1 - 1e-9) : [];
+    const sunkLen = ships.filter((s) => s.status === "sunk").reduce((a, s) => a + s.len, 0);
+    return {
+      ...base,
+      ok: true,
+      total,
+      prob,
+      exact,
+      best: open.slice(0, 3),
+      bestP,
+      ties,
+      certain,
+      mode: hitSet.size > sunkLen ? "target" : "hunt"
+    };
+  }
+  function playGame(layout, ships, cols, rows, { reportSunk = true } = {}) {
+    const shots = {};
+    const owner = /* @__PURE__ */ new Map();
+    layout.forEach((cs, k) => cs.forEach((i) => owner.set(i, k)));
+    const state = ships.map((s) => ({ len: s.len, status: reportSunk ? "afloat" : null }));
+    for (let n = 1; n <= cols * rows; n++) {
+      const a = analyzeBattleship({ cols, rows, ships: state, shots, trustAfloat: reportSunk });
+      if (!a.ok) throw new Error(a.reason);
+      if (a.done) return n - 1;
+      const i = a.best[0];
+      shots[i] = owner.has(i) ? "hit" : "miss";
+      if (reportSunk && owner.has(i)) {
+        const k = owner.get(i);
+        if (layout[k].every((c) => shots[c] === "hit")) state[k].status = "sunk";
+      }
+    }
+    return cols * rows;
+  }
+  var SAMPLE_MANUAL = `On the subject of Battleship
+Ships lie straight, across or down, and never overlap. Tell the Defuser where to fire. After each shot they must wait 20 seconds or the bomb detonates. A shot knocks the module in that slot offline for 20 seconds. Sink every ship to disarm this module.
+
+Enemy fleet:
+\u2022 3-cell ship, afloat
+\u2022 2-cell ship, afloat`;
+
   // conso-logic-entry.js
   var conso_logic_entry_default = {
     mines: Object.freeze({ ...minesSolver_exports, ...minesVision_exports }),
     queens: Object.freeze({ ...queensConstants_exports, ...queensSolver_exports, ...queensVision_exports }),
-    search: Object.freeze({ ...searchGlyphs_exports, ...searchOCR_exports, ...searchSolver_exports }),
+    search: Object.freeze({ ...searchGlyphs_exports, ...searchOCR_exports, ...searchSolver_exports, ...searchWords_exports }),
     password: Object.freeze({ ...passwordSolver_exports, ...passwordVision_exports }),
     switches: Object.freeze({ ...switchesSolver_exports, ...switchesVision_exports }),
     diagram: Object.freeze({ ...diagramCore_exports }),
@@ -8702,7 +12183,14 @@ Gray = 12 \u03A9`;
     astrology: Object.freeze({ ...astroRefs_exports, ...astrologyVision_exports, ...astrologySolver_exports }),
     cube: Object.freeze({ ...cubeSolver_exports, ...cubeVision_exports }),
     circuit: Object.freeze({ ...glyph_exports, ...circuitDigits_exports, ...circuitVision_exports, ...circuitLegend_exports, ...circuitSolver_exports }),
-    chess: Object.freeze({ ...chessVision_exports })
+    chess: Object.freeze({ ...chessVision_exports, ...chessEngine_exports }),
+    page: Object.freeze({ ...leftPage_exports }),
+    text: Object.freeze({ ...discordText_exports }),
+    blackjack: Object.freeze({ ...blackjackSolver_exports, ...blackjackVision_exports }),
+    batteries: Object.freeze({ ...sectionsData_exports, ...batteriesSolver_exports, ...batteriesVision_exports, ...batteriesOCR_exports }),
+    wireplace: Object.freeze({ ...wireplaceSolver_exports, ...wireplaceVision_exports }),
+    laundry: Object.freeze({ ...laundrySolver_exports, ...laundryVision_exports, ...laundryOCR_exports, ...laundrySprite_exports }),
+    battleship: Object.freeze({ ...battleshipSolver_exports })
   };
   return __toCommonJS(conso_logic_entry_exports);
 })();

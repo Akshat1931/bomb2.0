@@ -346,8 +346,9 @@ function saveLogicState() {
 
 function parseVariablesString(str) {
   const env = {};
-  // Strip asterisks (e.g. from copy-pasting markdown formats like **P** = **T**)
-  const cleanStr = str.replace(/\*/g, '');
+  // A phone copies Discord's markup too (**P** = **T**, __Q__: F, > R = T): bomb_boomed's
+  // discordPlain gives back the text Discord shows; any asterisk left is dropped as before.
+  const cleanStr = window.BombLogic.text.discordPlain(str).replace(/\*/g, '');
   
   // Use regex to locate variable declarations (e.g., P = T or Q: False) and ignore trailing instructions
   const regex = /\b([A-Z])\s*[=:]\s*(T|F|TRUE|FALSE)\b/gi;

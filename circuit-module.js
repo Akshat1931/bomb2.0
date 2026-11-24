@@ -36,7 +36,8 @@
     colors: [],      // per-resistor colour (editable)
     legend: null,    // { chips } — the legend picture pasted here
     note: null,      // { text, ok } — what the last paste did
-    lastAnswer: ''
+    lastAnswer: '',
+    notCopied: false // the answer came after the player left the page: not copied, a click copies it
   };
   const learned = () => { try { return JSON.parse(lsGet(DIGITS_KEY) || '{}'); } catch (e) { return {}; } };
 
@@ -117,6 +118,9 @@
   }
 
   function copyText(t) { try { navigator.clipboard.writeText(t).catch(() => {}); } catch (e) {} }
+  // An answer that arrives after the player has gone (to Discord, copying the next picture) isn't
+  // copied over what they copied there (bomb_boomed's rule, BombLogic.page): a click copies it.
+  const leftPage = () => Boolean(window.BombLogic.page && window.BombLogic.page.leftSinceLastAction());
 
   function render() {
     if (!$('cirRoot')) return;
@@ -167,14 +171,17 @@
     // answer
     const placeholder = !circuit ? (count ? 'Paste the circuit screenshot' : 'Paste the legend + the circuit')
       : !count ? 'Paste the colour legend' : '— — —';
+    if (answer !== S.lastAnswer) {
+      S.notCopied = Boolean(answer) && leftPage();
+      if (answer && !S.notCopied) copyText(answer);
+    }
+    S.lastAnswer = answer;
     $('cirAnswer').innerHTML = answer
-      ? `<div class="cir-ans-label">TOTAL RESISTANCE (Ω) · click to copy</div>
+      ? `<div class="cir-ans-label">${S.notCopied ? '<span class="cir-ans-warn">⚠ Not copied (you left the page) — click to copy</span>' : 'TOTAL RESISTANCE (Ω) · click to copy'}</div>
          <div class="cir-ans-big">${answer}&thinsp;Ω</div>
          <div class="cir-ans-sub">${solved.ohms.isInteger ? `${circuit.resistors.length} resistors` : `exact ${solved.ohms.exact} Ω`}</div>`
       : `<div class="cir-ans-wait">${esc(placeholder)}</div>`;
     $('cirAnswer').classList.toggle('ready', Boolean(answer));
-    if (answer && answer !== S.lastAnswer) copyText(answer);
-    S.lastAnswer = answer;
 
     // working: the screenshot with each resistor boxed + its value, and a table to fix colours
     const wk = $('cirWorking');
@@ -265,6 +272,7 @@
       #cirAnswer{text-align:center;padding:14px;background:#06060e;border:2px solid #263238;border-radius:14px;}
       #cirAnswer.ready{border-color:#00e676;cursor:pointer;}
       .cir-ans-label{font-size:10px;color:#546e7a;letter-spacing:1px;text-transform:uppercase;}
+      .cir-ans-warn{color:#f5a742;font-weight:800;}
       .cir-ans-big{font-size:58px;font-weight:900;font-family:'Outfit',sans-serif;color:#00e676;line-height:1.1;overflow-wrap:anywhere;}
       .cir-ans-sub{font-size:12px;color:#78909c;}
       .cir-ans-wait{color:#78909c;font-size:14px;text-transform:uppercase;letter-spacing:1px;}
@@ -329,6 +337,7 @@
     $('cirAnswer').addEventListener('click', () => {
       if (!S.lastAnswer) return;
       copyText(S.lastAnswer);
+      S.notCopied = false;
       const sub = $('cirAnswer').querySelector('.cir-ans-label');
       if (sub) { sub.textContent = '✓ Copied!'; setTimeout(render, 1000); }
     });

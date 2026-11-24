@@ -11,8 +11,9 @@
  */
 
 (function() {
-  // bomb_boomed's word list (this game's manual): every word found in the grid is given
-  const DEFAULT_WORDS_TEXT = `PALM SINK WITH SEND OKAY USER LOSS RAID DIRT LEAF WIFE YELL TELL FLAT PARK SOUP VAST BEST TORN CLAY STEM SLIP RIDE ICON CORN DOVE BIRD PLOT FOOT DESK CAPE POET LAVA JOKE MOVE JOIN FINE VEIL GAME PINE TOLD COLD BOLD GOLD HOLD SOLD FOLD MOLD`;
+  // The game's word bank, 628 words (bomb_boomed's MASTER_SEARCH_WORDS, from bomb-logic.js): every
+  // word found in the grid is given. It replaced the old 48-word list on 2026-11-24.
+  const DEFAULT_WORDS_TEXT = window.BombLogic.search.MASTER_SEARCH_WORDS;
 
   const DIRS = [
     { dr: -1, dc: 0, name: 'Up', arrow: '↑' },

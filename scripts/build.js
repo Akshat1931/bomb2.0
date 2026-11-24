@@ -444,7 +444,7 @@ const TRIAL_SNIPPET = `
     if (target.tagName === 'BUTTON') return true;
     if (target.tagName === 'CANVAS') return true;
     if (target.classList && (target.classList.contains('upload-btn') || target.classList.contains('dropzone') || target.classList.contains('venn-cell') || target.classList.contains('venn-region'))) return true;
-    if (target.closest('.upload-btn') || target.closest('#dropArea')) return true;
+    if (target.closest('.upload-btn') || target.closest('#dropArea') || target.closest('.mk-dropzone')) return true;
 
     return false;
   }
