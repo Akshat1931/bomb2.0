@@ -1,6 +1,6 @@
 /**
  * Bomb serial bar (from bomb_boomed's SerialBar): the serial number is the same on every bomb in one
- * game, so it is typed once at the top of the page. The Button, Complex Wires, Venn and Simon Says
+ * game, so it is typed once at the top of the page. The Button, Complex Wires, Simon Says and Laundry
  * read it from there: their own serial fields are filled in (and typing in one of them updates the
  * bar and the others). Saved in localStorage under the key Simon Says already used, so a reload
  * mid-game keeps it.
@@ -10,7 +10,7 @@
 
   const KEY = 'ktane_bomb_serial';
   // module serial fields kept in step with the bar (each module listens for 'input' on its own)
-  const FIELDS = ['buttonSerialInput', 'cwSerialInput', 'vennSerialInput', 'simonsSerial'];
+  const FIELDS = ['buttonSerialInput', 'cwSerialInput', 'simonsSerial', 'laundrySerialInput'];
 
   const clean = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const load = () => { try { return clean(localStorage.getItem(KEY)); } catch (e) { return ''; } };

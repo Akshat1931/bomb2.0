@@ -21,13 +21,18 @@
   const FACE_TITLE = { U: 'TOP (U)', F: 'FRONT-LEFT (F)', R: 'FRONT-RIGHT (R)' };
   const solvedCells = () => ({ U: Array(9).fill('W'), F: Array(9).fill('G'), R: Array(9).fill('R') });
 
-  const S = { cells: solvedCells(), solution: '', status: '', preview: null, token: 0 };
+  // notCopied: the solution came after the player left the page, so it wasn't copied; a click copies it
+  const S = { cells: solvedCells(), solution: '', status: '', preview: null, token: 0, notCopied: false };
 
   function copyText(t) { try { navigator.clipboard.writeText(t).catch(() => {}); } catch (e) {} }
+  // An answer that arrives after the player has gone (to Discord, copying the next picture) isn't
+  // copied over what they copied there (bomb_boomed's rule, BombLogic.page).
+  const leftPage = () => Boolean(window.BombLogic.page && window.BombLogic.page.leftSinceLastAction());
 
   async function solve() {
     const token = ++S.token;
     S.solution = '';
+    S.notCopied = false;
     S.status = 'Searching solution…';
     render();
     const obs = Array(54).fill(null);
@@ -44,7 +49,10 @@
       } else if (res && res.sols && res.sols.length) {
         S.solution = res.sols[0];
         S.status = res.len === 0 ? 'Already solved ✓' : `Solved ✓ (${res.len} moves)`;
-        if (S.solution) copyText(S.solution);
+        if (S.solution) {
+          S.notCopied = leftPage();
+          if (!S.notCopied) copyText(S.solution);
+        }
       } else {
         S.status = 'No solution found — check the face colours';
       }
@@ -120,7 +128,7 @@
     const moves = S.solution ? S.solution.split(' ').filter(Boolean) : [];
     $('rbAnswer').classList.toggle('ready', moves.length > 0);
     $('rbAnswer').innerHTML = moves.length
-      ? `<div class="rb-ans-label">SOLUTION · ${moves.length} MOVES · click to copy</div>
+      ? `<div class="rb-ans-label">${S.notCopied ? '<span class="rb-ans-warn">⚠ Not copied (you left the page) — click to copy</span>' : `SOLUTION · ${moves.length} MOVES · click to copy`}</div>
          <div class="rb-ans-big">${S.solution}</div>
          <div class="rb-moves">${moves.map((m, i) => `<span class="rb-move"><small>${i + 1}</small>${m}</span>`).join('')}</div>`
       : `<div class="rb-ans-wait">${S.status || 'Paste the cube screenshot, or set the stickers and press Solve'}</div>`;
@@ -151,6 +159,7 @@
       #rbAnswer{text-align:center;padding:14px;background:#06060e;border:2px solid #263238;border-radius:14px;}
       #rbAnswer.ready{border-color:#00e676;cursor:pointer;}
       .rb-ans-label{font-size:10px;color:#546e7a;letter-spacing:1px;text-transform:uppercase;}
+      .rb-ans-warn{color:#f5a742;font-weight:800;}
       .rb-ans-big{font-size:40px;font-weight:900;font-family:'Outfit',monospace,sans-serif;color:#00e676;line-height:1.2;overflow-wrap:anywhere;margin:4px 0;}
       .rb-ans-wait{color:#78909c;font-size:14px;}
       .rb-moves{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px;}
@@ -224,6 +233,7 @@
     $('rbAnswer').addEventListener('click', () => {
       if (!S.solution) return;
       copyText(S.solution);
+      S.notCopied = false;
       const l = $('rbAnswer').querySelector('.rb-ans-label');
       if (l) { l.textContent = '✓ Copied!'; setTimeout(render, 1000); }
     });

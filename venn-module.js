@@ -20,8 +20,6 @@ const REGION_DEFS_TWO = [
 const vennState = {
   image: null,
   initialized: false,
-  sidePick: null,     // 'shaded' / 'nonShaded' chosen by hand, or null = follow the serial
-  lastSerial: '',
   lastAutoCopy: '',
   manual: {
     mode: 'three',
@@ -50,19 +48,12 @@ function initVennModule() {
   }
 
   if (copyBtn) copyBtn.addEventListener('click', copyAnswerToClipboard);
+  // Which region is answered (and auto-copied): this drop-down, Shaded to start.
+  // (The serial no longer picks it — the vowel rule was removed 2026-11-24, as in bomb_boomed's Diagram.)
   if (targetMode) targetMode.addEventListener('change', () => {
-    // picked by hand: kept until the serial changes
-    vennState.sidePick = targetMode.value;
     updateDisplayedAnswer();
     autoCopyVennAnswer();
-    applyVennSerial();
   });
-  // The serial picks the region: typed here, or already typed in The Button / Complex Wires
-  ['vennSerialInput', 'buttonSerialInput', 'cwSerialInput'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => applyVennSerial({ serialChanged: true }));
-  });
-  applyVennSerial();
 
   if (dropzone) {
     dropzone.addEventListener('dragover', (event) => {
@@ -545,46 +536,7 @@ function setVennStatus(message, color) {
   status.style.color = color;
 }
 
-// Serial with a vowel → answer the SHADED region, no vowel → the UNSHADED one (no serial: shaded).
-// Same rule as bomb_boomed's Diagram. Choosing in the drop-down overrides it until the serial changes.
-function vennSerial() {
-  for (const id of ['vennSerialInput', 'buttonSerialInput', 'cwSerialInput']) {
-    const v = (document.getElementById(id)?.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (v) return { serial: v, from: id };
-  }
-  return { serial: '', from: null };
-}
-
-function applyVennSerial({ serialChanged = false } = {}) {
-  const select = document.getElementById('vennTargetMode');
-  const note = document.getElementById('vennSerialNote');
-  if (!select) return;
-  const { serial, from } = vennSerial();
-  if (serialChanged && serial !== vennState.lastSerial) vennState.sidePick = null;
-  vennState.lastSerial = serial;
-  const bySerial = serial ? (/[AEIOU]/.test(serial) ? 'shaded' : 'nonShaded') : 'shaded';
-  const want = vennState.sidePick || bySerial;
-  if (select.value !== want) {
-    select.value = want;
-    updateDisplayedAnswer();
-    autoCopyVennAnswer();
-  }
-  if (!note) return;
-  const where = from === 'buttonSerialInput' ? ' (from The Button)' : from === 'cwSerialInput' ? ' (from Complex Wires)' : '';
-  const word = v => (v === 'shaded' ? 'SHADED' : 'UNSHADED');
-  if (!serial) {
-    note.textContent = 'No serial yet: SHADED. A vowel in the serial → shaded, none → unshaded.';
-    note.style.color = '#8888aa';
-  } else if (vennState.sidePick && vennState.sidePick !== bySerial) {
-    note.textContent = `Set by hand — serial ${serial}${where} says ${word(bySerial)}.`;
-    note.style.color = '#f5a742';
-  } else {
-    note.textContent = `Serial ${serial}${where} ${bySerial === 'shaded' ? 'has a vowel → SHADED' : 'has no vowel → UNSHADED'}.`;
-    note.style.color = '#4caf50';
-  }
-}
-
-// Copy the answer when it changes after a picture or a serial change (not when it stays the same).
+// Copy the answer when it changes after a picture or a switch of the drop-down (not when it stays the same).
 function autoCopyVennAnswer() {
   const answer = document.getElementById('vennAnswer')?.value || '';
   // only a diagram with something on it: a region shaded, or a picture of the shading
@@ -592,6 +544,12 @@ function autoCopyVennAnswer() {
   const hasContent = Object.values(vennState.manual.shaded).some(Boolean) || !!(vennState.round && vennState.round.shade);
   if (!hasContent) { vennState.lastAutoCopy = ''; return; }
   if (!answer || answer === 'Null' || answer === vennState.lastAutoCopy) return;
+  // An answer that arrives after the player has gone (to Discord, copying the next picture) isn't
+  // copied over what they copied there (bomb_boomed's rule, BombLogic.page): Copy Answer copies it.
+  if (window.BombLogic.page && window.BombLogic.page.leftSinceLastAction()) {
+    setVennStatus(`⚠ Not copied (you left the page) — press Copy to copy ${answer}`, '#f5a742');
+    return;
+  }
   vennState.lastAutoCopy = answer;
   try {
     navigator.clipboard.writeText(answer).then(() => setVennStatus(`Copied: ${answer}`, '#4caf50')).catch(() => {});

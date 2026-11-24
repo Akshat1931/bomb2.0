@@ -987,6 +987,11 @@
     <button class="nav-link" type="button" data-target="hangmanSection" onclick="showSection('hangmanSection')">Hangman</button>
     <button class="nav-link" type="button" data-target="simonsSection" onclick="showSection('simonsSection')">Simon Says</button>
     <button class="nav-link" type="button" data-target="rubiksSection" onclick="showSection('rubiksSection')">Rubik's Cube</button>
+    <button class="nav-link" type="button" data-target="blackjackSection" onclick="showSection('blackjackSection')">Blackjack</button>
+    <button class="nav-link" type="button" data-target="batteriesSection" onclick="showSection('batteriesSection')">Batteries</button>
+    <button class="nav-link" type="button" data-target="wireplaceSection" onclick="showSection('wireplaceSection')">Wire Placement</button>
+    <button class="nav-link" type="button" data-target="laundrySection" onclick="showSection('laundrySection')">Laundry</button>
+    <button class="nav-link" type="button" data-target="battleshipSection" onclick="showSection('battleshipSection')">Battleship</button>
     <button class="nav-link" type="button" data-target="helpSection" onclick="showSection('helpSection')">Help</button>
     <button class="nav-link" type="button" data-target="aboutSection"
       onclick="showSection('aboutSection')">About</button>
@@ -1084,13 +1089,7 @@
             <option value="nonShaded">Non-shaded region</option>
           </select>
         </label>
-        <label style="color:#ddd; font-size:13px; gap:8px; display:inline-flex; align-items:center;">
-          <span>Serial:</span>
-          <input id="vennSerialInput" type="text" placeholder="e.g. 4B2Z96" spellcheck="false" autocomplete="off"
-            style="width:120px; padding:8px; background:#101025; border:1px solid #333; color:#eee; border-radius:8px; font-family:monospace; text-transform:uppercase;">
-        </label>
       </div>
-      <div id="vennSerialNote" style="text-align:center; color:#8888aa; font-size:12px; margin:-8px 0 14px;"></div>
 
       <div class="venn-manual">
         <h3 style="color:#f5c542; text-align:center; margin-bottom:12px;">Build The Scenario</h3>
@@ -1769,7 +1768,7 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <span style="color:#888; font-size:12px; font-weight:600; text-transform:uppercase; margin-right:4px;">Filter:</span>
           <button type="button" class="help-cat-btn active" onclick="filterHelpCategory('all', this)"
-            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #f5c542; background:#f5c542; color:#0e0e1e; font-weight:700; cursor:pointer;">All (14)</button>
+            style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #f5c542; background:#f5c542; color:#0e0e1e; font-weight:700; cursor:pointer;">All (25)</button>
           <button type="button" class="help-cat-btn" onclick="filterHelpCategory('wires', this)"
             style="padding:6px 14px; border-radius:6px; font-size:12px; border:1px solid #2d2d54; background:#1a1a36; color:#aaa; cursor:pointer;">Wires & Circuits</button>
           <button type="button" class="help-cat-btn" onclick="filterHelpCategory('words', this)"
@@ -2090,12 +2089,82 @@
           </div>
         </div>
 
+        <!-- Blackjack -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="blackjack cards hit stand dealer ace soft hand 21"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🃏 Blackjack</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Your cards (the helper's picture) against the dealer's up card (the defuser's picture). Hit or stand?</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste the helper's cards and the defuser's screen (<kbd style="background:#222; padding:2px 4px; border-radius:3px;">Ctrl+V</kbd>), or tap the ranks. It says <strong>HIT</strong> or <strong>STAND</strong> by blackjack basic strategy.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> A card marked “check” may be misread — pick the right rank and the reader learns that card's look. After a hit, paste the helper's cards again.</p>
+          </div>
+        </div>
+
+        <!-- Batteries -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="batteries battery volts timer order disarm table 9v round first then any"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🔋 Batteries</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A table (new every game) says, for each true battery condition, which modules wait for a digit on the timer and which must come first.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste this game's table once and the bomb's batteries picture — both at once works. Every true row applies; the disarm order is shown and can be copied.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Sync the timer (▶ 8:00 at the start, or type what it shows) to see when a timer-gated module can be done. Tap a row's ? / ✓ / ✗ to set it by hand.</p>
+          </div>
+        </div>
+
+        <!-- Wire Placement -->
+        <div class="help-module-card" data-category="wires" data-keywords="wire placement wires cut c3 column table grid a1 d4"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">〰️ Wire Placement</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Wires</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> A 4×4 board of wires and a table (it can change every game). The wire on C3 picks the column.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste this game's table once and the module picture. Every wire whose colour and one of its ends match a row in the C3 column is <strong>cut</strong>.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> A misread wire or table cell can be fixed by hand under “Board” and in the table.</p>
+          </div>
+        </div>
+
+        <!-- Laundry -->
+        <div class="help-module-card" data-category="words" data-keywords="laundry wash dry iron special care bleach load manual serial counts symbols presses"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🧺 Laundry</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Words</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Each load's counts and the serial give an item, material and colour, and from them the Wash, Dry, Iron and Special care settings.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste this game's manual once (text, or pictures of both pages), then each load's bot message. It shows the four settings and how many presses each button needs.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> Load 1 always starts on 30°C, High heat, 150°C, Bleach. Press “Next load” between loads: the manual, serial and symbols stay.</p>
+          </div>
+        </div>
+
+        <!-- Battleship -->
+        <div class="help-module-card" data-category="puzzles" data-keywords="battleship ships fleet hit miss shot grid 6x6 fire"
+          style="background:#131328; border:1px solid #222244; border-radius:12px; padding:18px; transition:border-color 0.2s;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h3 style="color:#f5c542; margin:0; font-size:16px;">🚢 Battleship</h3>
+            <span style="font-size:11px; background:#1a1a36; border:1px solid #333366; padding:2px 8px; border-radius:4px; color:#aaa;">Puzzles</span>
+          </div>
+          <div style="font-size:13px; color:#ccc; line-height:1.6;">
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">Overview:</strong> Find the enemy fleet on the bomb's 6×6 grid, one shot every 20 seconds.</p>
+            <p style="margin:0 0 8px;"><strong style="color:#fff;">How to Solve:</strong> Paste the manual text (the “Enemy fleet” list), then mark each shot as hit or miss. It names the cell most likely to hold a ship.</p>
+            <p style="margin:0;"><strong style="color:#81c784;">Speed Tip:</strong> “Just as good” cells are listed too — pick one whose module isn't being worked on, as a shot knocks it offline for 20 s.</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- No Results Message -->
       <div id="helpNoResults" style="display:none; text-align:center; padding:32px; color:#888;">
         <span style="font-size:32px; display:block; margin-bottom:8px;">🔍</span>
-        No modules match your search. Try searching for "wire", "who", "button", "morse", or click "All (14)".
+        No modules match your search. Try searching for "wire", "who", "button", "morse", or click "All (25)".
       </div>
 
     </div>
@@ -2622,6 +2691,11 @@
   <section id="hangmanSection" class="page-section"></section>
   <section id="simonsSection" class="page-section"></section>
   <section id="rubiksSection" class="page-section"></section>
+  <section id="blackjackSection" class="page-section"></section>
+  <section id="batteriesSection" class="page-section"></section>
+  <section id="wireplaceSection" class="page-section"></section>
+  <section id="laundrySection" class="page-section"></section>
+  <section id="battleshipSection" class="page-section"></section>
 
   <section id="aboutSection" class="page-section">
     <div
@@ -2634,14 +2708,14 @@
   </section>
 
   <!-- bomb_boomed's image readers and solvers (generated: node scripts/build-conso-logic.mjs in bomb_boomed) -->
-  <script src="./bomb-logic.js?v=20261123_v8"></script>
-  <script src="./venn-module.js?v=20261123_v1"></script>
+  <script src="./bomb-logic.js?v=20261124_v2"></script>
+  <script src="./venn-module.js?v=20261124_v1"></script>
   <script src="./logic-solver.js?v=20260918_v3"></script>
-  <script src="./logic-module.js?v=20261122_v1"></script>
+  <script src="./logic-module.js?v=20261124_v1"></script>
   <script src="./morse-module.js?v=20261122_v1"></script>
   <script src="./switches-module.js?v=20261122_v1"></script>
   <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
-  <script src="./search-module.js?v=20261122_v1"></script>
+  <script src="./search-module.js?v=20261124_v1"></script>
   <script src="./knobs-module.js?v=20261122_v7"></script>
   <script src="./memory-module.js?v=20260918_v3"></script>
   <script src="./password-module.js?v=20261122_v1"></script>
@@ -2649,10 +2723,10 @@
   <script src="./button-module.js?v=20261123_v1"></script>
   <script src="./whos-module.js?v=20261122_v1"></script>
   <script src="./wires-module.js?v=20261122_v7"></script>
-  <script src="./circuit-module.js?v=20261123_v1"></script>
+  <script src="./circuit-module.js?v=20261124_v1"></script>
   <script src="./nqueen-module.js?v=20261122_v1"></script>
   <script src="./complex-wires-module.js?v=20261122_v1"></script>
-  <script src="./chess-module.js?v=20261123_v2"></script>
+  <script src="./chess-module.js?v=20261124_v1"></script>
   <script src="./minesweeper-module.js?v=20261123_v1"></script>
   <script src="./symbols-module.js?v=20261122_v1"></script>
   <script src="./multi-maze-module.js?v=20261122_v2"></script>
@@ -2661,8 +2735,14 @@
   <script src="./astrology-module.js?v=20261123_v1"></script>
   <script src="./hangman-module.js?v=20261123_v1"></script>
   <script src="./simons-module.js?v=20261122_v3"></script>
-  <script src="./rubiks-module.js?v=20261123_v1"></script>
-  <script src="./dragdrop-helper.js?v=20261123_v1"></script>
+  <script src="./rubiks-module.js?v=20261124_v1"></script>
+  <script src="./module-kit.js?v=20261124_v1"></script>
+  <script src="./blackjack-module.js?v=20261124_v1"></script>
+  <script src="./batteries-module.js?v=20261124_v1"></script>
+  <script src="./wireplace-module.js?v=20261124_v1"></script>
+  <script src="./laundry-module.js?v=20261124_v1"></script>
+  <script src="./battleship-module.js?v=20261124_v1"></script>
+  <script src="./dragdrop-helper.js?v=20261124_v1"></script>
   <script>
     let img1 = null, img2 = null;
     let lastSolveData = null;
@@ -2853,7 +2933,7 @@
     // ── Paste support ─────────────────────────────────────────
     document.addEventListener('paste', function (e) {
       if (document.getElementById('multiMazeView')?.style.display === 'block') return;
-      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active') || document.getElementById('astrologySection')?.classList.contains('active') || document.getElementById('hangmanSection')?.classList.contains('active') || document.getElementById('simonsSection')?.classList.contains('active') || document.getElementById('rubiksSection')?.classList.contains('active')) return;
+      if (document.getElementById('vennSection')?.classList.contains('active') || document.getElementById('logicSection')?.classList.contains('active') || document.getElementById('morseSection')?.classList.contains('active') || document.getElementById('switchesSection')?.classList.contains('active') || document.getElementById('searchSection')?.classList.contains('active') || document.getElementById('knobsSection')?.classList.contains('active') || document.getElementById('memorySection')?.classList.contains('active') || document.getElementById('passwordSection')?.classList.contains('active') || document.getElementById('pianoSection')?.classList.contains('active') || document.getElementById('buttonSection')?.classList.contains('active') || document.getElementById('whosSection')?.classList.contains('active') || document.getElementById('wiresSection')?.classList.contains('active') || document.getElementById('circuitSection')?.classList.contains('active') || document.getElementById('nqueenSection')?.classList.contains('active') || document.getElementById('complexWiresSection')?.classList.contains('active') || document.getElementById('chessSection')?.classList.contains('active') || document.getElementById('minesweeperSection')?.classList.contains('active') || document.getElementById('symbolsSection')?.classList.contains('active') || document.getElementById('limboSection')?.classList.contains('active') || document.getElementById('pipesSection')?.classList.contains('active') || document.getElementById('astrologySection')?.classList.contains('active') || document.getElementById('hangmanSection')?.classList.contains('active') || document.getElementById('simonsSection')?.classList.contains('active') || document.getElementById('rubiksSection')?.classList.contains('active') || document.getElementById('blackjackSection')?.classList.contains('active') || document.getElementById('batteriesSection')?.classList.contains('active') || document.getElementById('wireplaceSection')?.classList.contains('active') || document.getElementById('laundrySection')?.classList.contains('active') || document.getElementById('battleshipSection')?.classList.contains('active')) return;
       
       let slot = pasteTargetSlot;
       if (slot !== 1 && slot !== 2) slot = 1;
@@ -3069,6 +3149,36 @@
           window.initRubiksModule();
         }
         window.rubiksLoaded = true;
+      }
+      if (id === 'blackjackSection' && !window.blackjackLoaded) {
+        if (typeof window.initBlackjackModule === 'function') {
+          window.initBlackjackModule();
+        }
+        window.blackjackLoaded = true;
+      }
+      if (id === 'batteriesSection' && !window.batteriesLoaded) {
+        if (typeof window.initBatteriesModule === 'function') {
+          window.initBatteriesModule();
+        }
+        window.batteriesLoaded = true;
+      }
+      if (id === 'wireplaceSection' && !window.wireplaceLoaded) {
+        if (typeof window.initWireplaceModule === 'function') {
+          window.initWireplaceModule();
+        }
+        window.wireplaceLoaded = true;
+      }
+      if (id === 'laundrySection' && !window.laundryLoaded) {
+        if (typeof window.initLaundryModule === 'function') {
+          window.initLaundryModule();
+        }
+        window.laundryLoaded = true;
+      }
+      if (id === 'battleshipSection' && !window.battleshipLoaded) {
+        if (typeof window.initBattleshipModule === 'function') {
+          window.initBattleshipModule();
+        }
+        window.battleshipLoaded = true;
       }
 
       if (window.BombDragDrop) {
@@ -3985,8 +4095,8 @@
       redraw();
     }
   </script>
-  <!-- one serial per game, shared by The Button, Complex Wires, Venn and Simon Says (after showSection) -->
-  <script src="./serial-bar.js?v=20261123_v2"></script>
+  <!-- one serial per game, shared by The Button, Complex Wires, Simon Says and Laundry (after showSection) -->
+  <script src="./serial-bar.js?v=20261124_v2"></script>
 </body>
 
 </html>

@@ -364,6 +364,26 @@
           if (file && input) feedFileToInput(input, file);
           break;
         }
+        case 'blackjackSection': {
+          const input = document.getElementById('blackjackFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'batteriesSection': {
+          const input = document.getElementById('batteriesFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'wireplaceSection': {
+          const input = document.getElementById('wireplaceFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
+        case 'laundrySection': {
+          const input = document.getElementById('laundryFileInput');
+          if (file && input) feedFileToInput(input, file);
+          break;
+        }
       }
     }
   }
